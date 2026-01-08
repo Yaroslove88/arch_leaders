@@ -39,6 +39,9 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     
+    env:
+      DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db?schema=public
+    
     services:
       postgres:
         image: postgres:15-alpine
@@ -72,18 +75,26 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Setup Prisma
+      - name: Wait for PostgreSQL
+        run: |
+          until pg_isready -h localhost -p 5432 -U test_user; do
+            echo "Waiting for PostgreSQL..."
+            sleep 2
+          done
+
+      - name: Generate Prisma Client
+        working-directory: apps/api
+        run: pnpm prisma generate
+
+      - name: Run Prisma Migrations
         working-directory: apps/api
         env:
           DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db?schema=public
-        run: |
-          pnpm prisma generate
-          pnpm prisma migrate deploy
+        run: pnpm prisma migrate deploy
 
       - name: Run tests
         working-directory: apps/api
         env:
-          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db?schema=public
           NODE_ENV: test
         run: pnpm test
 
