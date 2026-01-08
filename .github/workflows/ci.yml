@@ -74,6 +74,8 @@ jobs:
 
       - name: Setup Prisma
         working-directory: apps/api
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db?schema=public
         run: |
           pnpm prisma generate
           pnpm prisma migrate deploy
