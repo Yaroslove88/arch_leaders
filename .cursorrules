@@ -1,0 +1,220 @@
+# Правила проекта Leadership Architect
+
+## Общие принципы
+
+1. **Всегда используйте TypeScript strict mode**
+2. **Проверяйте результаты БД запросов**
+3. **Используйте декораторы Swagger для всех API endpoints**
+4. **Обрабатывайте ошибки с понятными сообщениями**
+
+---
+
+## Правило 1: Swagger декораторы (обязательно)
+
+### Для каждого контроллера:
+
+1. **Добавить `@ApiTags` на класс:**
+   ```typescript
+   @ApiTags('controller-name')
+   @Controller('controller-name')
+   export class ControllerName { }
+   ```
+
+2. **Для каждого метода с параметрами:**
+   - `@Param` → добавить `@ApiParam({ name: 'param', type: String })`
+   - `@Query` → добавить `@ApiQuery({ name: 'param', required: false, type: String })`
+   - `@Body` → добавить `@ApiBody({ type: DtoClass })` или `{ schema: { type: 'object' } }`
+
+3. **Для каждого метода:**
+   - Добавить `@ApiOperation({ summary: 'Описание' })`
+   - Добавить `@ApiResponse({ status: 200, description: 'Успешно' })`
+
+4. **DTO классы:**
+   - Всегда создавать классы, НЕ интерфейсы для DTO
+   - Все поля должны иметь `@ApiProperty` или `@ApiPropertyOptional`
+   - Не использовать `any` для типов параметров
+
+### Чеклист перед коммитом:
+- [ ] Все контроллеры имеют `@ApiTags`
+- [ ] Все `@Param` имеют `@ApiParam`
+- [ ] Все `@Query` имеют `@ApiQuery`
+- [ ] Все `@Body` имеют `@ApiBody` с типом DTO
+- [ ] Все методы имеют `@ApiOperation` и `@ApiResponse`
+- [ ] Нет использования `any` для параметров
+
+---
+
+## Правило 2: Обработка ошибок "Cannot read properties of undefined"
+
+### Обязательные проверки:
+
+1. **Проверка инжекции зависимостей:**
+   ```typescript
+   constructor(
+     @Inject(Service) private readonly service: Service,
+   ) {
+     if (!this.service) {
+       throw new InternalServerErrorException('Service injection failed');
+     }
+   }
+   ```
+
+2. **Проверка результатов Prisma запросов:**
+   ```typescript
+   // ❌ НЕПРАВИЛЬНО
+   const entity = await this.prisma.entity.findUnique({ where: { id } });
+   return entity.data;
+   
+   // ✅ ПРАВИЛЬНО
+   const entity = await findUniqueOrThrow(
+     this.prisma.entity.findUnique({ where: { id } }),
+     `Entity ${id} not found`,
+   );
+   return entity.data;
+   ```
+
+3. **Использование optional chaining:**
+   ```typescript
+   // ❌ НЕПРАВИЛЬНО
+   const value = obj.nested.deep.property;
+   
+   // ✅ ПРАВИЛЬНО
+   const value = obj?.nested?.deep?.property;
+   // или
+   if (obj?.nested?.deep?.property) {
+     const value = obj.nested.deep.property;
+   }
+   ```
+
+4. **Использование утилит:**
+   ```typescript
+   import { assertExists } from '../common/utils/assert-exists';
+   import { findUniqueOrThrow } from '../common/utils/prisma-helpers';
+   
+   // Вместо ручных проверок используйте утилиты
+   const entity = await findUniqueOrThrow(
+     this.prisma.entity.findUnique({ where: { id } }),
+     `Entity ${id} not found`,
+   );
+   ```
+
+### Чеклист перед коммитом:
+- [ ] Все зависимости проверены в конструкторе
+- [ ] Все Prisma запросы проверяют результат
+- [ ] Используется optional chaining для вложенных свойств
+- [ ] Используются утилиты (assertExists, findUniqueOrThrow)
+- [ ] Нет прямого доступа к свойствам без проверки
+
+---
+
+## Системный подход к решению ошибок
+
+⚠️ **ЖЕСТКИЕ ПРАВИЛА ОБРАБОТКИ ОШИБОК ИЗ КОНСОЛЕЙ**  
+Полные правила см. в `.cursorrules-error-handling`
+
+### ОБЯЗАТЕЛЬНАЯ ПОСЛЕДОВАТЕЛЬНОСТЬ:
+```
+ОШИБКА → ПАРСИНГ → ДИАГНОСТИКА → СТРАТЕГИЯ → ОДНО ИЗМЕНЕНИЕ → ЛИНТЕР → ПРОВЕРКА
+```
+
+### Шаг 1: Парсинг ошибки (2 минуты) - ОБЯЗАТЕЛЬНО
+1. Извлечь: тип, файл:строка, сообщение, контекст
+2. Определить категорию: JSX синтаксис / DI / Дублирование / Hydration / Webpack / Другое
+3. ЗАПРЕЩЕНО переходить дальше без этого шага
+
+### Шаг 2: Диагностика (3-5 минут) - ОБЯЗАТЕЛЬНО
+1. Прочитать файл целиком или проблемную область (±50 строк)
+2. Проверить специфичные вещи для категории (см. `.cursorrules-error-handling`)
+3. ЗАПРЕЩЕНО делать изменения без диагностики
+
+### Специальная заметка: ошибки парсинга JSX (SWC/TSX)
+При сообщениях вида:
+- `Unexpected token 'main'. Expected jsx identifier`
+- `Expression expected` на `<>`
+- `Expected ',', got 'className'`
+
+Действовать по чеклисту в `.cursorrules-error-handling` («Особый случай: JSX парсер отключён»):
+1) Проверить отсутствие/содержимое `.swcrc` (включён ли `tsx: true`),  
+2) Проверить `"jsx": "preserve" | "react-jsx"` в `tsconfig`,  
+3) Убедиться, что webpack/Next не подменяет обработку `.tsx`,  
+4) Подтвердить, что файл действительно `.tsx`,  
+5) Дымовой тест `<div>ok</div>`,  
+6) Если конфиги ок — искать незакрытые скобки/IIFE внутри JSX и валидировать корневой элемент/Fragment.
+
+### Шаг 3: Выбор стратегии - ОБЯЗАТЕЛЬНО
+- JSX синтаксис → Удалить лишние теги
+- Дублирование → Удалить дубликат
+- DI проблемы → Добавить импорт модуля
+- Hydration → Использовать useState/useEffect
+- Парсинг фрагментов → Один корневой элемент
+- Webpack кэш → Очистить .next
+- ЗАПРЕЩЕНО применять более 2 разных стратегий к одной проблеме
+
+### Шаг 4: Применение решения - ОБЯЗАТЕЛЬНО
+1. Сделать ОДНО изменение
+2. Проверить линтером
+3. ЗАПРЕЩЕНО делать множественные изменения одновременно
+
+### Шаг 5: Предотвращение (постоянно)
+1. Следование правилам
+2. Использование чеклистов
+3. Автоматические проверки
+
+---
+
+## Запрещенные паттерны
+
+### ❌ НЕ используйте:
+```typescript
+// Прямой доступ без проверки
+const value = obj.property;
+
+// any типы для параметров
+async method(@Body() body: any) { }
+
+// Интерфейсы для DTO
+export interface CreateDto { }
+
+// Отсутствие декораторов Swagger
+@Get(':id')
+async getById(@Param('id') id: string) { }
+```
+
+### ✅ Используйте:
+```typescript
+// Проверка перед доступом
+if (!obj) throw new NotFoundException('Not found');
+const value = obj.property;
+
+// DTO классы
+export class CreateDto {
+  @ApiProperty()
+  name: string;
+}
+
+// Полные декораторы Swagger
+@Get(':id')
+@ApiOperation({ summary: 'Get by ID' })
+@ApiParam({ name: 'id', type: String })
+@ApiResponse({ status: 200 })
+async getById(@Param('id') id: string) { }
+```
+
+---
+
+## Документация
+
+Подробные руководства:
+- `docs/SWAGGER_TROUBLESHOOTING.md` - решение проблем Swagger
+- `docs/ERROR_HANDLING_GUIDE.md` - обработка ошибок
+- `docs/SYSTEMATIC_ERROR_RESOLUTION.md` - системный подход
+- `docs/ERROR_PATTERNS_ANALYSIS.md` - анализ паттернов ошибок
+
+⚠️ **КРИТИЧЕСКИ ВАЖНО:**
+- `.cursorrules-error-handling` - **ЖЕСТКИЕ ПРАВИЛА** обработки ошибок из консолей
+- **ОБЯЗАТЕЛЬНО** применять эти правила при получении любой ошибки компиляции/выполнения
+
+---
+
+**Следуйте этим правилам при написании кода!**
+

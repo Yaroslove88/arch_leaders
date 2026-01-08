@@ -1,0 +1,507 @@
+// Prisma schema for Leadership Architect
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User - пользователи системы
+model User {
+  id              String   @id @default(uuid())
+  telegramUsername String  @unique // Telegram username (без @)
+  email           String?  @unique // Email для админки
+  password        String   // Хэшированный пароль
+  role            String   @default("user") // admin, user
+  status          String   @default("active") // active, blocked, deleted
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  last_seen_at    DateTime?
+  
+  entries        Entry[]
+  sessions       Session[]
+  quests         Quest[]
+  evidence       Evidence[]
+  treeSemantic   TreeSemantic[] @relation("TreeSemanticToUser")
+  treeLayout     TreeLayout[]
+  changeLogs     ChangeLog[]
+  abilityStates  UserAbilityState[]
+  configBindings UserConfigBinding[]
+  statsDaily     UserStatsDaily[]
+  statsRollup    UserStatsRollup?
+  jobs           Job[]
+  
+  @@index([telegramUsername])
+  @@index([email])
+  @@index([role])
+  @@index([status, created_at(sort: Desc)])
+  @@index([last_seen_at(sort: Desc)])
+  @@map("users")
+}
+
+// Entry - raw input (situations, reflections, feedback)
+model Entry {
+  id                String   @id @default(uuid())
+  userId            String   // Владелец записи
+  type              String   // situation, reflection, feedback, voice, import
+  source            String   // file, telegram, web
+  text              String   @db.Text // content_raw
+  text_masked       String?  @db.Text // content_masked для operator
+  is_sensitive      Boolean  @default(false)
+  participants      String[] // Array of participant names/roles
+  context_json      Json?    // Additional context: meeting, decision, result
+  file_ref          String?  // S3 path or local file
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+  tags              String[]
+  
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session           Session?
+  
+  @@index([userId, created_at(sort: Desc)])
+  @@index([type, created_at(sort: Desc)])
+  @@index([source, created_at(sort: Desc)])
+  @@index([is_sensitive, created_at(sort: Desc)])
+  @@index([created_at])
+}
+
+// Session - analysis output
+model Session {
+  id            String   @id @default(uuid())
+  userId        String   // Владелец сессии
+  entry_id      String   @unique
+  summary       String   @db.Text
+  insights_json Json     // Array of Insight
+  focus_json    Json     // Array of FocusPoint
+  themes        String[] // Extracted themes
+  patterns      String[] // Behavioral patterns
+  tensions      String[] // Conflicts, contradictions
+  ability_signals_json Json @default("[]") // Array of AbilitySignal
+  status        String   @default("pending") // pending, processing, succeeded, failed
+  analysis_version Int   @default(1) // версия пайплайна
+  analysis_error String? @db.Text
+  error_code    String?
+  error_message String?  @db.Text
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  analyzed_at   DateTime? // Legacy field, use completed_at for new code
+  completed_at  DateTime?
+  
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entry         Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  quests        Quest[]
+  artifacts     SessionArtifact[]
+  llmRuns       LlmRun[]
+  
+  @@index([userId, created_at(sort: Desc)])
+  @@index([status, created_at(sort: Desc)])
+  @@index([entry_id])
+  @@index([created_at])
+}
+
+// Quest
+model Quest {
+  id            String   @id @default(uuid())
+  userId        String   // Владелец квеста
+  title         String
+  description   String   @db.Text
+  type          String   // micro, weekly, story, in-person
+  status        String   @default("backlog") // backlog, active, completed, failed, archived
+  branch        String?  // ветка способностей
+  steps_json    Json     @default("[]")
+  criteria_json Json
+  reward_json   Json?
+  linked_nodes  String[] // Ability Node IDs
+  evidence_links_json Json @default("[]")
+  due_hint      String?
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  activated_at  DateTime?
+  completed_at  DateTime?
+  source        String?
+  tags          String[]
+  
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session_id    String?
+  session       Session? @relation(fields: [session_id], references: [id], onDelete: SetNull)
+  
+  @@index([userId, status, created_at(sort: Desc)])
+  @@index([userId, type, created_at(sort: Desc)])
+  @@index([status, created_at(sort: Desc)])
+  @@index([created_at])
+}
+
+// Evidence - proof of ability application
+model Evidence {
+  id            String   @id @default(uuid())
+  userId        String   // Владелец доказательства
+  type          String   // situation, observation, reflection, feedback, external_feedback
+  source        String?  // web, telegram
+  text          String   @db.Text // content_raw
+  quest_id      String?
+  ability_node_id String?
+  session_id    String?
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  tags          String[]
+  
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  links         EvidenceLink[]
+  
+  @@index([userId, created_at(sort: Desc)])
+  @@index([type, created_at(sort: Desc)])
+  @@index([quest_id])
+  @@index([ability_node_id])
+  @@index([created_at])
+}
+
+// Tree Semantic Graph (source of truth for ability tree)
+model TreeSemantic {
+  id               String   @id @default("tree_main")
+  userId           String?  // Владелец дерева (опционально для глобального дерева)
+  semantic_version String   @default("1.0.0")
+  tree_revision    Int      @default(1)
+  data             Json     // Full SemanticGraph JSON (6 branches of abilities)
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+  integrity_hash   String?
+  
+  user             User?    @relation("TreeSemanticToUser", fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId]) // Один пользователь - одно дерево (null для глобального)
+  @@index([userId])
+  @@map("tree_semantic")
+}
+
+// Tree Layout Graph (visual representation)
+model TreeLayout {
+  id                        String   @id @default(uuid())
+  userId                    String   // Владелец layout
+  tree_id                   String   // ID семантического дерева
+  layout_version            String   @default("1.0.0")
+  layout_revision           Int      @default(1)
+  computed_from_tree_revision Int
+  data                      Json     // Full LayoutGraph JSON
+  created_at                DateTime @default(now())
+  integrity_hash            String?
+  
+  user                      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, tree_id, computed_from_tree_revision])
+  @@map("tree_layout")
+}
+
+// ChangeLog - audit trail with undo support
+model ChangeLog {
+  id          String   @id @default(uuid())
+  userId      String   // Владелец изменений
+  change_id   String   @unique
+  scope       String   // ability, quest, settings, system
+  entity_type String?  // node, quest, config
+  entity_id   String?  // text/uuid
+  action      String   // create, update, unlock, integrate, regenerate, undo
+  tree_revision Int?
+  created_at  DateTime @default(now())
+  actor       String   // analyzer, user, system, admin
+  rationale   String   @db.Text
+  before      Json?    // состояние до
+  after       Json?    // состояние после
+  links_json  Json     @default("[]") // entry_ids, evidence_ids, session_id
+  ops_json    Json?    // Array of ChangeOp
+  inverse_ops_json Json? // For undo
+  is_undoable Boolean  @default(true)
+  undone_at   DateTime?
+  undone_by_admin String?
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, created_at(sort: Desc)])
+  @@index([scope, created_at(sort: Desc)])
+  @@index([entity_type, entity_id, created_at(sort: Desc)])
+  @@index([change_id])
+  @@index([tree_revision])
+  @@index([created_at])
+  @@map("changelog")
+}
+
+// Telegram settings
+model TelegramSettings {
+  id              String   @id @default("telegram_main")
+  chat_id         String?
+  bot_token       String?  @db.Text
+  enabled_post_types String[] @default([])
+  morning_time    String?  // HH:mm
+  evening_time    String?  // HH:mm
+  timezone        String?  @default("Europe/Moscow")
+  tone_sarcasm    Int      @default(35)
+  no_quotes_mode  Boolean  @default(true)
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  
+  @@map("telegram_settings")
+}
+
+// ============================================
+// ADMIN PANEL TABLES
+// ============================================
+
+// Admin Users - отдельная таблица для админов
+model AdminUser {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  password      String   // Хэшированный пароль
+  role          String   // super_admin, operator, analyst
+  created_at    DateTime @default(now())
+  last_login_at DateTime?
+  
+  auditLogs     AdminAuditLog[]
+  
+  @@index([email])
+  @@index([role])
+  @@map("admin_users")
+}
+
+// Admin Audit Log - логирование всех действий админа
+model AdminAuditLog {
+  id            String   @id @default(uuid())
+  admin_user_id String
+  action        String   // view_full_entry, update_config, recompute_user_state, etc.
+  target_type   String   // user, entry, session, quest, config, prompt, job
+  target_id     String?  // UUID или text
+  reason        String?  @db.Text // Обязателен для sensitive операций
+  metadata      Json?    // diff, params, etc.
+  ip            String?  @db.Inet
+  created_at    DateTime @default(now())
+  
+  adminUser     AdminUser @relation(fields: [admin_user_id], references: [id], onDelete: Cascade)
+  
+  @@index([created_at(sort: Desc)])
+  @@index([admin_user_id, created_at(sort: Desc)])
+  @@index([target_type, target_id, created_at(sort: Desc)])
+  @@map("admin_audit_log")
+}
+
+// Session Artifacts - версионирование выходов LLM
+model SessionArtifact {
+  id            String   @id @default(uuid())
+  session_id    String
+  kind          String   // summary, themes, patterns, tensions, insights, ability_signals, quest_candidates, raw_json
+  version       Int      // 1..n
+  prompt_id     String?
+  prompt_version Int?
+  model         String?
+  payload       Json
+  created_at    DateTime @default(now())
+  
+  session       Session  @relation(fields: [session_id], references: [id], onDelete: Cascade)
+  
+  @@index([session_id, kind, version(sort: Desc)])
+  @@map("session_artifacts")
+}
+
+// Ability Nodes - каталог узлов (глобальный)
+model AbilityNode {
+  id            String   @id // например "node_architecture_coupling"
+  branch        String
+  title         String
+  description   String   @db.Text
+  level         String   // basic, mid, advanced, master
+  conditions    Json?    // unlock criteria
+  created_at    DateTime @default(now())
+  
+  userStates    UserAbilityState[]
+  
+  @@index([branch, level])
+  @@map("ability_nodes")
+}
+
+// User Ability State - состояние узла у пользователя
+model UserAbilityState {
+  user_id       String
+  node_id       String
+  state         String   // locked, available, active, unlocked, integrated
+  progress      Decimal  @default(0.0) @db.Decimal(5, 4) // 0..1+
+  relevance     Decimal  @default(0.0) @db.Decimal(5, 4) // актуальность
+  last_updated_at DateTime @default(now()) @updatedAt
+  
+  user          User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  node          AbilityNode @relation(fields: [node_id], references: [id], onDelete: Cascade)
+  
+  @@id([user_id, node_id])
+  @@index([user_id, state, last_updated_at(sort: Desc)])
+  @@index([user_id, progress(sort: Desc)])
+  @@index([state, last_updated_at(sort: Desc)])
+  @@map("user_ability_state")
+}
+
+// Evidence Links - связи evidence с другими сущностями
+model EvidenceLink {
+  evidence_id   String
+  link_type     String   // quest, node, entry, session
+  link_id       String   // uuid или text
+  created_at    DateTime @default(now())
+  
+  evidence      Evidence @relation(fields: [evidence_id], references: [id], onDelete: Cascade)
+  
+  @@id([evidence_id, link_type, link_id])
+  @@index([link_type, link_id, created_at(sort: Desc)])
+  @@map("evidence_links")
+}
+
+// Config Sets - наборы конфигураций
+model ConfigSet {
+  id            String   @id @default(uuid())
+  name          String   // например "prod_default"
+  status        String   // draft, active, deprecated
+  created_at    DateTime @default(now())
+  created_by_admin String?
+  
+  versions      ConfigVersion[]
+  userBindings  UserConfigBinding[]
+  
+  @@index([status])
+  @@map("config_sets")
+}
+
+// Config Versions - версии конфигураций
+model ConfigVersion {
+  id            String   @id @default(uuid())
+  config_set_id String
+  version       Int
+  payload       Json     // веса, пороги, лимиты
+  comment       String?  @db.Text
+  created_at    DateTime @default(now())
+  created_by_admin String?
+  activated_at  DateTime?
+  
+  configSet     ConfigSet @relation(fields: [config_set_id], references: [id], onDelete: Cascade)
+  
+  @@unique([config_set_id, version])
+  @@index([config_set_id, version(sort: Desc)])
+  @@map("config_versions")
+}
+
+// User Config Bindings - привязка пользователей к config sets
+model UserConfigBinding {
+  user_id       String
+  config_set_id String
+  pinned_version Int?
+  created_at    DateTime @default(now())
+  
+  user          User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  configSet     ConfigSet @relation(fields: [config_set_id], references: [id], onDelete: Cascade)
+  
+  @@id([user_id, config_set_id])
+  @@unique([user_id, config_set_id])
+  @@map("user_config_bindings")
+}
+
+// Prompt Registry - реестр промптов
+model PromptRegistry {
+  prompt_id     String
+  version       Int
+  status        String   // draft, active, deprecated
+  purpose       String   // extract, summarize, quest_generate, ability_update, digest
+  template      String   @db.Text // или ссылка на s3
+  schema        Json?    // ожидаемый JSON output
+  created_at    DateTime @default(now())
+  created_by_admin String?
+  
+  @@id([prompt_id, version])
+  @@unique([prompt_id, version])
+  @@index([status, purpose])
+  @@map("prompt_registry")
+}
+
+// Jobs - очередь задач
+model Job {
+  id            String   @id @default(uuid())
+  queue         String
+  job_type      String   // analyze_entry, recompute_user, reembed_entry, regenerate_quests, send_telegram, backfill
+  status        String   // pending, running, succeeded, failed, cancelled
+  user_id       String?
+  entity_type   String?
+  entity_id     String?
+  priority      Int      @default(0)
+  attempt       Int      @default(0)
+  max_attempts  Int      @default(3)
+  scheduled_for DateTime?
+  started_at    DateTime?
+  finished_at   DateTime?
+  error          Json?
+  params        Json?
+  dedupe_key    String?  @unique // Для идемпотентности: ANALYZE_ENTRY:${entryId}
+  created_at    DateTime @default(now())
+  
+  user          User?    @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  
+  @@index([status, scheduled_for(sort: Asc), created_at(sort: Desc)])
+  @@index([user_id, created_at(sort: Desc)])
+  @@index([job_type, status, created_at(sort: Desc)])
+  @@index([entity_type, entity_id, created_at(sort: Desc)])
+  @@index([dedupe_key])
+  @@map("jobs")
+}
+
+// LLM Runs - трассировка вызовов LLM
+model LlmRun {
+  id            String   @id @default(uuid())
+  session_id    String?
+  stage         String   // extract_themes, generate_quests, etc.
+  prompt_id     String?
+  prompt_version Int?
+  model         String?
+  status        String   // succeeded, failed
+  input_hash    String?
+  output_json   Json?
+  tokens_in     Int?
+  tokens_out    Int?
+  latency_ms    Int?
+  created_at    DateTime @default(now())
+  
+  session       Session? @relation(fields: [session_id], references: [id], onDelete: SetNull)
+  
+  @@index([session_id, created_at(sort: Desc)])
+  @@index([prompt_id, prompt_version])
+  @@index([status, created_at(sort: Desc)])
+  @@map("llm_runs")
+}
+
+// User Stats Daily - ежедневная статистика пользователей
+model UserStatsDaily {
+  user_id       String
+  date          DateTime @db.Date
+  entries_count Int      @default(0)
+  sessions_succeeded Int @default(0)
+  quests_completed Int   @default(0)
+  evidences_count Int    @default(0)
+  
+  user          User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@id([user_id, date])
+  @@index([date(sort: Desc), entries_count(sort: Desc)])
+  @@index([user_id, date(sort: Desc)])
+  @@map("user_stats_daily")
+}
+
+// User Stats Rollup - агрегированная статистика
+model UserStatsRollup {
+  user_id       String   @id
+  entries_7d    Int      @default(0)
+  entries_30d   Int      @default(0)
+  quests_completed_30d Int @default(0)
+  last_entry_at DateTime?
+  last_session_at DateTime?
+  undo_count_30d Int     @default(0)
+  failed_jobs_7d Int     @default(0)
+  
+  user          User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@index([last_entry_at(sort: Desc)])
+  @@index([entries_30d(sort: Desc)])
+  @@map("user_stats_rollup")
+}
+
+
