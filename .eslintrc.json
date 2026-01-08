@@ -24,6 +24,12 @@
       "rules": {
         "@typescript-eslint/no-explicit-any": "off"
       }
+    },
+    {
+      "files": ["apps/web/**/*.{ts,tsx}"],
+      "rules": {
+        "@typescript-eslint/prefer-nullish-coalescing": "off"
+      }
     }
   ]
 }
