@@ -214,6 +214,20 @@ export async function activateQuest(id: string): Promise<Quest> {
   return response.json();
 }
 
+export async function getCompletedQuestsByNode(nodeId: string): Promise<{ quests: Quest[]; count: number }> {
+  const response = await fetch(`${API_URL}/quests/completed-by-node/${nodeId}`, {
+    headers: getAuthHeaders(),
+  });
+  
+  // Если не авторизован, возвращаем пустой массив вместо ошибки
+  if (response.status === 401) {
+    return { quests: [], count: 0 };
+  }
+  
+  if (!response.ok) throw new Error('Failed to fetch completed quests by node');
+  return response.json();
+}
+
 /**
  * Evidence API
  */
@@ -222,7 +236,15 @@ export async function getEvidence(params?: { quest_id?: string; ability_node_id?
   if (params?.quest_id) query.append('quest_id', params.quest_id);
   if (params?.ability_node_id) query.append('ability_node_id', params.ability_node_id);
 
-  const response = await fetch(`${API_URL}/evidence?${query}`);
+  const response = await fetch(`${API_URL}/evidence?${query}`, {
+    headers: getAuthHeaders(),
+  });
+  
+  // Если не авторизован, возвращаем пустой массив вместо ошибки
+  if (response.status === 401) {
+    return { evidences: [], total: 0 };
+  }
+  
   if (!response.ok) throw new Error('Failed to fetch evidence');
   return response.json();
 }
@@ -237,7 +259,7 @@ export async function createEvidence(data: {
 }): Promise<Evidence> {
   const response = await fetch(`${API_URL}/evidence`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify(data),
   });
   if (!response.ok) throw new Error('Failed to create evidence');
@@ -248,9 +270,111 @@ export async function createEvidence(data: {
  * Tree API
  */
 export async function getSemanticTree(): Promise<SemanticTree> {
-  const response = await fetch(`${API_URL}/tree/semantic`);
+  const response = await fetch(`${API_URL}/tree/semantic`, {
+    headers: getAuthHeaders(),
+  });
   if (!response.ok) throw new Error('Failed to fetch semantic tree');
   return response.json();
+}
+
+/**
+ * Ability State API - получение состояния узлов пользователя
+ */
+export interface NodeAbilityState {
+  node_id: string;
+  state: 'locked' | 'available' | 'active' | 'unlocked' | 'integrated';
+  progress: number; // 0..1 (вычисляется на лету из xp_current / xp_required)
+  relevance: number; // 0..1
+  last_activity_date?: string; // дата последней активности
+}
+
+export async function getUserAbilityStates(userId?: string): Promise<Record<string, NodeAbilityState>> {
+  const token = getToken();
+  const headers = getAuthHeaders();
+  
+  const url = userId 
+    ? `${API_URL}/ability/states?userId=${userId}`
+    : `${API_URL}/ability/states`;
+  
+  const response = await fetch(url, { headers });
+  if (!response.ok) throw new Error('Failed to fetch ability states');
+  const data = await response.json();
+  
+  // Преобразуем массив в объект с ключами node_id
+  const states: Record<string, NodeAbilityState> = {};
+  if (Array.isArray(data)) {
+    data.forEach((state: any) => {
+      states[state.node_id] = {
+        node_id: state.node_id,
+        state: state.state,
+        progress: Number(state.progress) || 0, // Вычисляется на лету из TreeSemantic
+        relevance: Number(state.relevance) || 0,
+        last_activity_date: state.last_activity_date,
+      };
+    });
+  }
+  return states;
+}
+
+/**
+ * Achievements API
+ */
+export interface Achievement {
+  id: string;
+  type: 'bronze' | 'silver' | 'gold' | 'platinum';
+  scope: 'node' | 'global';
+  node_id?: string;
+  title: string;
+  description: string;
+  threshold: number;
+  icon?: string;
+}
+
+export interface UserAchievement {
+  user_id: string;
+  achievement_id: string;
+  unlocked_at: string;
+  node_id?: string;
+}
+
+export async function getUserAchievements(userId?: string): Promise<UserAchievement[]> {
+  const token = getToken();
+  const headers = getAuthHeaders();
+  
+  const url = userId 
+    ? `${API_URL}/achievements/user/${userId}`
+    : `${API_URL}/achievements/user/me`;
+  
+  const response = await fetch(url, { headers });
+  if (!response.ok) throw new Error('Failed to fetch achievements');
+  return response.json();
+}
+
+export async function getNodeAchievements(nodeId: string, userId?: string): Promise<Achievement[]> {
+  const token = getToken();
+  if (!token) {
+    return []; // Если нет токена, возвращаем пустой массив
+  }
+  
+  const headers = getAuthHeaders();
+  
+  const url = userId 
+    ? `${API_URL}/achievements/node/${userId}/${nodeId}`
+    : `${API_URL}/achievements/node/me/${nodeId}`;
+  
+  try {
+    const response = await fetch(url, { headers });
+    if (!response.ok) {
+      if (response.status === 401 || response.status === 404) {
+        return []; // Не авторизован или не найдено - возвращаем пустой массив
+      }
+      throw new Error('Failed to fetch node achievements');
+    }
+    return response.json();
+  } catch (error) {
+    console.warn(`Failed to fetch achievements for node ${nodeId}:`, error);
+    return []; // Возвращаем пустой массив при ошибке
+  }
 }
 
 /**
@@ -275,19 +399,78 @@ export async function analyzeEntry(entryId: string): Promise<any> {
 /**
  * Interactive Cases API
  */
+/**
+ * Interactive Case - Инициационная архитектура кейсов
+ */
 export interface InteractiveCase {
+  // === META ===
   id: string;
   title: string;
   node_id?: string;
   branch_id?: string;
   difficulty: 'basic' | 'intermediate' | 'advanced';
-  context: string;
-  indicators?: Record<string, string>;
-  pattern?: {
-    trigger: string;
-    behavior: string;
-    result: string;
+  maturity_level?: 'низкая' | 'средняя' | 'высокая';
+  symbols?: string[];
+  strategic_tags?: string[];
+  pressure_level?: 'низкое' | 'среднее' | 'высокое';
+  uncertainty?: 'низкая' | 'средняя' | 'высокая';
+  subjectivity_load?: 'низкая' | 'средняя' | 'высокая';
+  systemic_regress_risk?: 'низкий' | 'средний' | 'высокий';
+
+  // === PORTAL ===
+  portal?: {
+    header_title: string;
+    case_name: string;
+    subtitle: string;
+    marker_icons: string[];
+    access_bar: string;
   };
+
+  // === EVENT ===
+  event?: {
+    label: string;
+    summary: string;
+    urgency: 'низкая' | 'средняя' | 'высокая';
+  };
+
+  // === CONTEXT ===
+  context: string; // Для обратной совместимости
+  space_map?: {
+    company: string;
+    environment: string;
+    constraints: string;
+    people: string;
+    mode: string;
+  };
+
+  // === FACTS & BACKGROUND ===
+  facts?: {
+    strict_facts: string;
+  };
+  background?: {
+    story: string;
+  };
+
+  // === DILEMMA ===
+  dilemma?: {
+    question: string;
+    ambiance?: string;
+  };
+
+  // === POSITIONS (новый формат) ===
+  positions?: Array<{
+    id: string;
+    description: string;
+    position_type: string;
+    consequence: {
+      immediate: string;
+      second_order: string;
+      systemic: string;
+    };
+    reflection_prompt?: string;
+  }>;
+
+  // === OPTIONS (старый формат для обратной совместимости) ===
   options: Array<{
     id: string;
     text: string;
@@ -302,10 +485,33 @@ export interface InteractiveCase {
     warning?: string;
     explanation?: string;
   }>;
+
+  // === INDICATORS ===
+  indicators?: {
+    trust?: 'low' | 'medium' | 'high';
+    risk?: 'low' | 'medium' | 'high';
+    time?: 'low' | 'medium' | 'critical';
+    chaos?: 'low' | 'medium' | 'high';
+    autonomy?: 'low' | 'medium' | 'high';
+    maturity?: 'низкая' | 'средняя' | 'высокая';
+    uncertainty?: 'низкая' | 'средняя' | 'высокая';
+    subjectivity?: 'низкая' | 'средняя' | 'высокая';
+    regress_risk?: 'низкий' | 'средний' | 'высокий';
+  };
+
+  // === PATTERN ===
+  pattern?: {
+    trigger: string;
+    behavior: string;
+    result: string;
+  };
+
+  // === REFLECTION ===
   reflection: {
     questions: string[];
     mirror?: Record<string, string>;
     key_insight?: string;
+    after_choice_insights?: string[];
   };
 }
 
@@ -342,6 +548,299 @@ export async function getCasesByBranch(branchId: string): Promise<{ cases: Inter
   return response.json();
 }
 
+export interface CaseAvailability {
+  available: boolean;
+  reason: string;
+  requirements: {
+    questsRequired: number;
+    questsCompleted: number;
+    progressRequired: number;
+    currentProgress: number;
+    nodeState: string;
+  };
+}
+
+export async function getCaseAvailability(caseId: string): Promise<CaseAvailability> {
+  try {
+    const response = await fetch(`${API_URL}/cases/${caseId}/availability`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch case availability: ${response.statusText}`);
+    }
+    return response.json();
+  } catch (error) {
+    console.error('Error fetching case availability:', error);
+    // Возвращаем недоступный кейс при ошибке
+    return {
+      available: false,
+      reason: 'Не удалось проверить доступность кейса.',
+      requirements: {
+        questsRequired: 1,
+        questsCompleted: 0,
+        progressRequired: 0,
+        currentProgress: 0,
+        nodeState: 'unknown',
+      },
+    };
+  }
+}
+
+export interface CaseProgress {
+  solvedCases: string[];
+  nodeProgress: Record<string, {
+    solved: string[];
+    progress: number;
+  }>;
+}
+
+export interface CaseAttempt {
+  caseId: string;
+  selectedOption: string;
+  timestamp: Date;
+  skillUsed?: string;
+  smImpact?: Record<string, number>;
+  reflection?: string;
+  isFirstAttempt: boolean;
+}
+
+export interface PatternAnalysis {
+  totalAttempts: number;
+  skillDistribution: Record<string, number>;
+  mostUsedSkill: string;
+  insight: string;
+  recommendation?: string;
+}
+
+export async function markCaseAsSolved(
+  caseId: string,
+  selectedOption?: string,
+  skillUsed?: string,
+): Promise<{ success: boolean; message: string; xpEarned?: number }> {
+  try {
+    const response = await fetch(`${API_URL}/cases/${caseId}/solve`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ selectedOption, skillUsed }),
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to mark case as solved: ${response.statusText}`);
+    }
+    return response.json();
+  } catch (error) {
+    console.error('Error marking case as solved:', error);
+    throw error;
+  }
+}
+
+export async function getCaseProgress(): Promise<CaseProgress> {
+  try {
+    const response = await fetch(`${API_URL}/cases/progress`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) {
+      if (response.status === 401) {
+        // Not authenticated - return empty progress
+        return { solvedCases: [], nodeProgress: {} };
+      }
+      throw new Error(`Failed to fetch case progress: ${response.statusText}`);
+    }
+    return response.json();
+  } catch (error) {
+    console.error('Error fetching case progress:', error);
+    // Return empty progress on error
+    return {
+      solvedCases: [],
+      nodeProgress: {},
+    };
+  }
+}
+
+export async function saveCaseProgress(progress: CaseProgress): Promise<{ success: boolean; message: string }> {
+  try {
+    const response = await fetch(`${API_URL}/cases/progress`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(progress),
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to save case progress: ${response.statusText}`);
+    }
+    return response.json();
+  } catch (error) {
+    console.error('Error saving case progress:', error);
+    throw error;
+  }
+}
+
+export async function saveCaseAttempt(attempt: CaseAttempt): Promise<{ success: boolean; message: string }> {
+  try {
+    const response = await fetch(`${API_URL}/cases/attempts`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ...attempt,
+        timestamp: attempt.timestamp.toISOString(),
+      }),
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to save case attempt: ${response.statusText}`);
+    }
+    return response.json();
+  } catch (error) {
+    console.error('Error saving case attempt:', error);
+    throw error;
+  }
+}
+
+export async function getPatternAnalysis(): Promise<PatternAnalysis> {
+  try {
+    const response = await fetch(`${API_URL}/cases/patterns`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch pattern analysis: ${response.statusText}`);
+    }
+    return response.json();
+  } catch (error) {
+    console.error('Error fetching pattern analysis:', error);
+    return {
+      totalAttempts: 0,
+      skillDistribution: {},
+      mostUsedSkill: '',
+      insight: 'Не удалось загрузить анализ паттернов.',
+    };
+  }
+}
+
+// Retention/Streaks API
+export interface UserRetention {
+  currentStreak: number;
+  longestStreak: number;
+  lastActivityDate: string | null;
+  activityDates: string[];
+}
+
+export async function recordActivity(
+  userId: string,
+  activityType: 'case' | 'quest' | 'entry' | 'trace' | 'any' = 'any'
+): Promise<{ success: boolean; message: string }> {
+  try {
+    const response = await fetch(`${API_URL}/retention/activity`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userId, activityType }),
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to record activity: ${response.statusText}`);
+    }
+    return response.json();
+  } catch (error) {
+    console.error('Error recording activity:', error);
+    // Не прерываем выполнение при ошибке
+    return { success: false, message: 'Failed to record activity' };
+  }
+}
+
+export async function getUserRetention(userId: string): Promise<UserRetention> {
+  try {
+    const response = await fetch(`${API_URL}/retention/${userId}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch retention: ${response.statusText}`);
+    }
+    return response.json();
+  } catch (error) {
+    console.error('Error fetching retention:', error);
+    return {
+      currentStreak: 0,
+      longestStreak: 0,
+      lastActivityDate: null,
+      activityDates: [],
+    };
+  }
+}
+
+export async function checkStreakRisk(userId: string): Promise<{
+  isAtRisk: boolean;
+  daysWithoutActivity: number;
+  shouldRemind: boolean;
+}> {
+  try {
+    const response = await fetch(`${API_URL}/retention/${userId}/risk`);
+    if (!response.ok) {
+      throw new Error(`Failed to check streak risk: ${response.statusText}`);
+    }
+    return response.json();
+  } catch (error) {
+    console.error('Error checking streak risk:', error);
+    return {
+      isAtRisk: false,
+      daysWithoutActivity: 0,
+      shouldRemind: false,
+    };
+  }
+}
+
+// Support API
+export interface StuckCase {
+  caseId: string;
+  caseTitle: string;
+  minutesStuck: number;
+  openedAt: string;
+}
+
+export interface StuckQuest {
+  questId: string;
+  questTitle: string;
+  daysStuck: number;
+  lastActivity?: string;
+}
+
+export async function recordCaseOpened(userId: string, caseId: string, caseTitle: string): Promise<void> {
+  try {
+    await fetch(`${API_URL}/support/case/opened`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, caseId, caseTitle }),
+    });
+  } catch (error) {
+    console.error('Error recording case opened:', error);
+  }
+}
+
+export async function recordCaseChoice(userId: string, caseId: string): Promise<void> {
+  try {
+    await fetch(`${API_URL}/support/case/choice`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, caseId }),
+    });
+  } catch (error) {
+    console.error('Error recording case choice:', error);
+  }
+}
+
+export async function getStuckItems(userId: string): Promise<{
+  stuckCases: StuckCase[];
+  stuckQuests: StuckQuest[];
+}> {
+  try {
+    const response = await fetch(`${API_URL}/support/${userId}/stuck`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to get stuck items: ${response.statusText}`);
+    }
+    return response.json();
+  } catch (error) {
+    console.error('Error getting stuck items:', error);
+    return { stuckCases: [], stuckQuests: [] };
+  }
+}
+
 /**
  * Builds API
  */
@@ -352,14 +851,14 @@ export interface Build {
   fantasy: string;
   description: string;
   entry_conditions: {
-    required_skills?: string[];
+    required_nodes: string[];
+    optional_nodes?: string[];
     behavioral_patterns?: Record<string, any>;
-    min_skills_count?: number;
+    min_required_count?: number;
   };
   bonuses: Record<string, any>;
   hidden_costs: Record<string, any>;
   exit_conditions: Record<string, any>;
-  related_nodes: string[];
   color: string;
 }
 
@@ -388,7 +887,9 @@ export async function getBuild(buildId: string): Promise<Build> {
 }
 
 export async function getCurrentBuild(): Promise<BuildStatus[]> {
-  const response = await fetch(`${API_URL}/builds/current`);
+  const response = await fetch(`${API_URL}/builds/current`, {
+    headers: getAuthHeaders(),
+  });
   if (!response.ok) throw new Error('Failed to fetch current build');
   return response.json();
 }
