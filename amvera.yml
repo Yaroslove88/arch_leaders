@@ -1,0 +1,17 @@
+# Amvera configuration for Leadership Architect API
+# Docs: https://docs.amvera.ru/applications/configuration/config-file.html
+#
+# Используется Dockerfile, так как это монорепозиторий pnpm + Turborepo.
+# Если Dockerfile найден — amvera.yml игнорируется.
+
+meta:
+  environment: docker
+
+build:
+  dockerfile: Dockerfile
+
+run:
+  containerPort: 3000
+  # Папка для хранения данных (Prisma SQLite, логи и т.д.)
+  # Если используется PostgreSQL — не обязательно
+  persistenceMount: /data

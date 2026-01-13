@@ -1,0 +1,59 @@
+# Dependencies
+node_modules
+**/node_modules
+
+# Build outputs
+dist
+**/dist
+.next
+**/.next
+
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+.cursor
+**/.cursor
+*.swp
+*.swo
+
+# Logs
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Test
+coverage
+**/*.test.ts
+**/*.spec.ts
+
+# Documentation
+*.md
+docs/
+reports/
+plans/
+
+# Data files (should be in DB)
+data/
+backups/
+
+# Local configs
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Turbo
+.turbo
+
+# Misc
+*.sql
+*.bak
+*.backup
