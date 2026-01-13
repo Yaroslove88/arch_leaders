@@ -1,7 +1,13 @@
 # ===== BUILD STAGE =====
-FROM node:20-alpine AS builder
+FROM node:24-slim AS builder
 
-# Install pnpm
+# Install system dependencies
+RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
+    apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install pnpm via corepack (встроен в Node.js 16+)
 RUN corepack enable && corepack prepare pnpm@10.26.2 --activate
 
 WORKDIR /app
@@ -27,15 +33,22 @@ RUN pnpm --filter @leadership-architect/shared build || true
 RUN pnpm --filter @leadership-architect/api build
 
 # ===== PRODUCTION STAGE =====
-FROM node:20-alpine AS runner
+FROM node:24-slim AS runner
 
+# Install system dependencies (минимальные для runtime)
+RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
+    apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install pnpm via corepack
 RUN corepack enable && corepack prepare pnpm@10.26.2 --activate
 
 WORKDIR /app
 
 # Create non-root user
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nestjs
+RUN groupadd --system --gid 1001 nodejs && \
+    useradd --system --uid 1001 --gid nodejs nestjs
 
 # Copy built application
 COPY --from=builder /app/node_modules ./node_modules
