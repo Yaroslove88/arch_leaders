@@ -21,17 +21,17 @@ export function Toast({ message, type = 'info', duration = 5000, onClose }: Toas
   }, [duration, onClose]);
 
   const typeStyles = {
-    success: 'bg-bg-panel border-system-growth text-system-growth shadow-floating',
-    error: 'bg-bg-panel border-system-critical text-system-critical shadow-floating',
-    info: 'bg-bg-panel border-system-focus text-system-focus shadow-floating',
-    warning: 'bg-bg-panel border-system-warning text-system-warning shadow-floating',
+    success: 'bg-graphite-structure border-sage-green text-sage-green shadow-floating',
+    error: 'bg-graphite-structure border-tension-red text-tension-red shadow-floating',
+    info: 'bg-graphite-structure border-strategic-blue text-strategic-blue shadow-floating',
+    warning: 'bg-graphite-structure border-catalyst-gold text-catalyst-gold shadow-floating',
   };
 
   const iconStyles = {
-    success: 'text-system-growth',
-    error: 'text-system-critical',
-    info: 'text-system-focus',
-    warning: 'text-system-warning',
+    success: 'text-sage-green',
+    error: 'text-tension-red',
+    info: 'text-strategic-blue',
+    warning: 'text-catalyst-gold',
   };
 
   const icons = {

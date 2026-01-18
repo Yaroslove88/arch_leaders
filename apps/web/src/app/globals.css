@@ -14,10 +14,48 @@ body {
   overflow-x: hidden;
 }
 
-/* Architectural Dark - Base Styles */
+:root {
+  --color-obsidian-core: #0F1216;
+  --color-graphite-structure: #1A1F26;
+  --color-ash-light: #E6E8EB;
+  --color-text-main: #E6E8EB;
+  --color-text-muted: #A4A8AD;
+  --color-text-dim: #8A8E94;
+  --color-strategic-blue: #1F3A5F;
+  --color-inner-violet: #3B2F4A;
+  --color-sage-green: #4E6F5D;
+  --color-tension-red: #8C2F2F;
+  --color-catalyst-gold: #C6A75E;
+  --color-warm-amber: #B8743A;
+  --color-ui-border-soft: rgba(255, 255, 255, 0.06);
+  --color-ui-border-strong: rgba(255, 255, 255, 0.12);
+  --color-ui-grid: rgba(255, 255, 255, 0.04);
+  --state-focus: #1F3A5F;
+  --state-growth: #4E6F5D;
+  --state-warning: #C6A75E;
+  --state-critical: #8C2F2F;
+  --state-disabled: rgba(255, 255, 255, 0.24);
+  
+  /* Shadows */
+  --shadow-panel: 0 1px 0 rgba(255,255,255,0.04), 0 12px 24px rgba(0,0,0,0.45);
+  --shadow-floating: 0 2px 0 rgba(255,255,255,0.06), 0 24px 60px rgba(0,0,0,0.65);
+  --shadow-active: 0 0 0 1px rgba(31,58,95,0.35), 0 24px 60px rgba(0,0,0,0.7);
+
+  /* Radii */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1.125rem;
+  --radius-2xl: 1.5rem;
+}
+
+/* Visual Style System - Elite Consulting × Personal Development × Leadership Architecture */
+/* McKinsey-level intellect × psychological depth × modern leadership × RPG-architecture */
+
+/* Base Styles - Obsidian Core фон */
 body {
-  color: #E6E9EF;
-  background: #0E1116;
+  color: #E6E8EB; /* ash-light - интеллектуальный "белый" */
+  background: #0F1216; /* obsidian-core - пространство мышления, потенциал, глубина */
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -28,14 +66,21 @@ a {
   text-decoration: none;
 }
 
-/* Scrollbar styling */
+/* Scrollbar styling - архитектурная эстетика */
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) #0F1216;
+}
+
+/* WebKit (Chrome, Safari, Edge) */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0B0F14;
+  background: #0F1216; /* obsidian-core */
 }
 
 ::-webkit-scrollbar-thumb {
@@ -47,29 +92,95 @@ a {
   background: rgba(255, 255, 255, 0.15);
 }
 
-/* Selection */
+/* Selection - strategic-blue */
 ::selection {
-  background: rgba(58, 111, 143, 0.3);
-  color: #E6E9EF;
+  background: rgba(31, 58, 95, 0.3); /* strategic-blue с прозрачностью */
+  color: #E6E8EB; /* ash-light */
 }
 
-/* Focus styles */
+/* Focus styles - strategic-blue для архитектуры мышления */
 :focus-visible {
-  outline: 2px solid rgba(58, 111, 143, 0.6);
+  outline: 2px solid rgba(31, 58, 95, 0.6); /* strategic-blue */
   outline-offset: 2px;
+  border-radius: 4px;
 }
 
-/* Typography improvements */
+/* Typography - Архитектурные заголовки с трекингом */
 h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.02em; /* трекинг для ощущения мышления */
   line-height: 1.2;
+  color: #E6E8EB; /* ash-light */
+}
+
+/* Заголовки - архитектурные, уверенные, с воздухом */
+h1 {
+  font-size: 2.25rem; /* 36px */
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 1.875rem; /* 30px */
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  font-weight: 600;
+}
+
+h3 {
+  font-size: 1.5rem; /* 24px */
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+  font-weight: 600;
+}
+
+/* Тело текста - максимально читабельное, long-form friendly, философская плотность */
+p {
+  line-height: 1.75; /* спокойный ритм для длинного чтения */
+  color: #E6E8EB; /* ash-light */
+}
+
+/* Числа / уровни / системы - нейтральный техно-гротеск или моно */
+code, .mono, .number {
+  font-family: 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', monospace;
+  font-size: 0.9em;
+}
+
+/* Hide scrollbar utility for horizontal scroll tabs */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Scroll indicator container */
+.scroll-tabs-container {
+  position: relative;
+}
+.scroll-tabs-container::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 40px;
+  background: linear-gradient(to right, transparent, #0F1216); /* obsidian-core */
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.2s;
+}
+.scroll-tabs-container.scrolled-end::after {
+  opacity: 0;
+}
+@media (min-width: 768px) {
+  .scroll-tabs-container::after {
+    display: none;
+  }
 }
 
 /* Smooth transitions */
-* {
-  transition-property: color, background-color, border-color, opacity, box-shadow, transform;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
-}
+/* Используйте utility-классы Tailwind для transition; глобально не применяем */
 

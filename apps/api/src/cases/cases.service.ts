@@ -6,93 +6,29 @@ import { PrismaService } from '../prisma/prisma.service';
 import { readFile } from 'fs/promises';
 import * as path from 'path';
 
-/**
- * New Case Structure - Инициационная архитектура кейсов
- * Структурированный формат для глубокой проработки управленческих дилемм
- */
 export interface InteractiveCase {
-  // === META - Системные данные ===
-  id: string; // case_id из YAML (например: case_let_it_break_1)
-  title: string; // case_name из portal
+  id: string;
+  title: string;
   node_id?: string;
   branch_id?: string;
-
-  // Уровень доступа: 'basic' | 'intermediate' | 'advanced'
-  // Маппинг: базовый -> basic, промежуточный -> intermediate, продвинутый -> advanced
   difficulty: 'basic' | 'intermediate' | 'advanced';
-
-  // Уровень зрелости (maturity_level)
-  maturity_level?: 'низкая' | 'средняя' | 'высокая';
-
-  // Символы и теги для визуализации
-  symbols?: string[]; // например: [Напряжение, Рост]
-  strategic_tags?: string[]; // например: [Делегирование, Автономия]
-
-  // Уровень давления
-  pressure_level?: 'низкое' | 'среднее' | 'высокое';
-
-  // Уровни риска
-  uncertainty?: 'низкая' | 'средняя' | 'высокая';
-  subjectivity_load?: 'низкая' | 'средняя' | 'высокая';
-  systemic_regress_risk?: 'низкий' | 'средний' | 'высокий';
-
-  // === PORTAL - Визуальное представление ===
-  portal?: {
-    header_title: string; // "КЕЙС"
-    case_name: string; // Название кейса
-    subtitle: string; // Подзаголовок с ключевыми понятиями
-    marker_icons: string[]; // Иконки-маркеры
-    access_bar: string; // "Уровень I/II/III"
+  context: string;
+  indicators?: {
+    trust?: 'low' | 'medium' | 'high';
+    risk?: 'low' | 'medium' | 'high';
+    time?: 'low' | 'medium' | 'critical';
+    chaos?: 'low' | 'medium' | 'high';
+    autonomy?: 'low' | 'medium' | 'high';
+    speed?: 'low' | 'medium' | 'high';
+    quality?: 'low' | 'medium' | 'high';
+    uncertainty?: 'low' | 'medium' | 'high';
+    stakes?: 'low' | 'medium' | 'high';
   };
-
-  // === EVENT - Событие/ситуация ===
-  event?: {
-    label: string; // Короткая метка
-    summary: string; // Краткое описание ситуации
-    urgency: 'низкая' | 'средняя' | 'высокая';
+  pattern?: {
+    trigger: string;
+    behavior: string;
+    result: string;
   };
-
-  // === CONTEXT - Контекст (новая структура) ===
-  context: string; // Сохраняем для обратной совместимости
-
-  // Структурированный контекст
-  space_map?: {
-    company: string; // Описание компании
-    environment: string; // Среда/обстановка
-    constraints: string; // Ограничения
-    people: string; // Участники
-    mode: string; // Режим работы/настрой
-  };
-
-  // === FACTS & BACKGROUND ===
-  facts?: {
-    strict_facts: string; // Жёсткие факты
-  };
-
-  background?: {
-    story: string; // Предыстория
-  };
-
-  // === DILEMMA - Дилемма ===
-  dilemma?: {
-    question: string; // Главный вопрос выбора
-    ambiance?: string; // Атмосфера/подтекст
-  };
-
-  // === POSITIONS - Варианты решений (новая структура) ===
-  positions?: Array<{
-    id: string; // А, Б, В
-    description: string; // Описание позиции
-    position_type: string; // Тип позиции (например: "Директивный подход")
-    consequence: {
-      immediate: string;
-      second_order: string;
-      systemic: string;
-    };
-    reflection_prompt?: string; // Вопрос для рефлексии по этой позиции
-  }>;
-
-  // === OPTIONS - Старый формат (для обратной совместимости) ===
   options: Array<{
     id: string;
     text: string;
@@ -113,38 +49,10 @@ export interface InteractiveCase {
     warning?: string;
     explanation?: string;
   }>;
-
-  // === INDICATORS - Индикаторы (новая структура) ===
-  indicators?: {
-    // Старые поля (для обратной совместимости)
-    trust?: 'low' | 'medium' | 'high';
-    risk?: 'low' | 'medium' | 'high';
-    time?: 'low' | 'medium' | 'critical';
-    chaos?: 'low' | 'medium' | 'high';
-    autonomy?: 'low' | 'medium' | 'high';
-    speed?: 'low' | 'medium' | 'high';
-    quality?: 'low' | 'medium' | 'high';
-    stakes?: 'low' | 'medium' | 'high';
-    // Новые поля
-    maturity?: 'низкая' | 'средняя' | 'высокая';
-    uncertainty?: 'низкая' | 'средняя' | 'высокая';
-    subjectivity?: 'низкая' | 'средняя' | 'высокая';
-    regress_risk?: 'низкий' | 'средний' | 'высокий';
-  };
-
-  // === PATTERN - Паттерн (старый формат) ===
-  pattern?: {
-    trigger: string;
-    behavior: string;
-    result: string;
-  };
-
-  // === REFLECTION - Рефлексия (обновлённая структура) ===
   reflection: {
     questions: string[];
     mirror?: Record<string, string>;
     key_insight?: string;
-    after_choice_insights?: string[]; // Инсайты после выбора
   };
 }
 
@@ -187,6 +95,8 @@ export interface CaseAttemptRecord {
 export class CasesService {
   private readonly logger = new Logger(CasesService.name);
   private casesCache: InteractiveCase[] | null = null;
+  private casesCacheLoadedAt?: number;
+  private readonly cacheTtlMs = 5 * 60 * 1000; // 5 минут
 
   constructor(
     @Inject(PathConfigService) private readonly pathConfig: PathConfigService,
@@ -215,7 +125,11 @@ export class CasesService {
 
   private async loadCases(): Promise<InteractiveCase[]> {
     if (this.casesCache) {
-      return this.casesCache;
+      if (this.casesCacheLoadedAt && Date.now() - this.casesCacheLoadedAt < this.cacheTtlMs) {
+        return this.casesCache;
+      }
+      this.logger.log('Cases cache expired, reloading...');
+      this.casesCache = null;
     }
 
     try {
@@ -224,6 +138,8 @@ export class CasesService {
       const fileContent = await readFile(casesPath, 'utf-8');
       const data = JSON.parse(fileContent);
       this.casesCache = data.interactive_cases || [];
+      this.casesCacheLoadedAt = Date.now();
+      await this.validateCaseLinks(this.casesCache || []);
       if (this.casesCache) {
         this.logger.log(`Loaded ${this.casesCache.length} cases`);
         return this.casesCache;
@@ -235,6 +151,38 @@ export class CasesService {
       this.logger.error(`Failed to load cases from ${this.getCasesPath()}: ${errorMessage}`);
       this.logger.error(`Error stack: ${errorStack}`);
       throw new Error(`Failed to load interactive cases: ${errorMessage}`);
+    }
+  }
+
+  /**
+   * Проверка связей кейсов с актуальным деревом (node_id / branch_id)
+   */
+  private async validateCaseLinks(cases: InteractiveCase[]): Promise<void> {
+    try {
+      const tree = await this.treeService.getSemantic();
+      const nodeIds = new Set(tree.nodes.map((n) => n.node_id));
+      const branchIds = new Set(tree.branches.map((b) => b.branch_id));
+
+      const invalidNodes = cases
+        .filter((c) => c.node_id && !nodeIds.has(c.node_id))
+        .map((c) => c.id);
+      const invalidBranches = cases
+        .filter((c) => c.branch_id && !branchIds.has(c.branch_id))
+        .map((c) => c.id);
+
+      if (invalidNodes.length > 0) {
+        this.logger.warn(
+          `Cases reference missing node_id. cases=${invalidNodes.slice(0, 5).join(', ')}${invalidNodes.length > 5 ? '...' : ''}`,
+        );
+      }
+      if (invalidBranches.length > 0) {
+        this.logger.warn(
+          `Cases reference missing branch_id. cases=${invalidBranches.slice(0, 5).join(', ')}${invalidBranches.length > 5 ? '...' : ''}`,
+        );
+      }
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error);
+      this.logger.warn(`Case links validation skipped: ${msg}`);
     }
   }
 
@@ -267,6 +215,7 @@ export class CasesService {
   // Метод для очистки кеша (для разработки)
   clearCache(): void {
     this.casesCache = null;
+    this.casesCacheLoadedAt = undefined;
     this.logger.log('Cases cache cleared');
   }
 

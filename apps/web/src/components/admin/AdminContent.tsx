@@ -35,21 +35,21 @@ export function AdminContent() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-ui-text-main mb-6">Контент и геймплей</h2>
+      <h2 className="text-2xl font-bold text-ash-light mb-6">Контент и геймплей</h2>
 
-      <div className="bg-bg-panel border border-ui-border-soft rounded-lg p-6 mb-6">
+      <div className="bg-graphite-structure border border-ui-border-soft rounded-lg p-6 mb-6">
         <div className="flex gap-4 mb-4">
           <input
             type="text"
             placeholder="ID пользователя..."
             value={userId}
             onChange={(e) => setUserId(e.target.value)}
-            className="flex-1 px-4 py-2 bg-bg-secondary border border-ui-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-system-focus"
+            className="flex-1 px-4 py-2 bg-obsidian-core border border-ui-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-strategic-blue"
           />
           <button
             onClick={loadData}
             disabled={!userId || loading}
-            className="px-6 py-2 bg-system-focus text-white rounded-lg hover:bg-system-focus/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="px-6 py-2 bg-strategic-blue text-white rounded-lg hover:bg-strategic-blue/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             Загрузить
           </button>
@@ -60,8 +60,8 @@ export function AdminContent() {
             onClick={() => setActiveSection('entries')}
             className={`px-4 py-2 rounded-lg transition-colors ${
               activeSection === 'entries'
-                ? 'bg-bg-secondary border border-system-focus text-system-focus'
-                : 'bg-bg-secondary border border-ui-border-soft text-ui-text-muted hover:border-ui-border-strong'
+                ? 'bg-obsidian-core border border-strategic-blue text-strategic-blue'
+                : 'bg-obsidian-core border border-ui-border-soft text-ui-text-muted hover:border-ui-border-strong'
             }`}
           >
             Записи
@@ -70,8 +70,8 @@ export function AdminContent() {
             onClick={() => setActiveSection('sessions')}
             className={`px-4 py-2 rounded-lg transition-colors ${
               activeSection === 'sessions'
-                ? 'bg-bg-secondary border border-system-focus text-system-focus'
-                : 'bg-bg-secondary border border-ui-border-soft text-ui-text-muted hover:border-ui-border-strong'
+                ? 'bg-obsidian-core border border-strategic-blue text-strategic-blue'
+                : 'bg-obsidian-core border border-ui-border-soft text-ui-text-muted hover:border-ui-border-strong'
             }`}
           >
             Сессии
@@ -80,8 +80,8 @@ export function AdminContent() {
             onClick={() => setActiveSection('quests')}
             className={`px-4 py-2 rounded-lg transition-colors ${
               activeSection === 'quests'
-                ? 'bg-bg-secondary border border-system-focus text-system-focus'
-                : 'bg-bg-secondary border border-ui-border-soft text-ui-text-muted hover:border-ui-border-strong'
+                ? 'bg-obsidian-core border border-strategic-blue text-strategic-blue'
+                : 'bg-obsidian-core border border-ui-border-soft text-ui-text-muted hover:border-ui-border-strong'
             }`}
           >
             Квесты
@@ -94,9 +94,9 @@ export function AdminContent() {
       ) : (
         <>
           {activeSection === 'entries' && (
-            <div className="bg-bg-panel border border-ui-border-soft rounded-lg overflow-hidden">
+            <div className="bg-graphite-structure border border-ui-border-soft rounded-lg overflow-hidden">
               <table className="w-full">
-                <thead className="bg-bg-secondary">
+                <thead className="bg-obsidian-core">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-ui-text-muted uppercase">ID</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-ui-text-muted uppercase">Тип</th>
@@ -106,12 +106,12 @@ export function AdminContent() {
                 </thead>
                 <tbody className="divide-y divide-ui-border-soft">
                   {entries.map((entry) => (
-                    <tr key={entry.id} className="hover:bg-bg-secondary">
+                    <tr key={entry.id} className="hover:bg-obsidian-core">
                       <td className="px-6 py-4">
                         <div className="font-mono text-xs text-ui-text-dim">{entry.id.slice(0, 8)}...</div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-ui-text-main">{entry.type}</td>
-                      <td className="px-6 py-4 text-sm text-ui-text-main">{entry.source}</td>
+                      <td className="px-6 py-4 text-sm text-ash-light">{entry.type}</td>
+                      <td className="px-6 py-4 text-sm text-ash-light">{entry.source}</td>
                       <td className="px-6 py-4 text-sm text-ui-text-muted">
                         {new Date(entry.created_at).toLocaleDateString('ru-RU')}
                       </td>
@@ -123,9 +123,9 @@ export function AdminContent() {
           )}
 
           {activeSection === 'sessions' && (
-            <div className="bg-bg-panel border border-ui-border-soft rounded-lg overflow-hidden">
+            <div className="bg-graphite-structure border border-ui-border-soft rounded-lg overflow-hidden">
               <table className="w-full">
-                <thead className="bg-bg-secondary">
+                <thead className="bg-obsidian-core">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-ui-text-muted uppercase">ID</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-ui-text-muted uppercase">Статус</th>
@@ -135,11 +135,11 @@ export function AdminContent() {
                 </thead>
                 <tbody className="divide-y divide-ui-border-soft">
                   {sessions.map((session) => (
-                    <tr key={session.id} className="hover:bg-bg-secondary">
+                    <tr key={session.id} className="hover:bg-obsidian-core">
                       <td className="px-6 py-4">
                         <div className="font-mono text-xs text-ui-text-dim">{session.id.slice(0, 8)}...</div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-ui-text-main">{session.status}</td>
+                      <td className="px-6 py-4 text-sm text-ash-light">{session.status}</td>
                       <td className="px-6 py-4 text-sm text-ui-text-muted">
                         {new Date(session.created_at).toLocaleDateString('ru-RU')}
                       </td>
@@ -154,9 +154,9 @@ export function AdminContent() {
           )}
 
           {activeSection === 'quests' && (
-            <div className="bg-bg-panel border border-ui-border-soft rounded-lg overflow-hidden">
+            <div className="bg-graphite-structure border border-ui-border-soft rounded-lg overflow-hidden">
               <table className="w-full">
-                <thead className="bg-bg-secondary">
+                <thead className="bg-obsidian-core">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-ui-text-muted uppercase">Название</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-ui-text-muted uppercase">Тип</th>
@@ -166,10 +166,10 @@ export function AdminContent() {
                 </thead>
                 <tbody className="divide-y divide-ui-border-soft">
                   {quests.map((quest) => (
-                    <tr key={quest.id} className="hover:bg-bg-secondary">
-                      <td className="px-6 py-4 text-sm text-ui-text-main">{quest.title}</td>
-                      <td className="px-6 py-4 text-sm text-ui-text-main">{quest.type}</td>
-                      <td className="px-6 py-4 text-sm text-ui-text-main">{quest.status}</td>
+                    <tr key={quest.id} className="hover:bg-obsidian-core">
+                      <td className="px-6 py-4 text-sm text-ash-light">{quest.title}</td>
+                      <td className="px-6 py-4 text-sm text-ash-light">{quest.type}</td>
+                      <td className="px-6 py-4 text-sm text-ash-light">{quest.status}</td>
                       <td className="px-6 py-4 text-sm text-ui-text-muted">
                         {new Date(quest.created_at).toLocaleDateString('ru-RU')}
                       </td>

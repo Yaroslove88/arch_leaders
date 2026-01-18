@@ -43,8 +43,8 @@ export function AddEntryModal({ isOpen, onClose }: AddEntryModalProps) {
 
       toast.showToast('Ситуация успешно создана', 'success');
       onClose();
-      // Перенаправляем на страницу разбора ситуации
-      router.push(`/entries/${entry.id}`);
+      // Перенаправляем в журнал
+      router.push('/traces');
     } catch (error: any) {
       toast.showToast(error?.message || 'Ошибка при создании ситуации', 'error');
     } finally {
@@ -112,17 +112,17 @@ export function AddEntryModal({ isOpen, onClose }: AddEntryModalProps) {
       aria-labelledby="modal-title"
     >
       <div
-        className="bg-bg-panel border border-ui-border-soft rounded-lg shadow-panel max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        className="bg-graphite-structure border border-ui-border-soft rounded-lg shadow-panel max-w-2xl w-full max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 bg-bg-panel border-b border-ui-border-soft p-6 flex justify-between items-center">
-          <h2 id="modal-title" className="text-2xl font-bold text-ui-text-main">
+        <div className="sticky top-0 bg-graphite-structure border-b border-ui-border-soft p-6 flex justify-between items-center">
+          <h2 id="modal-title" className="text-2xl font-bold text-ash-light">
             Добавить ситуацию
           </h2>
           <button
             onClick={handleClose}
             disabled={loading}
-            className="text-ui-text-muted hover:text-ui-text-main focus:outline-none focus:ring-2 focus:ring-system-focus rounded p-1 disabled:opacity-50"
+            className="text-ui-text-muted hover:text-ash-light focus:outline-none focus:ring-2 focus:ring-strategic-blue rounded p-1 disabled:opacity-50"
             aria-label="Закрыть модальное окно"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -133,13 +133,13 @@ export function AddEntryModal({ isOpen, onClose }: AddEntryModalProps) {
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Описание типов */}
-          <div className="bg-bg-secondary border border-ui-border-soft rounded-lg">
+          <div className="bg-obsidian-core border border-ui-border-soft rounded-lg">
             <button
               type="button"
               onClick={() => setShowDescription(!showDescription)}
-              className="w-full flex items-center justify-between p-4 text-left hover:bg-bg-panel transition-colors rounded-lg"
+              className="w-full flex items-center justify-between p-4 text-left hover:bg-graphite-structure transition-colors rounded-lg"
             >
-              <span className="font-medium text-ui-text-main">
+              <span className="font-medium text-ash-light">
                 {showDescription ? 'Скрыть описание' : 'Показать описание типов записей'}
               </span>
               <span className="text-ui-text-muted">
@@ -154,16 +154,16 @@ export function AddEntryModal({ isOpen, onClose }: AddEntryModalProps) {
                   После создания запись будет автоматически проанализирована, и система предложит квесты для развития.
                 </p>
                 
-                <h3 className="font-semibold text-ui-text-main mb-2">Типы записей:</h3>
+                <h3 className="font-semibold text-ash-light mb-2">Типы записей:</h3>
                 <ul className="space-y-2 text-ui-text-muted">
                   <li>
-                    <strong className="text-ui-text-main">Ситуация</strong> — описание конкретной ситуации, где вы проявили лидерство или столкнулись с вызовом.
+                    <strong className="text-ash-light">Ситуация</strong> — описание конкретной ситуации, где вы проявили лидерство или столкнулись с вызовом.
                   </li>
                   <li>
-                    <strong className="text-ui-text-main">Рефлексия</strong> — размышление о том, что произошло, что получилось, что не получилось, какие уроки вы извлекли.
+                    <strong className="text-ash-light">Рефлексия</strong> — размышление о том, что произошло, что получилось, что не получилось, какие уроки вы извлекли.
                   </li>
                   <li>
-                    <strong className="text-ui-text-main">Обратная связь</strong> — запись о том, как вы дали или получили обратную связь.
+                    <strong className="text-ash-light">Обратная связь</strong> — запись о том, как вы дали или получили обратную связь.
                   </li>
                 </ul>
               </div>
@@ -172,14 +172,14 @@ export function AddEntryModal({ isOpen, onClose }: AddEntryModalProps) {
 
           {/* Тип */}
           <div>
-            <label htmlFor="entry-type" className="block text-sm font-medium mb-2 text-ui-text-main">
+            <label htmlFor="entry-type" className="block text-sm font-medium mb-2 text-ash-light">
               Тип
             </label>
             <select
               id="entry-type"
               value={formData.type}
               onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-              className="w-full bg-bg-secondary border border-ui-border-soft rounded px-3 py-2 text-ui-text-main focus:outline-none focus:ring-2 focus:ring-system-focus focus:border-system-focus"
+              className="w-full bg-obsidian-core border border-ui-border-soft rounded px-3 py-2 text-ash-light focus:outline-none focus:ring-2 focus:ring-strategic-blue focus:border-strategic-blue"
               aria-required="true"
             >
               <option value="situation">Ситуация</option>
@@ -190,14 +190,14 @@ export function AddEntryModal({ isOpen, onClose }: AddEntryModalProps) {
 
           {/* Текст */}
           <div>
-            <label htmlFor="entry-text" className="block text-sm font-medium mb-2 text-ui-text-main">
+            <label htmlFor="entry-text" className="block text-sm font-medium mb-2 text-ash-light">
               Описание ситуации
             </label>
             <textarea
               id="entry-text"
               value={formData.text}
               onChange={(e) => setFormData({ ...formData, text: e.target.value })}
-              className="w-full bg-bg-secondary border border-ui-border-soft rounded px-3 py-2 min-h-[200px] text-ui-text-main placeholder-ui-text-dim focus:outline-none focus:ring-2 focus:ring-system-focus focus:border-system-focus"
+              className="w-full bg-obsidian-core border border-ui-border-soft rounded px-3 py-2 min-h-[200px] text-ash-light placeholder-ui-text-dim focus:outline-none focus:ring-2 focus:ring-strategic-blue focus:border-strategic-blue"
               placeholder="Опишите ситуацию, что произошло, кто участвовал, какие были вызовы..."
               required
               aria-required="true"
@@ -206,7 +206,7 @@ export function AddEntryModal({ isOpen, onClose }: AddEntryModalProps) {
 
           {/* Участники */}
           <div>
-            <label htmlFor="participant-input" className="block text-sm font-medium mb-2 text-ui-text-main">
+            <label htmlFor="participant-input" className="block text-sm font-medium mb-2 text-ash-light">
               Участники
             </label>
             <div className="flex gap-2 mb-2">
@@ -216,13 +216,13 @@ export function AddEntryModal({ isOpen, onClose }: AddEntryModalProps) {
                 value={participantInput}
                 onChange={(e) => setParticipantInput(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addParticipant())}
-                className="flex-1 bg-bg-secondary border border-ui-border-soft rounded px-3 py-2 text-ui-text-main placeholder-ui-text-dim focus:outline-none focus:ring-2 focus:ring-system-focus focus:border-system-focus"
+                className="flex-1 bg-obsidian-core border border-ui-border-soft rounded px-3 py-2 text-ash-light placeholder-ui-text-dim focus:outline-none focus:ring-2 focus:ring-strategic-blue focus:border-strategic-blue"
                 placeholder="Добавить участника"
               />
               <button
                 type="button"
                 onClick={addParticipant}
-                className="px-4 py-2 bg-bg-secondary border border-system-focus text-system-focus rounded hover:border-system-focus/70 hover:bg-bg-panel focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-system-focus transition-colors"
+                className="px-4 py-2 bg-obsidian-core border border-strategic-blue text-strategic-blue rounded hover:border-strategic-blue/70 hover:bg-graphite-structure focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-strategic-blue transition-colors"
               >
                 Добавить
               </button>
@@ -231,13 +231,13 @@ export function AddEntryModal({ isOpen, onClose }: AddEntryModalProps) {
               {formData.participants.map((p, i) => (
                 <span
                   key={i}
-                  className="inline-flex items-center gap-1 bg-bg-secondary border border-system-focus/30 text-system-focus px-3 py-1 rounded"
+                  className="inline-flex items-center gap-1 bg-obsidian-core border border-strategic-blue/30 text-strategic-blue px-3 py-1 rounded"
                 >
                   {p}
                   <button
                     type="button"
                     onClick={() => removeParticipant(i)}
-                    className="text-system-focus hover:text-system-focus/80 focus:outline-none focus:ring-2 focus:ring-system-focus rounded"
+                    className="text-strategic-blue hover:text-strategic-blue/80 focus:outline-none focus:ring-2 focus:ring-strategic-blue rounded"
                   >
                     ×
                   </button>
@@ -248,7 +248,7 @@ export function AddEntryModal({ isOpen, onClose }: AddEntryModalProps) {
 
           {/* Теги */}
           <div>
-            <label htmlFor="tag-input" className="block text-sm font-medium mb-2 text-ui-text-main">
+            <label htmlFor="tag-input" className="block text-sm font-medium mb-2 text-ash-light">
               Теги
             </label>
             <div className="flex gap-2 mb-2">
@@ -258,13 +258,13 @@ export function AddEntryModal({ isOpen, onClose }: AddEntryModalProps) {
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                className="flex-1 bg-bg-secondary border border-ui-border-soft rounded px-3 py-2 text-ui-text-main placeholder-ui-text-dim focus:outline-none focus:ring-2 focus:ring-system-focus focus:border-system-focus"
+                className="flex-1 bg-obsidian-core border border-ui-border-soft rounded px-3 py-2 text-ash-light placeholder-ui-text-dim focus:outline-none focus:ring-2 focus:ring-strategic-blue focus:border-strategic-blue"
                 placeholder="Добавить тег"
               />
               <button
                 type="button"
                 onClick={addTag}
-                className="px-4 py-2 bg-bg-secondary border border-ui-border-strong text-ui-text-muted rounded hover:border-ui-border-strong hover:text-ui-text-main focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-system-focus transition-colors"
+                className="px-4 py-2 bg-obsidian-core border border-ui-border-strong text-ui-text-muted rounded hover:border-ui-border-strong hover:text-ash-light focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-strategic-blue transition-colors"
               >
                 Добавить
               </button>
@@ -273,13 +273,13 @@ export function AddEntryModal({ isOpen, onClose }: AddEntryModalProps) {
               {formData.tags.map((t, i) => (
                 <span
                   key={i}
-                  className="inline-flex items-center gap-1 bg-bg-secondary border border-ui-border-soft text-ui-text-muted px-3 py-1 rounded"
+                  className="inline-flex items-center gap-1 bg-obsidian-core border border-ui-border-soft text-ui-text-muted px-3 py-1 rounded"
                 >
                   {t}
                   <button
                     type="button"
                     onClick={() => removeTag(i)}
-                    className="text-ui-text-dim hover:text-ui-text-muted focus:outline-none focus:ring-2 focus:ring-system-focus rounded"
+                    className="text-ui-text-dim hover:text-ui-text-muted focus:outline-none focus:ring-2 focus:ring-strategic-blue rounded"
                   >
                     ×
                   </button>
@@ -293,7 +293,7 @@ export function AddEntryModal({ isOpen, onClose }: AddEntryModalProps) {
             <button
               type="submit"
               disabled={loading || !formData.text.trim()}
-              className="px-6 py-2 bg-system-focus text-ui-text-main rounded hover:bg-system-focus/90 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-system-focus transition-colors font-medium"
+              className="px-6 py-2 bg-system-focus text-ash-light rounded hover:bg-system-focus/90 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-strategic-blue transition-colors font-medium"
             >
               {loading ? 'Создание...' : 'Создать'}
             </button>
@@ -301,7 +301,7 @@ export function AddEntryModal({ isOpen, onClose }: AddEntryModalProps) {
               type="button"
               onClick={handleClose}
               disabled={loading}
-              className="px-6 py-2 bg-bg-secondary border border-ui-border-soft text-ui-text-muted rounded hover:border-ui-border-strong hover:text-ui-text-main focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-system-focus transition-colors disabled:opacity-50"
+              className="px-6 py-2 bg-obsidian-core border border-ui-border-soft text-ui-text-muted rounded hover:border-ui-border-strong hover:text-ash-light focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-strategic-blue transition-colors disabled:opacity-50"
             >
               Отмена
             </button>

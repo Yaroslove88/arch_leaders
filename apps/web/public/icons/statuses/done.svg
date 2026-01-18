@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none" aria-hidden="true">
+  <!-- transparent background -->
+  <g stroke="currentColor" stroke-width="14" stroke-linecap="round" stroke-linejoin="round">
+    <!-- structural outer circle -->
+    <circle cx="256" cy="256" r="180"/>
+    <!-- subtle inner ring (architectural / system completeness) -->
+    <circle cx="256" cy="256" r="120" opacity="0.6"/>
+    <!-- completion check -->
+    <path d="M188 262l44 44 92-104"/>
+  </g>
+</svg>

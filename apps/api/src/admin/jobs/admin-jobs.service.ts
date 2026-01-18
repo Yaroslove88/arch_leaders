@@ -50,28 +50,31 @@ export class AdminJobsService {
     const sortField = filters.sort || 'created_at';
     orderBy[sortField] = filters.order || 'desc';
 
-    const jobs = await this.prisma.job.findMany({
-      where,
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            telegramUsername: true,
+    const [jobs, total] = await Promise.all([
+      this.prisma.job.findMany({
+        where,
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              telegramUsername: true,
+            },
           },
         },
-      },
-      orderBy,
-      take: filters.limit || 50,
-      ...(filters.cursor && {
-        skip: 1,
-        cursor: {
-          id: filters.cursor,
-        },
+        orderBy,
+        take: filters.limit || 50,
+        ...(filters.cursor && {
+          skip: 1,
+          cursor: {
+            id: filters.cursor,
+          },
+        }),
       }),
-    });
+      this.prisma.job.count({ where }),
+    ]);
 
-    return jobs;
+    return { jobs, total };
   }
 
   async getJobById(jobId: string) {

@@ -13,6 +13,10 @@ export class LLMService {
   private readonly openaiApiKey?: string;
   private readonly anthropicApiKey?: string;
   private readonly provider: 'openai' | 'anthropic' | 'none';
+  private readonly analysisPromptId = 'analysis_situation';
+  private readonly analysisPromptVersion = 1;
+  private readonly questTheoryPromptId = 'quest_theory';
+  private readonly questTheoryPromptVersion = 1;
 
   constructor(
     @Inject(ConfigService) private readonly configService: ConfigService,
@@ -59,6 +63,11 @@ export class LLMService {
     patterns: string[];
     tensions: string[];
     ability_signals: any[];
+    __meta: {
+      prompt_id: string;
+      prompt_version: number;
+      model: string;
+    };
   }> {
     if (this.provider === 'none') {
       return this.generateMockAnalysis(entry);
@@ -96,6 +105,11 @@ export class LLMService {
         patterns: result.data.patterns,
         tensions: result.data.tensions,
         ability_signals: result.data.ability_signals,
+        __meta: {
+          prompt_id: this.analysisPromptId,
+          prompt_version: this.analysisPromptVersion,
+          model: result.model,
+        },
       };
     } catch (error) {
       this.logger.error(`[${requestId || 'unknown'}] LLM analysis failed:`, error);
@@ -388,6 +402,9 @@ ${entry.text}
     }
 
     const prompt = this.buildQuestTheoryPrompt(quest, abilityNode);
+    this.logger.log(
+      `[Prompt] ${this.questTheoryPromptId}_v${this.questTheoryPromptVersion} provider=${this.provider}`,
+    );
 
     try {
       if (this.provider === 'openai') {
@@ -689,6 +706,11 @@ ${quest.description}
           priority: 'high',
         },
       ],
+      __meta: {
+        prompt_id: this.analysisPromptId,
+        prompt_version: this.analysisPromptVersion,
+        model: 'mock',
+      },
     };
   }
 }

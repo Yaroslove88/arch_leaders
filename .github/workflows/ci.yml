@@ -61,3 +61,10 @@ jobs:
 
       - name: Test
         run: pnpm test
+jobs:
+  lint-typecheck:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    # ... остальные шаги без PostgreSQL

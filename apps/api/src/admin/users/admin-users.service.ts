@@ -55,35 +55,38 @@ export class AdminUsersService {
     const sortField = filters.sort || 'created_at';
     orderBy[sortField] = filters.order || 'desc';
 
-    const users = await this.prisma.user.findMany({
-      where,
-      select: {
-        id: true,
-        email: true,
-        telegramUsername: true,
-        status: true,
-        role: true,
-        created_at: true,
-        last_seen_at: true,
-        _count: {
-          select: {
-            entries: true,
-            quests: true,
-            sessions: true,
+    const [users, total] = await Promise.all([
+      this.prisma.user.findMany({
+        where,
+        select: {
+          id: true,
+          email: true,
+          telegramUsername: true,
+          status: true,
+          role: true,
+          created_at: true,
+          last_seen_at: true,
+          _count: {
+            select: {
+              entries: true,
+              quests: true,
+              sessions: true,
+            },
           },
         },
-      },
-      orderBy,
-      take: filters.limit || 50,
-      ...(filters.cursor && {
-        skip: 1,
-        cursor: {
-          id: filters.cursor,
-        },
+        orderBy,
+        take: filters.limit || 50,
+        ...(filters.cursor && {
+          skip: 1,
+          cursor: {
+            id: filters.cursor,
+          },
+        }),
       }),
-    });
+      this.prisma.user.count({ where }),
+    ]);
 
-    return users;
+    return { users, total };
   }
 
   async getUserById(userId: string) {
@@ -112,7 +115,41 @@ export class AdminUsersService {
       throw new NotFoundException('User not found');
     }
 
-    return user;
+    // Get quest counts by status
+    const [activeQuests, completedQuests] = await Promise.all([
+      this.prisma.quest.count({
+        where: {
+          userId: userId,
+          status: 'active',
+        },
+      }),
+      this.prisma.quest.count({
+        where: {
+          userId: userId,
+          status: 'completed',
+        },
+      }),
+    ]);
+
+    // Transform to User360 structure expected by frontend
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        telegramUsername: user.telegramUsername,
+        status: user.status,
+        role: user.role,
+        created_at: user.created_at,
+        last_seen_at: user.last_seen_at,
+      },
+      stats: {
+        entries_count: user._count.entries || 0,
+        sessions_count: user._count.sessions || 0,
+        quests_active: activeQuests,
+        quests_completed: completedQuests,
+        abilities_unlocked: user._count.evidence || 0,
+      },
+    };
   }
 
   async updateUser(userId: string, data: { status?: string; note?: string }) {

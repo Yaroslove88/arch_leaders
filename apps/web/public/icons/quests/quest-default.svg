@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+  <g stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- route / steps -->
+    <path d="M5 17c2-4 4-6 7-6s5 2 7 6"/>
+    <circle cx="5" cy="17" r="1.5"/>
+    <circle cx="12" cy="11" r="1.5"/>
+    <!-- destination flag -->
+    <path d="M19 7v9"/>
+    <path d="M19 7h-5l1.2 2L14 11h5z"/>
+  </g>
+</svg>

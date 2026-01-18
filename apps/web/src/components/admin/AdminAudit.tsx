@@ -38,11 +38,11 @@ export function AdminAudit() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-ui-text-main">Аудит и безопасность</h2>
+        <h2 className="text-2xl font-bold text-ash-light">Аудит и безопасность</h2>
         <div className="text-sm text-ui-text-muted">Всего записей: {total}</div>
       </div>
 
-      <div className="bg-bg-panel border border-ui-border-soft rounded-lg p-4 mb-6">
+      <div className="bg-graphite-structure border border-ui-border-soft rounded-lg p-4 mb-6">
         <div className="flex gap-4">
           <select
             value={actionFilter}
@@ -50,7 +50,7 @@ export function AdminAudit() {
               setActionFilter(e.target.value);
               setPage(1);
             }}
-            className="px-4 py-2 bg-bg-secondary border border-ui-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-system-focus"
+            className="px-4 py-2 bg-obsidian-core border border-ui-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-strategic-blue"
           >
             <option value="all">Все действия</option>
             <option value="view_full_entry">Просмотр полного контента</option>
@@ -65,7 +65,7 @@ export function AdminAudit() {
               setTargetTypeFilter(e.target.value);
               setPage(1);
             }}
-            className="px-4 py-2 bg-bg-secondary border border-ui-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-system-focus"
+            className="px-4 py-2 bg-obsidian-core border border-ui-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-strategic-blue"
           >
             <option value="all">Все типы</option>
             <option value="user">Пользователь</option>
@@ -81,9 +81,9 @@ export function AdminAudit() {
         <LoadingSpinner text="Загрузка логов..." />
       ) : (
         <>
-          <div className="bg-bg-panel border border-ui-border-soft rounded-lg overflow-hidden">
+          <div className="bg-graphite-structure border border-ui-border-soft rounded-lg overflow-hidden">
             <table className="w-full">
-              <thead className="bg-bg-secondary">
+              <thead className="bg-obsidian-core">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-ui-text-muted uppercase">Время</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-ui-text-muted uppercase">Действие</th>
@@ -94,12 +94,12 @@ export function AdminAudit() {
               </thead>
               <tbody className="divide-y divide-ui-border-soft">
                 {logs.map((log) => (
-                  <tr key={log.id} className="hover:bg-bg-secondary">
+                  <tr key={log.id} className="hover:bg-obsidian-core">
                     <td className="px-6 py-4 text-sm text-ui-text-muted">
                       {new Date(log.created_at).toLocaleString('ru-RU')}
                     </td>
-                    <td className="px-6 py-4 text-sm text-ui-text-main">{log.action}</td>
-                    <td className="px-6 py-4 text-sm text-ui-text-main">{log.target_type}</td>
+                    <td className="px-6 py-4 text-sm text-ash-light">{log.action}</td>
+                    <td className="px-6 py-4 text-sm text-ash-light">{log.target_type}</td>
                     <td className="px-6 py-4">
                       <div className="font-mono text-xs text-ui-text-dim">{log.target_id.slice(0, 8)}...</div>
                     </td>
@@ -121,14 +121,14 @@ export function AdminAudit() {
                 <button
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="px-4 py-2 bg-bg-secondary border border-ui-border-soft rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:border-ui-border-strong transition-colors"
+                  className="px-4 py-2 bg-obsidian-core border border-ui-border-soft rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:border-ui-border-strong transition-colors"
                 >
                   Назад
                 </button>
                 <button
                   onClick={() => setPage(p => p + 1)}
                   disabled={page * limit >= total}
-                  className="px-4 py-2 bg-bg-secondary border border-ui-border-soft rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:border-ui-border-strong transition-colors"
+                  className="px-4 py-2 bg-obsidian-core border border-ui-border-soft rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:border-ui-border-strong transition-colors"
                 >
                   Вперед
                 </button>

@@ -1,5 +1,6 @@
 import { Injectable, CanActivate, ExecutionContext, UnauthorizedException, Inject } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../../prisma/prisma.service';
 
 @Injectable()
@@ -9,6 +10,8 @@ export class AdminAuthGuard implements CanActivate {
     private jwtService: JwtService,
     @Inject(PrismaService)
     private prisma: PrismaService,
+    @Inject(ConfigService)
+    private configService: ConfigService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -20,27 +23,50 @@ export class AdminAuthGuard implements CanActivate {
     }
 
     try {
+      // Используем секрет из ConfigService (тот же, что используется в admin-auth.module.ts для подписи)
+      const secretForVerify = this.configService.get<string>('JWT_SECRET') || 'your-secret-key';
+      
       const payload = await this.jwtService.verifyAsync(token, {
-        secret: process.env.JWT_SECRET,
+        secret: secretForVerify,
       });
 
-      // Проверяем, что это админ
-      const admin = await this.prisma.adminUser.findUnique({
+      // Сначала проверяем в таблице admin_users
+      const adminUser = await this.prisma.adminUser.findUnique({
         where: { id: payload.sub },
       });
 
-      if (!admin) {
-        throw new UnauthorizedException('Admin not found');
+      if (adminUser) {
+        request.admin = {
+          id: adminUser.id,
+          email: adminUser.email,
+          role: adminUser.role,
+          source: 'admin_users',
+        };
+        return true;
       }
 
-      request.admin = {
-        id: admin.id,
-        email: admin.email,
-        role: admin.role,
-      };
+      // Fallback: проверяем в обычной таблице users
+      // Если пользователь имеет role='admin', разрешаем доступ как super_admin
+      const regularUser = await this.prisma.user.findUnique({
+        where: { id: payload.sub },
+      });
 
-      return true;
-    } catch {
+      if (regularUser && regularUser.role === 'admin') {
+        request.admin = {
+          id: regularUser.id,
+          email: regularUser.email || regularUser.telegramUsername,
+          role: 'super_admin', // Обычный админ получает полные права
+          source: 'users',
+          telegramUsername: regularUser.telegramUsername,
+        };
+        return true;
+      }
+      
+      throw new UnauthorizedException('Admin access required');
+    } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
       throw new UnauthorizedException('Invalid token');
     }
   }
@@ -50,4 +76,3 @@ export class AdminAuthGuard implements CanActivate {
     return type === 'Bearer' ? token : undefined;
   }
 }
-

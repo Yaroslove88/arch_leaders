@@ -38,13 +38,13 @@ export function AdminJobs() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'succeeded':
-        return 'bg-system-growth/20 text-system-growth';
+        return 'bg-sage-green/20 text-sage-green';
       case 'failed':
-        return 'bg-system-critical/20 text-system-critical';
+        return 'bg-tension-red/20 text-tension-red';
       case 'running':
-        return 'bg-system-stable/20 text-system-stable';
+        return 'bg-sage-green/20 text-sage-green';
       case 'pending':
-        return 'bg-system-warning/20 text-system-warning';
+        return 'bg-catalyst-gold/20 text-catalyst-gold';
       default:
         return 'bg-ui-border-soft text-ui-text-muted';
     }
@@ -53,11 +53,11 @@ export function AdminJobs() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-ui-text-main">Задачи и система</h2>
+        <h2 className="text-2xl font-bold text-ash-light">Задачи и система</h2>
         <div className="text-sm text-ui-text-muted">Всего: {total}</div>
       </div>
 
-      <div className="bg-bg-panel border border-ui-border-soft rounded-lg p-4 mb-6">
+      <div className="bg-graphite-structure border border-ui-border-soft rounded-lg p-4 mb-6">
         <div className="flex gap-4">
           <select
             value={statusFilter}
@@ -65,7 +65,7 @@ export function AdminJobs() {
               setStatusFilter(e.target.value);
               setPage(1);
             }}
-            className="px-4 py-2 bg-bg-secondary border border-ui-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-system-focus"
+            className="px-4 py-2 bg-obsidian-core border border-ui-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-strategic-blue"
           >
             <option value="all">Все статусы</option>
             <option value="pending">Ожидают</option>
@@ -80,7 +80,7 @@ export function AdminJobs() {
               setTypeFilter(e.target.value);
               setPage(1);
             }}
-            className="px-4 py-2 bg-bg-secondary border border-ui-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-system-focus"
+            className="px-4 py-2 bg-obsidian-core border border-ui-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-strategic-blue"
           >
             <option value="all">Все типы</option>
             <option value="analyze_entry">Анализ записи</option>
@@ -95,9 +95,9 @@ export function AdminJobs() {
         <LoadingSpinner text="Загрузка задач..." />
       ) : (
         <>
-          <div className="bg-bg-panel border border-ui-border-soft rounded-lg overflow-hidden">
+          <div className="bg-graphite-structure border border-ui-border-soft rounded-lg overflow-hidden">
             <table className="w-full">
-              <thead className="bg-bg-secondary">
+              <thead className="bg-obsidian-core">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-ui-text-muted uppercase">ID</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-ui-text-muted uppercase">Тип</th>
@@ -108,11 +108,11 @@ export function AdminJobs() {
               </thead>
               <tbody className="divide-y divide-ui-border-soft">
                 {jobs.map((job) => (
-                  <tr key={job.id} className="hover:bg-bg-secondary">
+                  <tr key={job.id} className="hover:bg-obsidian-core">
                     <td className="px-6 py-4">
                       <div className="font-mono text-xs text-ui-text-dim">{job.id.slice(0, 8)}...</div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-ui-text-main">{job.job_type}</td>
+                    <td className="px-6 py-4 text-sm text-ash-light">{job.job_type}</td>
                     <td className="px-6 py-4">
                       <span className={`px-2 py-1 rounded text-xs ${getStatusColor(job.status)}`}>
                         {job.status}
@@ -139,14 +139,14 @@ export function AdminJobs() {
                 <button
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="px-4 py-2 bg-bg-secondary border border-ui-border-soft rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:border-ui-border-strong transition-colors"
+                  className="px-4 py-2 bg-obsidian-core border border-ui-border-soft rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:border-ui-border-strong transition-colors"
                 >
                   Назад
                 </button>
                 <button
                   onClick={() => setPage(p => p + 1)}
                   disabled={page * limit >= total}
-                  className="px-4 py-2 bg-bg-secondary border border-ui-border-soft rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:border-ui-border-strong transition-colors"
+                  className="px-4 py-2 bg-obsidian-core border border-ui-border-soft rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:border-ui-border-strong transition-colors"
                 >
                   Вперед
                 </button>

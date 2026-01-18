@@ -31,9 +31,9 @@ export default function NewEntryPage() {
         tags: formData.tags.filter((t) => t.trim()),
       });
 
-      toast.showToast('Запись успешно создана', 'success');
-      // Перенаправляем на страницу entry или dashboard
-      router.push(`/entries/${entry.id}`);
+      toast.showToast('Запись добавлена в журнал', 'success');
+      // Перенаправляем в журнал
+      router.push('/traces');
     } catch (error: any) {
       toast.showToast(error?.message || 'Ошибка при создании записи', 'error');
     } finally {
@@ -76,17 +76,17 @@ export default function NewEntryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-bg-main p-8">
+    <div className="min-h-screen bg-obsidian-core p-8">
       <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold mb-4 text-ui-text-main" id="page-title">Добавить ситуацию</h1>
+        <h1 className="text-3xl font-bold mb-4 text-ash-light" id="page-title">Добавить ситуацию</h1>
         
-        <div className="bg-bg-panel border border-system-focus/30 rounded-lg mb-6">
+        <div className="bg-bg-panel border border-strategic-blue/30 rounded-lg mb-6">
           <button
             type="button"
             onClick={() => setShowDescription(!showDescription)}
-            className="w-full flex items-center justify-between p-4 text-left hover:bg-bg-secondary transition-colors rounded-lg"
+            className="w-full flex items-center justify-between p-4 text-left hover:bg-obsidian-core transition-colors rounded-lg"
           >
-            <span className="font-medium text-ui-text-main">
+            <span className="font-medium text-ash-light">
               {showDescription ? 'Скрыть описание' : 'Показать описание типов записей'}
             </span>
             <span className="text-ui-text-muted">
@@ -101,18 +101,18 @@ export default function NewEntryPage() {
                 После создания запись будет автоматически проанализирована, и система предложит квесты для развития.
               </p>
               
-              <h3 className="font-semibold text-ui-text-main mb-2">Типы записей:</h3>
+              <h3 className="font-semibold text-ash-light mb-2">Типы записей:</h3>
               <ul className="space-y-2 text-ui-text-muted">
                 <li>
-                  <strong className="text-ui-text-main">Ситуация</strong> — описание конкретной ситуации, где вы проявили лидерство или столкнулись с вызовом. 
-                  Например: &laquo;Провел сложную встречу с командой&raquo;, &laquo;Принял решение в условиях неопределенности&raquo;, &laquo;Разрешил конфликт между коллегами&raquo;.
+                  <strong className="text-ash-light">Ситуация</strong> — описание конкретной ситуации, где вы проявили лидерство или столкнулись с вызовом. 
+                  Например: "Провел сложную встречу с командой", "Принял решение в условиях неопределенности", "Разрешил конфликт между коллегами".
                 </li>
                 <li>
-                  <strong className="text-ui-text-main">Рефлексия</strong> — размышление о том, что произошло, что получилось, что не получилось, какие уроки вы извлекли. 
+                  <strong className="text-ash-light">Рефлексия</strong> — размышление о том, что произошло, что получилось, что не получилось, какие уроки вы извлекли. 
                   Это более глубокий анализ ситуации с фокусом на вашем опыте и развитии.
                 </li>
                 <li>
-                  <strong className="text-ui-text-main">Обратная связь</strong> — запись о том, как вы дали или получили обратную связь. 
+                  <strong className="text-ash-light">Обратная связь</strong> — запись о том, как вы дали или получили обратную связь. 
                   Это может быть обратная связь от коллеги, ментора, или которую вы дали кому-то.
                 </li>
               </ul>
@@ -123,12 +123,12 @@ export default function NewEntryPage() {
         <form onSubmit={handleSubmit} className="bg-bg-panel border border-ui-border-soft rounded-lg shadow-panel p-6 space-y-6 bg-panel-gradient" aria-labelledby="page-title">
           {/* Тип */}
           <div>
-            <label htmlFor="entry-type" className="block text-sm font-medium mb-2 text-ui-text-main">Тип</label>
+            <label htmlFor="entry-type" className="block text-sm font-medium mb-2 text-ash-light">Тип</label>
             <select
               id="entry-type"
               value={formData.type}
               onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-              className="w-full bg-bg-secondary border border-ui-border-soft rounded px-3 py-2 text-ui-text-main focus:outline-none focus:ring-2 focus:ring-system-focus focus:border-system-focus"
+              className="w-full bg-obsidian-core border border-ui-border-soft rounded px-3 py-2 text-ash-light focus:outline-none focus:ring-2 focus:ring-strategic-blue focus:border-strategic-blue"
               aria-required="true"
             >
               <option value="situation">Ситуация</option>
@@ -139,12 +139,12 @@ export default function NewEntryPage() {
 
           {/* Текст */}
           <div>
-            <label htmlFor="entry-text" className="block text-sm font-medium mb-2 text-ui-text-main">Описание ситуации</label>
+            <label htmlFor="entry-text" className="block text-sm font-medium mb-2 text-ash-light">Описание ситуации</label>
             <textarea
               id="entry-text"
               value={formData.text}
               onChange={(e) => setFormData({ ...formData, text: e.target.value })}
-              className="w-full bg-bg-secondary border border-ui-border-soft rounded px-3 py-2 min-h-[200px] text-ui-text-main placeholder-ui-text-dim focus:outline-none focus:ring-2 focus:ring-system-focus focus:border-system-focus"
+              className="w-full bg-obsidian-core border border-ui-border-soft rounded px-3 py-2 min-h-[200px] text-ash-light placeholder-ui-text-dim focus:outline-none focus:ring-2 focus:ring-strategic-blue focus:border-strategic-blue"
               placeholder="Опишите ситуацию, что произошло, кто участвовал, какие были вызовы..."
               required
               aria-required="true"
@@ -155,7 +155,7 @@ export default function NewEntryPage() {
 
           {/* Участники */}
           <div>
-            <label htmlFor="participant-input" className="block text-sm font-medium mb-2 text-ui-text-main">Участники</label>
+            <label htmlFor="participant-input" className="block text-sm font-medium mb-2 text-ash-light">Участники</label>
             <div className="flex gap-2 mb-2">
               <input
                 id="participant-input"
@@ -163,14 +163,14 @@ export default function NewEntryPage() {
                 value={participantInput}
                 onChange={(e) => setParticipantInput(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addParticipant())}
-                className="flex-1 bg-bg-secondary border border-ui-border-soft rounded px-3 py-2 text-ui-text-main placeholder-ui-text-dim focus:outline-none focus:ring-2 focus:ring-system-focus focus:border-system-focus"
+                className="flex-1 bg-obsidian-core border border-ui-border-soft rounded px-3 py-2 text-ash-light placeholder-ui-text-dim focus:outline-none focus:ring-2 focus:ring-strategic-blue focus:border-strategic-blue"
                 placeholder="Добавить участника"
                 aria-label="Введите имя участника и нажмите Enter или кнопку Добавить"
               />
               <button
                 type="button"
                 onClick={addParticipant}
-                className="px-4 py-2 bg-bg-secondary border border-system-focus text-system-focus rounded hover:border-system-focus/70 hover:bg-bg-panel focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-system-focus transition-colors"
+                className="px-4 py-2 bg-obsidian-core border border-strategic-blue text-strategic-blue rounded hover:border-strategic-blue/70 hover:bg-bg-panel focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-strategic-blue transition-colors"
                 aria-label="Добавить участника"
               >
                 Добавить
@@ -180,13 +180,13 @@ export default function NewEntryPage() {
               {formData.participants.map((p, i) => (
                 <span
                   key={i}
-                  className="inline-flex items-center gap-1 bg-bg-secondary border border-system-focus/30 text-system-focus px-3 py-1 rounded"
+                  className="inline-flex items-center gap-1 bg-obsidian-core border border-strategic-blue/30 text-strategic-blue px-3 py-1 rounded"
                 >
                   {p}
                   <button
                     type="button"
                     onClick={() => removeParticipant(i)}
-                    className="text-system-focus hover:text-system-focus/80 focus:outline-none focus:ring-2 focus:ring-system-focus rounded"
+                    className="text-strategic-blue hover:text-strategic-blue/80 focus:outline-none focus:ring-2 focus:ring-strategic-blue rounded"
                     aria-label={`Удалить участника ${p}`}
                   >
                     ×
@@ -198,7 +198,7 @@ export default function NewEntryPage() {
 
           {/* Теги */}
           <div>
-            <label htmlFor="tag-input" className="block text-sm font-medium mb-2 text-ui-text-main">Теги</label>
+            <label htmlFor="tag-input" className="block text-sm font-medium mb-2 text-ash-light">Теги</label>
             <div className="flex gap-2 mb-2">
               <input
                 id="tag-input"
@@ -206,14 +206,14 @@ export default function NewEntryPage() {
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                className="flex-1 bg-bg-secondary border border-ui-border-soft rounded px-3 py-2 text-ui-text-main placeholder-ui-text-dim focus:outline-none focus:ring-2 focus:ring-system-focus focus:border-system-focus"
+                className="flex-1 bg-obsidian-core border border-ui-border-soft rounded px-3 py-2 text-ash-light placeholder-ui-text-dim focus:outline-none focus:ring-2 focus:ring-strategic-blue focus:border-strategic-blue"
                 placeholder="Добавить тег"
                 aria-label="Введите тег и нажмите Enter или кнопку Добавить"
               />
               <button
                 type="button"
                 onClick={addTag}
-                className="px-4 py-2 bg-bg-secondary border border-ui-border-strong text-ui-text-muted rounded hover:border-ui-border-strong hover:text-ui-text-main focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-system-focus transition-colors"
+                className="px-4 py-2 bg-obsidian-core border border-ui-border-strong text-ui-text-muted rounded hover:border-ui-border-strong hover:text-ash-light focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-strategic-blue transition-colors"
                 aria-label="Добавить тег"
               >
                 Добавить
@@ -223,13 +223,13 @@ export default function NewEntryPage() {
               {formData.tags.map((t, i) => (
                 <span
                   key={i}
-                  className="inline-flex items-center gap-1 bg-bg-secondary border border-ui-border-soft text-ui-text-muted px-3 py-1 rounded"
+                  className="inline-flex items-center gap-1 bg-obsidian-core border border-ui-border-soft text-ui-text-muted px-3 py-1 rounded"
                 >
                   {t}
                   <button
                     type="button"
                     onClick={() => removeTag(i)}
-                    className="text-ui-text-dim hover:text-ui-text-muted focus:outline-none focus:ring-2 focus:ring-system-focus rounded"
+                    className="text-ash-light opacity-50 hover:text-ui-text-muted focus:outline-none focus:ring-2 focus:ring-strategic-blue rounded"
                     aria-label={`Удалить тег ${t}`}
                   >
                     ×
@@ -244,7 +244,7 @@ export default function NewEntryPage() {
             <button
               type="submit"
               disabled={loading || !formData.text.trim()}
-              className="px-6 py-2 bg-bg-secondary border border-system-focus text-system-focus rounded hover:border-system-focus/70 hover:bg-bg-panel disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-system-focus transition-colors"
+              className="px-6 py-2 bg-obsidian-core border border-strategic-blue text-strategic-blue rounded hover:border-strategic-blue/70 hover:bg-bg-panel disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-strategic-blue transition-colors"
               aria-disabled={loading || !formData.text.trim()}
             >
               {loading ? 'Создание...' : 'Создать'}
@@ -252,7 +252,7 @@ export default function NewEntryPage() {
             <button
               type="button"
               onClick={() => router.back()}
-              className="px-6 py-2 bg-bg-secondary border border-ui-border-soft text-ui-text-muted rounded hover:border-ui-border-strong hover:text-ui-text-main focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-system-focus transition-colors"
+              className="px-6 py-2 bg-obsidian-core border border-ui-border-soft text-ui-text-muted rounded hover:border-ui-border-strong hover:text-ash-light focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-strategic-blue transition-colors"
             >
               Отмена
             </button>

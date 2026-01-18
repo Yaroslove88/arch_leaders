@@ -1,7 +1,9 @@
-import { Controller, Get, Param, Inject, InternalServerErrorException } from '@nestjs/common';
+import { Controller, Get, Param, Inject, InternalServerErrorException, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 import { BuildsService } from './builds.service';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { JwtPayload } from '../auth/auth.service';
 
 @ApiTags('builds')
 @Controller('builds')
@@ -21,11 +23,13 @@ export class BuildsController {
   }
 
   @Get('current')
+  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Определить текущий билд пользователя' })
   @ApiResponse({ status: 200, description: 'Статусы билдов' })
-  async getCurrentBuild(@CurrentUser('sub') userId?: string) {
-    return this.buildsService.detectCurrentBuild(userId);
+  @ApiResponse({ status: 401, description: 'Не авторизован' })
+  async getCurrentBuild(@CurrentUser() user: JwtPayload) {
+    return this.buildsService.detectCurrentBuild(user.sub);
   }
 
   @Get(':id')

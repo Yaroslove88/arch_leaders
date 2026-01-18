@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { JobsService, type ClaimedJob } from './jobs.service';
 import { AnalyzeEntryHandler } from './job-handlers/analyze-entry.handler';
+import { DegradeExperienceHandler } from './job-handlers/degrade-experience.handler';
 
 /**
  * Воркер для обработки очереди задач
@@ -17,6 +18,7 @@ export class JobsWorkerService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly jobsService: JobsService,
     private readonly analyzeEntryHandler: AnalyzeEntryHandler,
+    private readonly degradeExperienceHandler: DegradeExperienceHandler,
   ) {}
 
   onModuleInit() {
@@ -133,6 +135,10 @@ export class JobsWorkerService implements OnModuleInit, OnModuleDestroy {
       case 'backfill':
         // TODO: реализовать позже
         throw new Error('backfill handler not implemented yet');
+
+      case 'degrade_experience':
+        await this.degradeExperienceHandler.handle();
+        break;
 
       default:
         throw new Error(`Unknown job type: ${job.jobType}`);

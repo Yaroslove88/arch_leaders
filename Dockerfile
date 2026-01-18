@@ -1,5 +1,5 @@
 # ===== BUILD STAGE =====
-FROM node:20-alpine AS builder
+FROM node:22-slim AS builder
 
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@10.26.2 --activate
@@ -34,15 +34,15 @@ ENV NEXT_PUBLIC_TELEGRAM_BOT_USERNAME=${NEXT_PUBLIC_TELEGRAM_BOT_USERNAME}
 RUN pnpm --filter @leadership-architect/web build
 
 # ===== PRODUCTION STAGE =====
-FROM node:20-alpine AS runner
+FROM node:22-slim AS runner
 
 RUN corepack enable && corepack prepare pnpm@10.26.2 --activate
 
 WORKDIR /app
 
-# Create non-root user
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs
+# Create non-root user (Debian syntax for slim image)
+RUN groupadd --system --gid 1001 nodejs && \
+    useradd --system --uid 1001 --gid nodejs nextjs
 
 # Copy built application
 COPY --from=builder /app/apps/web/.next/standalone ./

@@ -46,7 +46,7 @@ export default function SessionPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-bg-main p-8">
+      <main className="min-h-screen bg-obsidian-core p-8">
         <div className="max-w-4xl mx-auto">
           <div className="text-center text-ui-text-muted">Загрузка...</div>
         </div>
@@ -56,7 +56,7 @@ export default function SessionPage() {
 
   if (!session) {
     return (
-      <main className="min-h-screen bg-bg-main p-8">
+      <main className="min-h-screen bg-obsidian-core p-8">
         <div className="max-w-4xl mx-auto">
           <div className="text-center text-system-critical">Анализ не найден</div>
         </div>
@@ -65,18 +65,18 @@ export default function SessionPage() {
   }
 
   return (
-    <main className="min-h-screen bg-bg-main p-8">
+    <main className="min-h-screen bg-obsidian-core p-8">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
-          <Link href="/sessions" className="text-system-focus hover:text-system-focus/80 mb-4 inline-block transition-colors">
+          <Link href="/sessions" className="text-strategic-blue hover:text-strategic-blue/80 mb-4 inline-block transition-colors">
             ← Назад к анализам
           </Link>
-          <h1 className="text-3xl font-bold mb-2 text-ui-text-main">Результаты анализа</h1>
+          <h1 className="text-3xl font-bold mb-2 text-ash-light">Результаты анализа</h1>
           <div className="flex items-center gap-4 flex-wrap">
             <span
               className={`px-3 py-1 rounded text-sm border ${
                 session.status === 'done'
-                  ? 'bg-bg-secondary border-system-growth text-system-growth'
+                  ? 'bg-bg-secondary border-sage-green text-sage-green'
                   : session.status === 'analyzing'
                   ? 'bg-bg-secondary border-system-warning text-system-warning'
                   : 'bg-bg-secondary border-ui-border-soft text-ui-text-muted'
@@ -90,7 +90,7 @@ export default function SessionPage() {
               <button
                 onClick={handleAnalyze}
                 disabled={analyzing}
-                className="px-4 py-2 bg-system-focus text-ui-text-main rounded hover:bg-system-focus/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:ring-2 focus:ring-system-focus focus:ring-offset-2 focus:ring-offset-bg-main"
+                className="px-4 py-2 bg-system-focus text-ash-light rounded hover:bg-system-focus/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:ring-2 focus:ring-system-focus focus:ring-offset-2 focus:ring-offset-bg-main"
               >
                 {analyzing ? 'Анализ...' : 'Запустить анализ'}
               </button>
@@ -99,18 +99,18 @@ export default function SessionPage() {
         </div>
 
         {/* Сводка */}
-        <section className="bg-bg-panel border border-ui-border-soft rounded-lg shadow-panel p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4 text-ui-text-main">Сводка</h2>
-          <p className="text-ui-text-main whitespace-pre-wrap">{session.summary}</p>
+        <section className="bg-graphite-structure border border-ui-border-soft rounded-lg shadow-panel p-6 mb-6">
+          <h2 className="text-xl font-semibold mb-4 text-ash-light">Сводка</h2>
+          <p className="text-ash-light whitespace-pre-wrap">{session.summary}</p>
         </section>
 
         {/* Темы */}
         {session.themes.length > 0 && (
-          <section className="bg-bg-panel border border-ui-border-soft rounded-lg shadow-panel p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4 text-ui-text-main">Темы</h2>
+          <section className="bg-graphite-structure border border-ui-border-soft rounded-lg shadow-panel p-6 mb-6">
+            <h2 className="text-xl font-semibold mb-4 text-ash-light">Темы</h2>
             <div className="flex flex-wrap gap-2">
               {session.themes.map((theme, i) => (
-                <span key={i} className="px-3 py-1 bg-bg-secondary border border-system-focus text-system-focus rounded">
+                <span key={i} className="px-3 py-1 bg-bg-secondary border border-strategic-blue text-strategic-blue rounded">
                   {theme}
                 </span>
               ))}
@@ -120,11 +120,11 @@ export default function SessionPage() {
 
         {/* Паттерны */}
         {session.patterns.length > 0 && (
-          <section className="bg-bg-panel border border-ui-border-soft rounded-lg shadow-panel p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4 text-ui-text-main">Паттерны</h2>
+          <section className="bg-graphite-structure border border-ui-border-soft rounded-lg shadow-panel p-6 mb-6">
+            <h2 className="text-xl font-semibold mb-4 text-ash-light">Паттерны</h2>
             <ul className="list-disc list-inside space-y-1">
               {session.patterns.map((pattern, i) => (
-                <li key={i} className="text-ui-text-main">{pattern}</li>
+                <li key={i} className="text-ash-light">{pattern}</li>
               ))}
             </ul>
           </section>
@@ -132,11 +132,11 @@ export default function SessionPage() {
 
         {/* Напряжения */}
         {session.tensions.length > 0 && (
-          <section className="bg-bg-panel border border-ui-border-soft rounded-lg shadow-panel p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4 text-ui-text-main">Напряжения</h2>
+          <section className="bg-graphite-structure border border-ui-border-soft rounded-lg shadow-panel p-6 mb-6">
+            <h2 className="text-xl font-semibold mb-4 text-ash-light">Напряжения</h2>
             <ul className="list-disc list-inside space-y-1">
               {session.tensions.map((tension, i) => (
-                <li key={i} className="text-ui-text-main">{tension}</li>
+                <li key={i} className="text-ash-light">{tension}</li>
               ))}
             </ul>
           </section>
@@ -144,12 +144,12 @@ export default function SessionPage() {
 
         {/* Способности */}
         {session.ability_signals_json && (session.ability_signals_json as any[]).length > 0 && (
-          <section className="bg-bg-panel border border-ui-border-soft rounded-lg shadow-panel p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4 text-ui-text-main">Проявленные способности</h2>
+          <section className="bg-graphite-structure border border-ui-border-soft rounded-lg shadow-panel p-6 mb-6">
+            <h2 className="text-xl font-semibold mb-4 text-ash-light">Проявленные способности</h2>
             <div className="space-y-3">
               {(session.ability_signals_json as any[]).map((signal, i) => (
-                <div key={i} className="border-l-4 border-system-focus pl-4 py-2 bg-bg-secondary/30 rounded-r">
-                  <div className="text-sm text-ui-text-main">{signal.signal}</div>
+                <div key={i} className="border-l-4 border-strategic-blue pl-4 py-2 bg-bg-secondary/30 rounded-r">
+                  <div className="text-sm text-ash-light">{signal.signal}</div>
                 </div>
               ))}
             </div>
@@ -158,13 +158,13 @@ export default function SessionPage() {
 
         {/* Инсайты */}
         {session.insights_json && (session.insights_json as any[]).length > 0 && (
-          <section className="bg-bg-panel border border-ui-border-soft rounded-lg shadow-panel p-6">
-            <h2 className="text-xl font-semibold mb-4 text-ui-text-main">Инсайты</h2>
+          <section className="bg-graphite-structure border border-ui-border-soft rounded-lg shadow-panel p-6">
+            <h2 className="text-xl font-semibold mb-4 text-ash-light">Инсайты</h2>
             <div className="space-y-4">
               {(session.insights_json as any[]).map((insight, i) => (
-                <div key={i} className="border-l-4 border-system-growth pl-4 py-2 bg-bg-secondary/30 rounded-r">
+                <div key={i} className="border-l-4 border-sage-green pl-4 py-2 bg-bg-secondary/30 rounded-r">
                   {insight.title && (
-                    <div className="font-semibold mb-1 text-ui-text-main">{insight.title}</div>
+                    <div className="font-semibold mb-1 text-ash-light">{insight.title}</div>
                   )}
                   <div className="text-ui-text-muted">{insight.description || insight.text}</div>
                 </div>

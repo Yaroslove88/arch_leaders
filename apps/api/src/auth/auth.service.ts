@@ -1,7 +1,8 @@
-import { Injectable, UnauthorizedException, ConflictException, BadRequestException, Inject, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, BadRequestException, Inject, InternalServerErrorException, forwardRef } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
+import { UserInitializationService } from '../user/user-initialization.service';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -25,6 +26,8 @@ export class AuthService {
     private readonly configService: ConfigService,
     @Inject(PrismaService)
     private readonly prisma: PrismaService,
+    @Inject(forwardRef(() => UserInitializationService))
+    private readonly userInitializationService: UserInitializationService,
   ) {
     if (!this.jwtService) {
       throw new InternalServerErrorException('JwtService injection failed');
@@ -154,6 +157,20 @@ export class AuthService {
     const isPasswordValid = await bcrypt.compare(loginDto.password, user.password);
     if (!isPasswordValid) {
       throw new UnauthorizedException('Неверный Telegram username или пароль');
+    }
+
+    // Проверяем, нужна ли инициализация пользователя
+    if (this.userInitializationService) {
+      try {
+        const needsInit = await this.userInitializationService.needsInitialization(user.id);
+        if (needsInit) {
+          // Инициализируем пользователя синхронно (блокируем ответ до завершения)
+          await this.userInitializationService.initializeUser(user.id);
+        }
+      } catch (error) {
+        // Логируем ошибку, но не блокируем логин
+        console.error('Error initializing user:', error);
+      }
     }
 
     // Генерируем токен
@@ -444,6 +461,7 @@ export class AuthService {
     });
 
     // Если пользователь не найден, создаем нового
+    const isNewUser = !user;
     if (!user) {
       // Генерируем случайный пароль (пользователь не будет его использовать при OAuth)
       const randomPassword = crypto.randomBytes(32).toString('hex');
@@ -463,6 +481,19 @@ export class AuthService {
         where: { id: user.id },
         data: { last_seen_at: new Date() },
       });
+    }
+
+    // Инициализируем нового пользователя или проверяем инициализацию существующего
+    if (this.userInitializationService) {
+      try {
+        if (isNewUser || await this.userInitializationService.needsInitialization(user.id)) {
+          // Инициализируем пользователя синхронно (блокируем ответ до завершения)
+          await this.userInitializationService.initializeUser(user.id);
+        }
+      } catch (error) {
+        // Логируем ошибку, но не блокируем логин
+        console.error('Error initializing user:', error);
+      }
     }
 
     // Генерируем токен

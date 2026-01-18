@@ -1,6 +1,7 @@
 import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
 import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -19,6 +20,11 @@ import { NodesModule } from './nodes/nodes.module';
 import { BuildsModule } from './builds/builds.module';
 import { AdminModule } from './admin/admin.module';
 import { JobsModule } from './jobs/jobs.module';
+import { AchievementsModule } from './achievements/achievements.module';
+import { RetentionModule } from './retention/retention.module';
+import { SupportModule } from './support/support.module';
+import { CoreLoopModule } from './core-loop/core-loop.module';
+import { MetricsModule } from './metrics/metrics.module';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { HealthController } from './common/health/health.controller';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
@@ -29,10 +35,11 @@ import { validate } from './config/env.validation';
     // Глобальные модули должны быть первыми
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: ['.env', 'apps/api/.env'], // Проверяем оба возможных пути
       validate,
     }),
     PrismaModule, // Глобальный модуль
+    ScheduleModule.forRoot(), // Планировщик задач
     ThrottlerModule.forRoot([
       {
         ttl: 60000, // 1 минута
@@ -54,6 +61,11 @@ import { validate } from './config/env.validation';
     BuildsModule,
     AdminModule, // Админ-панель
     JobsModule, // Job queue и worker
+    AchievementsModule, // Система ачивок
+    RetentionModule, // Система ретеншена и серий
+    SupportModule, // Поддержка при застревании
+    CoreLoopModule, // Unified Core Loop API
+    MetricsModule, // Core Loop metrics
   ],
   controllers: [AppController, HealthController],
   providers: [

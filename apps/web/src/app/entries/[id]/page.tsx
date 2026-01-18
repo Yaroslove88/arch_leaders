@@ -43,14 +43,26 @@ export default function EntryPage() {
     return sessionsData.sessions.find((s: Session) => s.entry_id === entryId) || null;
   }, [sessionsData, entryId]);
 
-  // Находим связанные квесты (по узлам из сессии)
-  const relatedQuests = useMemo(() => {
+  // Находим квесты, рождённые из этой сессии
+  const bornQuests = useMemo(() => {
     if (!session || !questsData?.quests) return [];
-    const affectedNodeIds = session.ability_signals_json?.map((signal: any) => signal.node_id).filter(Boolean) || [];
+    // Только квесты, которые созданы из этой сессии
     return questsData.quests.filter((quest: any) => 
-      quest.linked_nodes?.some((nodeId: string) => affectedNodeIds.includes(nodeId))
+      quest.session_id === session.id
     );
   }, [session, questsData]);
+  
+  // Рекомендуемые квесты (по узлам из сессии, но не рождённые здесь и не завершённые)
+  const recommendedQuests = useMemo(() => {
+    if (!session || !questsData?.quests) return [];
+    const affectedNodeIds = session.ability_signals_json?.map((signal: any) => signal.node_id).filter(Boolean) || [];
+    const bornQuestIds = bornQuests.map(q => q.id);
+    return questsData.quests.filter((quest: any) => 
+      !bornQuestIds.includes(quest.id) &&
+      quest.status !== 'done' && // Исключаем завершённые
+      quest.linked_nodes?.some((nodeId: string) => affectedNodeIds.includes(nodeId))
+    ).slice(0, 3);
+  }, [session, questsData, bornQuests]);
 
   // Находим затронутые узлы и ветки
   // Пробуем несколько способов извлечения node_id из ability_signals_json
@@ -123,7 +135,7 @@ export default function EntryPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-bg-main p-8">
+      <main className="min-h-screen bg-obsidian-core p-4 md:p-8">
         <div className="max-w-4xl mx-auto">
           <div className="text-center text-ui-text-muted">Загрузка...</div>
         </div>
@@ -133,40 +145,41 @@ export default function EntryPage() {
 
   if (!entry) {
     return (
-      <main className="min-h-screen bg-bg-main p-8">
+      <main className="min-h-screen bg-obsidian-core p-4 md:p-8">
         <div className="max-w-4xl mx-auto">
-          <div className="text-center text-system-critical">Запись не найдена</div>
+          <div className="text-center text-tension-red">Запись не найдена</div>
         </div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-bg-main p-8">
+    <main className="min-h-screen bg-obsidian-core p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
+        {/* Навигация */}
+        <Link href="/traces" className="text-sm text-strategic-blue hover:underline mb-4 inline-block">
+          ← К журналу
+        </Link>
+
+        {/* Заголовок */}
         <div className="mb-6">
-          <Link href="/entries" className="text-system-focus hover:text-system-focus/80 mb-4 inline-block transition-colors">
-            ← Назад к ситуациям
-          </Link>
-          <h1 className="text-3xl font-bold mb-4 text-ui-text-main">Разбор ситуации</h1>
-          <div className="flex items-center gap-4 flex-wrap">
-            <span className="px-3 py-1 bg-bg-secondary border border-ui-border-soft text-ui-text-main rounded text-sm">
-              {entry.type === 'situation' ? 'Ситуация' : 
-               entry.type === 'reflection' ? 'Рефлексия' : 
-               entry.type === 'feedback' ? 'Обратная связь' : entry.type}
+          <div className="flex items-center gap-3 mb-2">
+            <span className="text-xl">📝</span>
+            <h1 className="text-xl font-bold text-ash-light">Ситуация</h1>
+            <span className="text-sm text-ui-text-muted">
+              {new Date(entry.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}
             </span>
+          </div>
+          <div className="flex items-center gap-3">
             {session ? (
-              <Link
-                href={`/sessions/${session.id}`}
-                className="px-3 py-1 bg-bg-secondary border border-system-growth text-system-growth rounded text-sm hover:bg-bg-hover hover:border-system-growth/80 transition-colors"
-              >
+              <span className="text-xs px-2 py-1 bg-sage-green/20 text-sage-green rounded">
                 ✓ Проанализировано
-              </Link>
+              </span>
             ) : (
               <button
                 onClick={handleAnalyze}
                 disabled={analyzing}
-                className="px-4 py-2 bg-system-focus text-ui-text-main rounded hover:bg-system-focus/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:ring-2 focus:ring-system-focus focus:ring-offset-2 focus:ring-offset-bg-main"
+                className="px-4 py-2 bg-strategic-blue text-white rounded-lg text-sm font-medium hover:bg-strategic-blue/90 disabled:opacity-50 transition-colors"
               >
                 {analyzing ? 'Анализ...' : 'Проанализировать'}
               </button>
@@ -176,69 +189,117 @@ export default function EntryPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Основной контент */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4">
             {/* Текст ситуации */}
-            <section className="bg-bg-panel border border-ui-border-soft rounded-lg shadow-panel p-6">
-              <h2 className="text-xl font-semibold mb-4 text-ui-text-main">Описание ситуации</h2>
-              <p className="text-ui-text-main whitespace-pre-wrap">{entry.text}</p>
+            <section className="bg-graphite-structure border border-ui-border-soft rounded-lg p-5">
+              <div className="bg-obsidian-core rounded-lg p-4 border-l-4 border-strategic-blue">
+                <p className="text-ash-light leading-relaxed whitespace-pre-wrap">
+                  "{entry.text}"
+                </p>
+              </div>
             </section>
 
             {/* Результаты анализа */}
             {session && (
               <>
-                {/* Сводка */}
-                {session.summary && (
-                  <section className="bg-bg-panel border border-ui-border-soft rounded-lg shadow-panel p-6">
-                    <h2 className="text-xl font-semibold mb-4 text-ui-text-main">Сводка анализа</h2>
-                    <p className="text-ui-text-main whitespace-pre-wrap">{session.summary}</p>
-                  </section>
-                )}
-
-                {/* Паттерны */}
-                {session.patterns && session.patterns.length > 0 && (
-                  <section className="bg-bg-panel border border-ui-border-soft rounded-lg shadow-panel p-6">
-                    <h2 className="text-xl font-semibold mb-4 text-ui-text-main">Паттерны</h2>
-                    <ul className="space-y-2">
-                      {session.patterns.map((pattern, i) => (
-                        <li key={i} className="flex items-start gap-2 text-ui-text-main">
-                          <span className="text-system-focus mt-1">•</span>
-                          <span>{pattern}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </section>
-                )}
+                {/* Что увидела система */}
+                <section className="bg-graphite-structure border border-ui-border-soft rounded-lg p-5">
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="text-lg">🔍</span>
+                    <h2 className="text-base font-semibold text-ash-light">Что увидела система</h2>
+                  </div>
+                  
+                  {/* Паттерны */}
+                  {session.patterns && session.patterns.length > 0 && (
+                    <div className="mb-4">
+                      <p className="text-xs text-ui-text-muted mb-2">Паттерны:</p>
+                      <div className="space-y-2">
+                        {session.patterns.slice(0, 3).map((pattern, i) => (
+                          <div key={i} className="flex items-start gap-2 text-sm text-ash-light">
+                            <span className="text-strategic-blue">•</span>
+                            <span>{pattern}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Сводка как инсайт */}
+                  {session.summary && (
+                    <div className="bg-obsidian-core border-l-4 border-sage-green rounded-r-lg p-4 mt-4">
+                      <div className="flex items-start gap-2">
+                        <span>💡</span>
+                        <div>
+                          <p className="text-xs text-ui-text-muted mb-1">Инсайт</p>
+                          <p className="text-sm text-ash-light font-medium">{session.summary}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </section>
 
                 {/* Что это изменило */}
                 {session.insights_json && session.insights_json.length > 0 && (
-                  <section className="bg-bg-panel border border-ui-border-soft rounded-lg shadow-panel p-6">
-                    <h2 className="text-xl font-semibold mb-4 text-ui-text-main">Что это изменило</h2>
+                  <section className="bg-graphite-structure border border-ui-border-soft rounded-lg p-5">
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className="text-lg">✨</span>
+                      <h2 className="text-base font-semibold text-ash-light">Что это изменило</h2>
+                    </div>
                     <div className="space-y-3">
                       {session.insights_json.map((insight: any, i: number) => (
-                        <div key={i} className="border-l-4 border-system-growth pl-4 py-2 bg-bg-secondary/30 rounded-r">
-                          {insight.title && (
-                            <div className="font-semibold mb-1 text-ui-text-main">{insight.title}</div>
-                          )}
-                          <div className="text-ui-text-muted">{insight.description || insight.text}</div>
+                        <div key={i} className="flex items-start gap-3 p-3 bg-obsidian-core rounded-lg">
+                          <span className="w-2 h-2 rounded-full bg-sage-green mt-1.5 flex-shrink-0" />
+                          <div>
+                            {insight.title && (
+                              <p className="text-sm font-medium text-ash-light mb-0.5">{insight.title}</p>
+                            )}
+                            <p className="text-sm text-ui-text-muted">{insight.description || insight.text}</p>
+                          </div>
                         </div>
                       ))}
                     </div>
                   </section>
                 )}
 
-                {/* Связанные квесты */}
-                {relatedQuests.length > 0 && (
-                  <section className="bg-bg-panel border border-ui-border-soft rounded-lg shadow-panel p-6">
-                    <h2 className="text-xl font-semibold mb-4 text-ui-text-main">Родившиеся квесты</h2>
-                    <div className="space-y-3">
-                      {relatedQuests.map((quest: any) => (
+                {/* Родившиеся квесты - только те, что созданы из этой сессии */}
+                {bornQuests.length > 0 && (
+                  <section className="bg-graphite-structure border border-ui-border-soft rounded-lg p-5">
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className="text-lg">⚔️</span>
+                      <h2 className="text-base font-semibold text-ash-light">Родившиеся квесты</h2>
+                    </div>
+                    <div className="space-y-2">
+                      {bornQuests.map((quest: any) => (
                         <Link
                           key={quest.id}
                           href={`/quests/${quest.id}`}
-                          className="block border-l-4 border-system-focus pl-4 py-3 bg-bg-secondary rounded hover:bg-bg-panel transition-colors"
+                          className="block p-3 bg-obsidian-core rounded-lg hover:bg-obsidian-core transition-colors border-l-2 border-strategic-blue"
                         >
-                          <h3 className="font-semibold text-ui-text-main mb-1">{quest.title}</h3>
-                          <p className="text-sm text-ui-text-muted line-clamp-2">{quest.description}</p>
+                          <h3 className="text-sm font-medium text-ash-light mb-1">{quest.title}</h3>
+                          <p className="text-xs text-ui-text-muted line-clamp-1">{quest.description}</p>
+                        </Link>
+                      ))}
+                    </div>
+                  </section>
+                )}
+                
+                {/* Рекомендуемые квесты - связанные по узлам */}
+                {bornQuests.length === 0 && recommendedQuests.length > 0 && (
+                  <section className="bg-graphite-structure border border-ui-border-soft rounded-lg p-5">
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className="text-lg">💡</span>
+                      <h2 className="text-base font-semibold text-ash-light">Рекомендуемые квесты</h2>
+                    </div>
+                    <p className="text-xs text-ui-text-muted mb-3">По затронутым способностям</p>
+                    <div className="space-y-2">
+                      {recommendedQuests.map((quest: any) => (
+                        <Link
+                          key={quest.id}
+                          href={`/quests/${quest.id}`}
+                          className="block p-3 bg-obsidian-core rounded-lg hover:bg-obsidian-core transition-colors"
+                        >
+                          <h3 className="text-sm font-medium text-ash-light mb-1">{quest.title}</h3>
+                          <p className="text-xs text-ui-text-muted line-clamp-1">{quest.description}</p>
                         </Link>
                       ))}
                     </div>
@@ -248,110 +309,105 @@ export default function EntryPage() {
             )}
           </div>
 
-          {/* Боковая панель */}
-          <div className="space-y-6">
-            {/* Мини-карта архитектуры */}
-            {session && (
-              <section className="bg-bg-panel border border-ui-border-soft rounded-lg shadow-panel p-6 sticky top-4">
-                <h2 className="text-xl font-semibold mb-4 text-ui-text-main">Затронутая архитектура</h2>
-                
-                {affectedNodes.length === 0 && affectedBranches.length === 0 ? (
-                  <div className="text-sm text-ui-text-muted">
-                    <p>Архитектурные связи будут отображены после анализа ситуации.</p>
-                    {session.ability_signals_json && session.ability_signals_json.length > 0 && (
-                      <p className="mt-2 text-xs">
-                        Обнаружено {session.ability_signals_json.length} сигналов способностей, но связи с узлами не установлены.
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <>
-                
-                {/* Затронутые ветки */}
-                {affectedBranches.length > 0 && (
-                  <div className="mb-4">
-                    <h3 className="text-sm font-medium text-ui-text-muted mb-2">Ветки:</h3>
-                    <div className="space-y-2">
-                      {affectedBranches.map((branch: any) => (
-                        <Link
-                          key={branch.branch_id}
-                          href={`/tree?branch=${branch.branch_id}`}
-                          className="block px-3 py-2 bg-bg-secondary border border-system-focus/30 rounded hover:border-system-focus transition-colors text-sm text-ui-text-main"
-                        >
-                          {branch.name || branch.branch_id}
-                        </Link>
-                      ))}
+          {/* Боковая панель - Архитектура */}
+          <div className="space-y-4">
+            {/* Затронутая архитектура */}
+            <section className="bg-graphite-structure border border-ui-border-soft rounded-lg p-5 sticky top-4">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-lg">🌳</span>
+                <h2 className="text-base font-semibold text-ash-light">Архитектура</h2>
+              </div>
+              
+              {!session ? (
+                <p className="text-sm text-ui-text-muted">
+                  Архитектурные связи появятся после анализа
+                </p>
+              ) : affectedNodes.length === 0 && affectedBranches.length === 0 ? (
+                <p className="text-sm text-ui-text-muted">
+                  Связи с узлами не установлены
+                </p>
+              ) : (
+                <>
+                  {/* Ветки */}
+                  {affectedBranches.length > 0 && (
+                    <div className="mb-4">
+                      <p className="text-xs text-ash-light opacity-50 mb-2">Затронутые ветки</p>
+                      <div className="space-y-1">
+                        {affectedBranches.map((branch: any) => (
+                          <Link
+                            key={branch.branch_id}
+                            href={`/architecture?branch=${branch.branch_id}`}
+                            className="flex items-center gap-2 px-3 py-2 bg-obsidian-core rounded-lg text-sm text-ash-light hover:bg-obsidian-core transition-colors"
+                          >
+                            <span className="text-strategic-blue">├─</span>
+                            {branch.name || branch.branch_id}
+                          </Link>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* Затронутые узлы */}
-                {affectedNodes.length > 0 && (
-                  <div>
-                    <h3 className="text-sm font-medium text-ui-text-muted mb-2">Узлы ({affectedNodes.length}):</h3>
-                    <div className="space-y-2 max-h-64 overflow-y-auto">
-                      {affectedNodes.map((node: any) => (
-                        <Link
-                          key={node.node_id}
-                          href={`/tree?node=${node.node_id}`}
-                          className="block px-3 py-2 bg-bg-secondary border border-system-stable/30 rounded hover:border-system-stable transition-colors text-sm text-ui-text-main"
-                        >
-                          <div className="font-medium">{node.name || node.node_id}</div>
-                          <div className="text-xs text-ui-text-muted mt-1">
-                            {node.state === 'integrated' ? 'Интегрировано' :
-                             node.state === 'unlocked' ? 'Разблокировано' :
-                             node.state === 'available' ? 'Доступно' : node.state}
-                          </div>
-                        </Link>
+                  {/* Узлы */}
+                  {affectedNodes.length > 0 && (
+                    <div>
+                      <p className="text-xs text-ash-light opacity-50 mb-2">Затронутые узлы</p>
+                      <div className="space-y-1 max-h-48 overflow-y-auto">
+                        {affectedNodes.map((node: any) => (
+                          <Link
+                            key={node.node_id}
+                            href={`/architecture?node=${node.node_id}`}
+                            className="flex items-center gap-2 px-3 py-2 bg-obsidian-core rounded-lg text-sm hover:bg-obsidian-core transition-colors"
+                          >
+                            <span className="text-sage-green">└─</span>
+                            <span className="text-ash-light">{node.name || node.node_id}</span>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Рекомендация - показывается всегда, если есть квесты, независимо от наличия узлов/веток */}
+              {session && (bornQuests.length > 0 || recommendedQuests.length > 0) && (
+                <div className="mt-4 pt-4 border-t border-ui-border-soft">
+                  <p className="text-xs text-ash-light opacity-50 mb-2">🎯 Рекомендация</p>
+                  <Link
+                    href={`/quests/${(bornQuests[0] || recommendedQuests[0]).id}`}
+                    className="block p-2 bg-strategic-blue/10 border border-strategic-blue/30 rounded-lg text-sm text-strategic-blue hover:bg-strategic-blue/20 transition-colors"
+                  >
+                    {(bornQuests[0] || recommendedQuests[0]).title} →
+                  </Link>
+                </div>
+              )}
+            </section>
+
+            {/* Метаданные (компактно) */}
+            {(entry.participants?.length || entry.tags?.length) && (
+              <section className="bg-graphite-structure border border-ui-border-soft rounded-lg p-5">
+                <p className="text-xs text-ash-light opacity-50 mb-3">Метаданные</p>
+                <div className="space-y-2">
+                  {entry.participants && entry.participants.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {entry.participants.map((participant, i) => (
+                        <span key={i} className="px-2 py-0.5 bg-obsidian-core text-xs text-ui-text-muted rounded">
+                          @{participant}
+                        </span>
                       ))}
                     </div>
-                  </div>
-                )}
-                  </>
-                )}
+                  )}
+                  {entry.tags && entry.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {entry.tags.map((tag, i) => (
+                        <span key={i} className="px-2 py-0.5 bg-obsidian-core text-xs text-ui-text-muted rounded">
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </section>
             )}
-
-            {/* Метаданные */}
-            <section className="bg-bg-panel border border-ui-border-soft rounded-lg shadow-panel p-6">
-              <h2 className="text-xl font-semibold mb-4 text-ui-text-main">Информация</h2>
-              <div className="space-y-3 text-sm">
-                {entry.participants && entry.participants.length > 0 && (
-                  <div>
-                    <span className="font-medium text-ui-text-main">Участники:</span>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {entry.participants.map((participant, i) => (
-                        <span key={i} className="px-2 py-1 bg-bg-secondary border border-system-focus/30 text-system-focus rounded text-xs">
-                          {participant}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {entry.tags && entry.tags.length > 0 && (
-                  <div>
-                    <span className="font-medium text-ui-text-main">Теги:</span>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {entry.tags.map((tag, i) => (
-                        <span key={i} className="px-2 py-1 bg-bg-secondary border border-ui-border-soft text-ui-text-main rounded text-xs">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                <div className="pt-3 border-t border-ui-border-soft space-y-1 text-ui-text-muted">
-                  <div>
-                    <span className="font-semibold text-ui-text-main">Создано:</span>{' '}
-                    {new Date(entry.created_at).toLocaleString('ru-RU')}
-                  </div>
-                  <div>
-                    <span className="font-semibold text-ui-text-main">Обновлено:</span>{' '}
-                    {new Date(entry.updated_at).toLocaleString('ru-RU')}
-                  </div>
-                </div>
-              </div>
-            </section>
           </div>
         </div>
       </div>
