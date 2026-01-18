@@ -38,6 +38,27 @@ else
   echo "DIAG entrypoint: migrate deploy DONE ts=$(date -Iseconds)"
 fi
 
+# Hotfix: ensure required columns exist even if migrations are blocked (P3009).
+# This is idempotent and matches prisma migration 20250115000000_add_experience_system_fields.
+echo "DIAG entrypoint: db hotfix START ts=$(date -Iseconds)"
+set +e
+npx prisma db execute --schema=./prisma/schema.prisma --stdin <<'SQL'
+ALTER TABLE "ability_nodes"
+ADD COLUMN IF NOT EXISTS "prerequisites" TEXT[] DEFAULT ARRAY[]::TEXT[];
+
+ALTER TABLE "user_ability_state"
+ADD COLUMN IF NOT EXISTS "internal_progress" DECIMAL(10,4) NOT NULL DEFAULT 0.0,
+ADD COLUMN IF NOT EXISTS "stored_experience" DECIMAL(10,4) NOT NULL DEFAULT 0.0,
+ADD COLUMN IF NOT EXISTS "last_activity_date" TIMESTAMP(3);
+SQL
+HOTFIX_EXIT=$?
+set -e
+if [ "$HOTFIX_EXIT" -ne 0 ]; then
+  echo "DIAG entrypoint: db hotfix FAILED exit=${HOTFIX_EXIT} ts=$(date -Iseconds)"
+else
+  echo "DIAG entrypoint: db hotfix DONE ts=$(date -Iseconds)"
+fi
+
 # Seed admin user if not exists
 echo "👤 Checking admin user..."
 echo "DIAG entrypoint: seed-admin START ts=$(date -Iseconds)"
