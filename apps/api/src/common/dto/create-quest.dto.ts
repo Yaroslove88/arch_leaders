@@ -22,6 +22,17 @@ class QuestCriteriaDto {
 }
 
 class QuestRewardDto {
+  // Новые поля (приоритет)
+  @IsOptional()
+  base_xp?: number;
+
+  @IsOptional()
+  reflection_xp?: number;
+
+  @IsOptional()
+  max?: number; // base_xp + reflection_xp
+
+  // Старые поля для обратной совместимости (deprecated)
   @IsOptional()
   xp?: number;
 
@@ -78,7 +89,7 @@ export class CreateQuestDto {
 
   @IsOptional()
   @IsArray()
-  evidence_links?: any[];
+  evidence_links?: Array<{ evidence_id: string; type: string }>;
 
   @IsOptional()
   @IsString()

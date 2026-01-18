@@ -7,16 +7,19 @@
       "fantasy": "Я — тот, кто держит систему, когда всё рушится",
       "description": "Эффективен в турбулентности, быстро действует, держит давление",
       "entry_conditions": {
-        "required_skills": [
+        "required_nodes": [
           "node_containment",
           "node_personal_resilience",
           "node_emotional_work"
+        ],
+        "optional_nodes": [
+          "node_cognitive_maturity"
         ],
         "behavioral_patterns": {
           "crisis_decisions_percentage": 60,
           "personal_decisions_percentage": 50
         },
-        "min_skills_count": 3
+        "min_required_count": 3
       },
       "bonuses": {
         "crisis_skills_cost_reduction": 30,
@@ -33,12 +36,6 @@
         "delegated_risky_decisions_count": 1,
         "conscious_refusal_from_crisis_ult": true
       },
-      "related_nodes": [
-        "node_containment",
-        "node_personal_resilience",
-        "node_emotional_work",
-        "node_cognitive_maturity"
-      ],
       "color": "#FF6B6B"
     },
     {
@@ -48,16 +45,20 @@
       "fantasy": "Я создаю условия, а не решения",
       "description": "Качает систему, снижает хаос, терпелив к росту",
       "entry_conditions": {
-        "required_skills": [
+        "required_nodes": [
           "node_thinking_through_form",
           "node_form_assembly",
           "node_system_thinking"
+        ],
+        "optional_nodes": [
+          "node_scenario_thinking",
+          "node_institutionalization"
         ],
         "behavioral_patterns": {
           "architectural_decisions_count": 1,
           "crisis_not_solved_manually": 1
         },
-        "min_skills_count": 2
+        "min_required_count": 2
       },
       "bonuses": {
         "architectural_skills_cost_reduction": 25,
@@ -74,13 +75,6 @@
         "frequent_override_decisions": 3,
         "ignore_people_conflicts": true
       },
-      "related_nodes": [
-        "node_thinking_through_form",
-        "node_form_assembly",
-        "node_system_thinking",
-        "node_scenario_thinking",
-        "node_institutionalization"
-      ],
       "color": "#50C878"
     },
     {
@@ -90,16 +84,20 @@
       "fantasy": "Я выращиваю субъектность других",
       "description": "Выращивает субъектность других, снижает свою нагрузку, строит автономию",
       "entry_conditions": {
-        "required_skills": [
+        "required_nodes": [
           "node_delegation_as_coupling",
           "node_subjectivity_transfer",
           "node_scene_holding"
+        ],
+        "optional_nodes": [
+          "node_maturity_environment",
+          "node_vertical_development"
         ],
         "behavioral_patterns": {
           "autonomous_team_decisions_count": 1,
           "held_interventions_count": 1
         },
-        "min_skills_count": 2
+        "min_required_count": 2
       },
       "bonuses": {
         "delegation_gives_xp": true,
@@ -116,13 +114,6 @@
         "frequent_corrections": 3,
         "intolerance_to_errors": true
       },
-      "related_nodes": [
-        "node_subjectivity_transfer",
-        "node_scene_holding",
-        "node_delegation_as_coupling",
-        "node_maturity_environment",
-        "node_vertical_development"
-      ],
       "color": "#1ABC9C"
     },
     {
@@ -132,16 +123,20 @@
       "fantasy": "Я влияю на направление, а не на шаги",
       "description": "Мыслит на уровне направлений, мало решений, но высокоимпактных, работает с неопределённостью",
       "entry_conditions": {
-        "required_skills": [
+        "required_nodes": [
           "node_scenario_thinking",
           "node_decision_authorship",
           "node_upper_field_work"
+        ],
+        "optional_nodes": [
+          "node_system_thinking",
+          "node_cognitive_maturity"
         ],
         "behavioral_patterns": {
           "conscious_scene_skip": 1,
           "priority_change": 1
         },
-        "min_skills_count": 2
+        "min_required_count": 2
       },
       "bonuses": {
         "can_cancel_scenes": true,
@@ -157,13 +152,6 @@
         "return_to_operational_decisions": true,
         "series_of_concrete_interventions": 3
       },
-      "related_nodes": [
-        "node_scenario_thinking",
-        "node_decision_authorship",
-        "node_upper_field_work",
-        "node_system_thinking",
-        "node_cognitive_maturity"
-      ],
       "color": "#9B59B6"
     }
   ]

@@ -1,4 +1,5 @@
 import { QuestCriteria } from '../common/types/json-types';
+import { QuestType, Rationale } from '@leadership-architect/shared';
 
 /**
  * Результат анализа сессии для генерации квестов
@@ -14,12 +15,14 @@ export interface SessionAnalysisResult {
 /**
  * Сгенерированный квест (DTO/Domain)
  * Не содержит логики сохранения в БД
+ * 
+ * @see packages/shared/src/ontology.ts для типов QuestType
  */
 export interface GeneratedQuest {
   userId: string;
   title: string;
   description: string;
-  type: 'micro' | 'weekly' | 'story' | 'in-person';
+  type: QuestType | 'micro' | 'weekly' | 'story' | 'in-person';
   criteria: QuestCriteria;
   reward?: {
     xp?: number;
@@ -30,5 +33,7 @@ export interface GeneratedQuest {
   session_id?: string;
   source: string;
   tags: string[];
+  /** Объяснение, почему сгенерирован именно этот квест */
+  rationale?: Rationale;
 }
 

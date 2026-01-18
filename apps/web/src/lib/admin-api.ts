@@ -136,7 +136,10 @@ export async function getAdminUsers(params?: {
   const response = await fetch(`${API_URL}/admin/v1/users?${query}`, {
     headers: getAuthHeaders(),
   });
-  if (!response.ok) throw new Error('Failed to fetch users');
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || `Failed to fetch users (${response.status})`);
+  }
   return response.json();
 }
 
@@ -244,8 +247,184 @@ export async function getJobs(params?: {
   const response = await fetch(`${API_URL}/admin/v1/jobs?${query}`, {
     headers: getAuthHeaders(),
   });
-  if (!response.ok) throw new Error('Failed to fetch jobs');
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || `Failed to fetch jobs (${response.status})`);
+  }
   return response.json();
+}
+
+// Analytics
+export interface AnalyticsOverview {
+  totalUsers: number;
+  activeUsers7d: number;
+  activeUsers30d: number;
+  totalEntries: number;
+  totalSessions: number;
+  totalQuests: number;
+  completedQuests: number;
+  totalEvidence: number;
+}
+
+export interface DailyStats {
+  date: string;
+  entries_count: number;
+  sessions_succeeded: number;
+  quests_completed: number;
+  evidences_count: number;
+  new_users: number;
+}
+
+export interface UserActivityStats {
+  user_id: string;
+  telegramUsername: string;
+  entries_7d: number;
+  entries_30d: number;
+  quests_completed_30d: number;
+  last_entry_at: string | null;
+}
+
+export async function getAnalyticsOverview(): Promise<AnalyticsOverview> {
+  const response = await fetch(`${API_URL}/admin/v1/analytics/overview`, {
+    headers: getAuthHeaders(),
+  });
+  if (!response.ok) {
+    // Fallback to basic stats if endpoint doesn't exist
+    const usersData = await getAdminUsers({ limit: 1 });
+    const jobsData = await getJobs({ limit: 1 });
+    return {
+      totalUsers: usersData.total,
+      activeUsers7d: 0,
+      activeUsers30d: 0,
+      totalEntries: 0,
+      totalSessions: 0,
+      totalQuests: 0,
+      completedQuests: 0,
+      totalEvidence: 0,
+    };
+  }
+  return response.json();
+}
+
+export async function getDailyStats(days: number = 30): Promise<DailyStats[]> {
+  const response = await fetch(`${API_URL}/admin/v1/analytics/daily?days=${days}`, {
+    headers: getAuthHeaders(),
+  });
+  if (!response.ok) {
+    // Return empty array if endpoint doesn't exist
+    return [];
+  }
+  return response.json();
+}
+
+export async function getTopActiveUsers(limit: number = 10): Promise<UserActivityStats[]> {
+  const response = await fetch(`${API_URL}/admin/v1/analytics/top-users?limit=${limit}`, {
+    headers: getAuthHeaders(),
+  });
+  if (!response.ok) {
+    return [];
+  }
+  return response.json();
+}
+
+// Prompts
+export interface Prompt {
+  prompt_id: string;
+  version: number;
+  status: 'draft' | 'active' | 'deprecated';
+  purpose: string;
+  template: string;
+  schema?: any;
+  created_at: string;
+  created_by_admin?: string;
+}
+
+export interface ConfigSet {
+  id: string;
+  name: string;
+  status: 'draft' | 'active' | 'deprecated';
+  created_at: string;
+  versions?: ConfigVersion[];
+}
+
+export interface ConfigVersion {
+  id: string;
+  config_set_id: string;
+  version: number;
+  payload: any;
+  comment?: string;
+  created_at: string;
+  activated_at?: string;
+}
+
+export interface LlmRun {
+  id: string;
+  session_id?: string;
+  stage: string;
+  prompt_id?: string;
+  prompt_version?: number;
+  model?: string;
+  status: 'succeeded' | 'failed';
+  tokens_in?: number;
+  tokens_out?: number;
+  latency_ms?: number;
+  created_at: string;
+}
+
+export async function getPrompts(): Promise<Prompt[]> {
+  const response = await fetch(`${API_URL}/admin/v1/prompts`, {
+    headers: getAuthHeaders(),
+  });
+  if (!response.ok) return [];
+  return response.json();
+}
+
+export async function getPromptVersions(promptId: string): Promise<Prompt[]> {
+  const response = await fetch(`${API_URL}/admin/v1/prompts/${promptId}/versions`, {
+    headers: getAuthHeaders(),
+  });
+  if (!response.ok) return [];
+  return response.json();
+}
+
+export async function getConfigSets(): Promise<ConfigSet[]> {
+  const response = await fetch(`${API_URL}/admin/v1/config-sets`, {
+    headers: getAuthHeaders(),
+  });
+  if (!response.ok) return [];
+  return response.json();
+}
+
+export async function getConfigVersions(configSetId: string): Promise<ConfigVersion[]> {
+  const response = await fetch(`${API_URL}/admin/v1/config-sets/${configSetId}/versions`, {
+    headers: getAuthHeaders(),
+  });
+  if (!response.ok) return [];
+  return response.json();
+}
+
+export async function getLlmRuns(params?: {
+  session_id?: string;
+  status?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<{ runs: LlmRun[]; total: number }> {
+  const query = new URLSearchParams();
+  if (params?.session_id) query.append('session_id', params.session_id);
+  if (params?.status) query.append('status', params.status);
+  if (params?.limit) query.append('limit', params.limit.toString());
+  if (params?.offset) query.append('offset', params.offset.toString());
+
+  const response = await fetch(`${API_URL}/admin/v1/prompts/llm-runs?${query}`, {
+    headers: getAuthHeaders(),
+  });
+  if (!response.ok) return { runs: [], total: 0 };
+  const data = await response.json();
+  // Ensure we always return the expected structure
+  return {
+    runs: Array.isArray(data?.runs) ? data.runs : [],
+    total: typeof data?.total === 'number' ? data.total : 0,
+  };
 }
 
 // Audit
@@ -266,7 +445,10 @@ export async function getAuditLog(params?: {
   const response = await fetch(`${API_URL}/admin/v1/audit-log?${query}`, {
     headers: getAuthHeaders(),
   });
-  if (!response.ok) throw new Error('Failed to fetch audit log');
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || `Failed to fetch audit log (${response.status})`);
+  }
   return response.json();
 }
 

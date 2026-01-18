@@ -62,8 +62,8 @@ export class UpdateQuestDto {
   criteria?: QuestCriteria;
 
   @ApiPropertyOptional({
-    description: 'Награда в формате JSON',
-    example: { xp: 100, skill_xp: 50 },
+    description: 'Награда в формате JSON (новая система: base_xp + reflection_xp)',
+    example: { base_xp: 20, reflection_xp: 80, max: 100 },
   })
   @IsOptional()
   @IsObject()
@@ -84,8 +84,8 @@ export class UpdateQuestDto {
     example: [{ evidence_id: '...', type: 'proof' }],
   })
   @IsOptional()
-  @IsObject()
-  evidence_links_json?: any;
+  @IsArray()
+  evidence_links_json?: Array<{ evidence_id: string; type: string }>;
 
   @ApiPropertyOptional({
     description: 'Подсказка о сроке выполнения',

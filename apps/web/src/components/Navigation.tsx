@@ -40,10 +40,9 @@ export function Navigation() {
 
   const navLinks = [
     { href: '/dashboard', label: 'Обзор', requiresAuth: false },
-    { href: '/entries', label: 'Ситуации', requiresAuth: true },
     { href: '/experiments', label: 'Эксперименты', requiresAuth: false },
+    { href: '/traces', label: 'Журнал', requiresAuth: true },
     { href: '/architecture', label: 'Архитектура', requiresAuth: false },
-    { href: '/traces', label: 'Следы', requiresAuth: true },
   ].filter(link => isAuthenticated || !link.requiresAuth);
 
   const isActive = (href: string) => {
@@ -55,27 +54,27 @@ export function Navigation() {
 
   return (
     <>
-      <nav className="bg-bg-panel border-b border-ui-border-soft shadow-panel" role="navigation" aria-label="Основная навигация">
+      <nav className="bg-graphite-structure border-b border-ui-border-soft shadow-panel" role="navigation" aria-label="Основная навигация">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex">
               <Link 
                 href="/dashboard" 
-                className="flex items-center px-2 py-2 text-xl font-bold text-ui-text-main"
+                className="flex items-center px-2 py-2 text-xl font-bold text-ash-light tracking-tight"
                 aria-label="Архитектор лидерства - Главная"
               >
                 Архитектор лидерства
               </Link>
-              {/* Desktop Navigation */}
+              {/* Desktop Navigation - минималистичная, иконки-символы, состояния доступа */}
               <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
                 {navLinks.map((link) => (
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={`inline-flex items-center px-1 pt-1 text-sm font-medium transition-colors ${
+                    className={`inline-flex items-center px-3 min-h-[44px] text-sm font-medium transition-colors border-b-2 ${
                       isActive(link.href)
-                        ? 'text-system-focus border-b-2 border-system-focus'
-                        : 'text-ui-text-muted hover:text-system-focus'
+                        ? 'text-strategic-blue border-strategic-blue'
+                        : 'text-ui-text-muted border-transparent hover:text-ash-light hover:border-ui-border-soft'
                     }`}
                     aria-current={isActive(link.href) ? 'page' : undefined}
                   >
@@ -88,7 +87,7 @@ export function Navigation() {
               {isAdmin && (
                 <Link
                   href="/admin"
-                  className="inline-flex items-center px-4 py-2 text-sm font-medium text-ui-text-main bg-bg-secondary border border-ui-border-soft hover:border-system-focus rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-system-focus"
+                  className="inline-flex items-center px-4 py-2 text-sm font-medium text-ash-light bg-graphite-structure border border-ui-border-soft hover:border-strategic-blue rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-strategic-blue"
                   aria-label="Открыть админ-панель"
                 >
                   <svg
@@ -117,7 +116,7 @@ export function Navigation() {
               )}
               <button
                 onClick={() => setIsModalOpen(true)}
-                className="inline-flex items-center px-4 py-2 text-sm font-medium text-ui-text-muted bg-bg-secondary border border-ui-border-soft hover:border-ui-border-strong hover:text-ui-text-main rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-system-focus"
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-ash-light bg-graphite-structure border border-ui-border-soft hover:border-ui-border-strong hover:text-ash-light rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-strategic-blue"
                 aria-label={isAuthenticated ? `Профиль пользователя @${user?.telegramUsername}` : 'Открыть личный кабинет'}
               >
                 <svg
@@ -144,7 +143,7 @@ export function Navigation() {
               {/* Mobile menu button */}
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="sm:hidden inline-flex items-center justify-center p-2 rounded-md text-ui-text-dim hover:text-ui-text-muted hover:bg-bg-secondary focus:outline-none focus:ring-2 focus:ring-inset focus:ring-system-focus"
+                className="sm:hidden inline-flex items-center justify-center min-w-[44px] min-h-[44px] p-2 rounded-md text-ui-text-muted hover:text-ash-light hover:bg-obsidian-core focus:outline-none focus:ring-2 focus:ring-inset focus:ring-strategic-blue transition-colors"
                 aria-expanded={isMobileMenuOpen}
                 aria-controls="mobile-menu"
                 aria-label="Открыть меню"
@@ -179,7 +178,7 @@ export function Navigation() {
         {isMobileMenuOpen && (
           <div
             id="mobile-menu"
-            className="sm:hidden border-t border-ui-border-soft bg-bg-panel"
+            className="sm:hidden border-t border-ui-border-soft bg-graphite-structure"
             data-mobile-menu
             role="menu"
             aria-label="Мобильное меню"
@@ -189,10 +188,10 @@ export function Navigation() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                  className={`block px-4 py-3 min-h-[48px] rounded-lg text-base font-medium transition-colors ${
                     isActive(link.href)
-                      ? 'bg-bg-secondary text-system-focus border-l-2 border-system-focus'
-                      : 'text-ui-text-muted hover:bg-bg-secondary hover:text-system-focus'
+                      ? 'bg-obsidian-core text-strategic-blue border-l-4 border-strategic-blue'
+                      : 'text-ui-text-muted hover:bg-obsidian-core hover:text-ash-light'
                   }`}
                   role="menuitem"
                   aria-current={isActive(link.href) ? 'page' : undefined}

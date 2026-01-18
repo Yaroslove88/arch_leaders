@@ -11,6 +11,7 @@ import { AdminPromptsModule } from './prompts/admin-prompts.module';
 import { AdminJobsModule } from './jobs/admin-jobs.module';
 import { AdminAuditModule } from './audit/admin-audit.module';
 import { AdminPipelineModule } from './pipeline/admin-pipeline.module';
+import { AdminAnalyticsModule } from './analytics/admin-analytics.module';
 import { AuditService } from './audit/audit.service';
 
 @Module({
@@ -27,6 +28,7 @@ import { AuditService } from './audit/audit.service';
     AdminJobsModule,
     AdminAuditModule,
     AdminPipelineModule,
+    AdminAnalyticsModule,
   ],
   providers: [AuditService],
   exports: [AuditService],

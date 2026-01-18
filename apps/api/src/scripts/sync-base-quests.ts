@@ -35,6 +35,7 @@ async function syncBaseQuests() {
   
   let created = 0;
   let updated = 0;
+  let skipped = 0;
   let errors = 0;
   
   for (const template of templates) {
@@ -56,10 +57,19 @@ async function syncBaseQuests() {
         linked_nodes: template.linked_nodes || [],
         tags: template.tags || [],
         status: 'backlog' as const,
+        source: 'base_template' as const,
       };
       
       if (existing) {
-        // Обновляем существующий
+        // ⚠️ ЗАЩИТА: Обновляем только базовые квесты (source='base_template')
+        // Не перезаписываем пользовательские квесты (source='user_generated' или 'auto_generated')
+        if (existing.source && existing.source !== 'base_template') {
+          console.log(`⚠ Пропущен (пользовательский квест): ${title} (source=${existing.source})`);
+          skipped++;
+          continue;
+        }
+        
+        // Обновляем только базовый квест
         await prisma.quest.update({
           where: { id: existing.id },
           data: questData
@@ -95,6 +105,7 @@ async function syncBaseQuests() {
   console.log(`\n[SUCCESS] Синхронизация завершена!`);
   console.log(`  Создано: ${created}`);
   console.log(`  Обновлено: ${updated}`);
+  console.log(`  Пропущено (пользовательские): ${skipped}`);
   console.log(`  Ошибок: ${errors}`);
 }
 

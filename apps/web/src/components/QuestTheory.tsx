@@ -44,8 +44,8 @@ function parseMarkdown(text: string): string {
       if (listItems.length > 0 && listType) {
         const tag = listType === 'ul' ? 'ul' : 'ol';
         const className = listType === 'ul' 
-          ? 'list-disc ml-6 mb-4 space-y-2 text-ui-text-main' 
-          : 'list-decimal ml-6 mb-4 space-y-2 text-ui-text-main';
+          ? 'list-disc ml-6 mb-4 space-y-2 text-ash-light' 
+          : 'list-decimal ml-6 mb-4 space-y-2 text-ash-light';
         processedLines.push(`<${tag} class="${className}">${listItems.join('')}</${tag}>`);
         listItems = [];
         listType = null;
@@ -60,17 +60,17 @@ function parseMarkdown(text: string): string {
       // Заголовки (проверяем до обрезки пробелов)
       if (trimmed.startsWith('### ')) {
         flushList();
-        processedLines.push(`<h3 class="font-semibold text-ui-text-main mt-6 mb-3 text-lg">${trimmed.substring(4)}</h3>`);
+        processedLines.push(`<h3 class="font-semibold text-ash-light mt-6 mb-3 text-lg">${trimmed.substring(4)}</h3>`);
         continue;
       }
       if (trimmed.startsWith('## ')) {
         flushList();
-        processedLines.push(`<h2 class="font-semibold text-ui-text-main mt-6 mb-4 text-xl">${trimmed.substring(3)}</h2>`);
+        processedLines.push(`<h2 class="font-semibold text-ash-light mt-6 mb-4 text-xl">${trimmed.substring(3)}</h2>`);
         continue;
       }
       if (trimmed.startsWith('# ')) {
         flushList();
-        processedLines.push(`<h1 class="font-bold text-ui-text-main mt-6 mb-4 text-2xl">${trimmed.substring(2)}</h1>`);
+        processedLines.push(`<h1 class="font-bold text-ash-light mt-6 mb-4 text-2xl">${trimmed.substring(2)}</h1>`);
         continue;
       }
       
@@ -84,8 +84,8 @@ function parseMarkdown(text: string): string {
         }
         // Обрабатываем форматирование внутри элемента списка
         let content = numberedMatch[2];
-        content = content.replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold text-ui-text-main">$1</strong>');
-        listItems.push(`<li class="text-ui-text-main">${content}</li>`);
+        content = content.replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold text-ash-light">$1</strong>');
+        listItems.push(`<li class="text-ash-light">${content}</li>`);
         continue;
       }
       
@@ -99,8 +99,8 @@ function parseMarkdown(text: string): string {
         }
         // Обрабатываем форматирование внутри элемента списка
         let content = bulletMatch[1];
-        content = content.replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold text-ui-text-main">$1</strong>');
-        listItems.push(`<li class="text-ui-text-main">${content}</li>`);
+        content = content.replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold text-ash-light">$1</strong>');
+        listItems.push(`<li class="text-ash-light">${content}</li>`);
         continue;
       }
       
@@ -117,7 +117,7 @@ function parseMarkdown(text: string): string {
       
       // Обычная строка - обрабатываем форматирование
       let processedLine = trimmed;
-      processedLine = processedLine.replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold text-ui-text-main">$1</strong>');
+      processedLine = processedLine.replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold text-ash-light">$1</strong>');
       processedLine = processedLine.replace(/\*(.+?)\*/g, '<em class="italic text-ui-text-muted">$1</em>');
       processedLines.push(processedLine);
     }
@@ -135,7 +135,7 @@ function parseMarkdown(text: string): string {
         if (trimmed.startsWith('<h') || trimmed.startsWith('<ul') || trimmed.startsWith('<ol')) {
           return trimmed;
         }
-        return `<p class="mb-4 text-ui-text-main leading-relaxed">${trimmed}</p>`;
+        return `<p class="mb-4 text-ash-light leading-relaxed">${trimmed}</p>`;
       })
       .filter(p => p)
       .join('\n');
@@ -187,10 +187,10 @@ export function QuestTheory({ theory, steps }: QuestTheoryProps) {
   if (!parsedHtml) {
     return (
       <div className="mt-4 p-6 bg-bg-secondary rounded-lg border border-ui-border-soft">
-        <div className="text-ui-text-main space-y-4">
-          <div className="p-4 bg-bg-panel rounded border border-ui-border-soft mb-4">
+        <div className="text-ash-light space-y-4">
+          <div className="p-4 bg-graphite-structure rounded border border-ui-border-soft mb-4">
             <p className="text-sm text-ui-text-muted leading-relaxed">
-              <strong className="font-semibold text-ui-text-main">Теория</strong> содержит детальное объяснение способности, 
+              <strong className="font-semibold text-ash-light">Теория</strong> содержит детальное объяснение способности, 
               которую вы развиваете в этом квесте, с пояснением терминов, обоснованием важности и примерами применения.
             </p>
           </div>
@@ -210,7 +210,7 @@ export function QuestTheory({ theory, steps }: QuestTheoryProps) {
   return (
     <div className="p-6 bg-bg-secondary rounded-lg border border-ui-border-soft">
       <div 
-        className="text-ui-text-main space-y-4"
+        className="text-ash-light space-y-4"
         dangerouslySetInnerHTML={{ 
           __html: parsedHtml
         }}

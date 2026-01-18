@@ -80,14 +80,16 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
 
   return (
     <>
-      <div className="fixed inset-0 z-50 overflow-y-auto" onClick={onClose}>
-        <div className="flex min-h-screen items-center justify-center p-4">
-          <div
-            className="relative bg-bg-panel border border-ui-border-soft rounded-lg shadow-floating max-w-4xl w-full p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
+      <div 
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto" 
+        onClick={onClose}
+      >
+        <div
+          className="relative bg-graphite-structure border border-ui-border-soft rounded-lg shadow-floating max-w-4xl w-full p-6 my-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-bold text-ui-text-main">Панель администратора</h2>
+            <h2 className="text-2xl font-bold text-ash-light">Панель администратора</h2>
             <button
               onClick={onClose}
               className="text-ui-text-dim hover:text-ui-text-muted text-2xl font-bold transition-colors"
@@ -97,7 +99,7 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
           </div>
 
           {error && (
-            <div className="bg-bg-secondary border border-system-critical/30 text-system-critical px-4 py-3 rounded mb-4">
+            <div className="bg-obsidian-core border border-tension-red/30 text-system-critical px-4 py-3 rounded mb-4">
               {error}
             </div>
           )}
@@ -107,7 +109,7 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-ui-border-soft">
-                <thead className="bg-bg-secondary">
+                <thead className="bg-obsidian-core">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-ui-text-muted uppercase tracking-wider border-b border-ui-border-soft">
                       Username
@@ -123,11 +125,11 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-bg-panel divide-y divide-ui-border-soft">
+                <tbody className="bg-graphite-structure divide-y divide-ui-border-soft">
                   {users.map((user) => (
-                    <tr key={user.id} className="hover:bg-bg-secondary/50 transition-colors">
+                    <tr key={user.id} className="hover:bg-obsidian-core/50 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-ui-text-main">@{user.telegramUsername}</div>
+                        <div className="text-sm font-medium text-ash-light">@{user.telegramUsername}</div>
                         <div className="text-xs text-ui-text-dim font-mono">{user.id}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -136,7 +138,7 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                             <select
                               value={newRole}
                               onChange={(e) => setNewRole(e.target.value)}
-                              className="bg-bg-secondary border border-ui-border-soft rounded px-2 py-1 text-sm text-ui-text-main focus:outline-none focus:ring-2 focus:ring-system-focus focus:ring-offset-2 focus:ring-offset-bg-panel"
+                              className="bg-obsidian-core border border-ui-border-soft rounded px-2 py-1 text-sm text-ash-light focus:outline-none focus:ring-2 focus:ring-strategic-blue focus:ring-offset-2 focus:ring-offset-bg-panel"
                             >
                               <option value="">Выберите роль</option>
                               <option value="user">Пользователь</option>
@@ -145,7 +147,7 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                             <button
                               onClick={() => handleUpdateRole(user.id)}
                               disabled={loading}
-                              className="bg-system-focus text-ui-text-main px-3 py-1 rounded text-sm hover:bg-system-focus/80 disabled:opacity-50 transition-colors focus:ring-2 focus:ring-system-focus focus:ring-offset-2 focus:ring-offset-bg-panel"
+                              className="bg-strategic-blue text-ash-light px-3 py-1 rounded text-sm hover:bg-strategic-blue/80 disabled:opacity-50 transition-colors focus:ring-2 focus:ring-strategic-blue focus:ring-offset-2 focus:ring-offset-bg-panel"
                             >
                               Сохранить
                             </button>
@@ -154,7 +156,7 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                                 setEditingUserId(null);
                                 setNewRole('');
                               }}
-                              className="bg-bg-secondary border border-ui-border-soft text-ui-text-muted px-3 py-1 rounded text-sm hover:border-ui-border-strong hover:text-ui-text-main transition-colors focus:ring-2 focus:ring-ui-border-soft focus:ring-offset-2 focus:ring-offset-bg-panel"
+                              className="bg-obsidian-core border border-ui-border-soft text-ui-text-muted px-3 py-1 rounded text-sm hover:border-ui-border-strong hover:text-ash-light transition-colors focus:ring-2 focus:ring-ui-border-soft focus:ring-offset-2 focus:ring-offset-bg-panel"
                             >
                               Отмена
                             </button>
@@ -163,8 +165,8 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                           <div className="flex items-center gap-2">
                             <span className={`px-2 py-1 rounded text-xs font-semibold border ${
                               user.role === 'admin' 
-                                ? 'bg-bg-secondary border-system-stable text-system-stable' 
-                                : 'bg-bg-secondary border-ui-border-soft text-ui-text-muted'
+                                ? 'bg-obsidian-core border-system-stable text-system-stable' 
+                                : 'bg-obsidian-core border-ui-border-soft text-ui-text-muted'
                             }`}>
                               {user.role === 'admin' ? 'Администратор' : 'Пользователь'}
                             </span>
@@ -173,7 +175,7 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                                 setEditingUserId(user.id);
                                 setNewRole(user.role);
                               }}
-                              className="text-system-focus hover:text-system-focus/80 text-sm transition-colors focus:ring-2 focus:ring-system-focus focus:ring-offset-2 focus:ring-offset-bg-panel rounded px-1"
+                              className="text-strategic-blue hover:text-strategic-blue/80 text-sm transition-colors focus:ring-2 focus:ring-strategic-blue focus:ring-offset-2 focus:ring-offset-bg-panel rounded px-1"
                             >
                               Изменить
                             </button>
@@ -204,15 +206,13 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
           <div className="mt-4 flex justify-end">
             <button
               onClick={onClose}
-              className="bg-bg-secondary border border-ui-border-soft text-ui-text-muted py-2 px-4 rounded-lg hover:border-ui-border-strong hover:text-ui-text-main transition-colors focus:ring-2 focus:ring-system-focus focus:ring-offset-2 focus:ring-offset-bg-panel"
+              className="bg-obsidian-core border border-ui-border-soft text-ui-text-muted py-2 px-4 rounded-lg hover:border-ui-border-strong hover:text-ash-light transition-colors focus:ring-2 focus:ring-strategic-blue focus:ring-offset-2 focus:ring-offset-bg-panel"
             >
               Закрыть
             </button>
           </div>
         </div>
       </div>
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm -z-10" />
-    </div>
 
     <ConfirmDialog
       isOpen={!!deleteUserId}

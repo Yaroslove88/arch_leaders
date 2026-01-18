@@ -1,3 +1,4 @@
 // UI components and design tokens
 export * from './tokens';
+export * from './primitives';
 

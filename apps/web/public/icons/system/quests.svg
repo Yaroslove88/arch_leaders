@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none" aria-hidden="true">
+  <!-- transparent background -->
+  <g stroke="currentColor" stroke-width="14" stroke-linecap="round" stroke-linejoin="round">
+    <!-- outer circle container -->
+    <circle cx="256" cy="256" r="180"/>
+
+    <!-- quest badge (shield-like, geometric) -->
+    <path d="M256 152l110 48v82c0 78-55 120-110 134-55-14-110-56-110-134v-82l110-48z"/>
+
+    <!-- target (experiment focus) -->
+    <circle cx="256" cy="260" r="52" opacity="0.75"/>
+    <circle cx="256" cy="260" r="18"/>
+
+    <!-- subtle direction / progress mark -->
+    <path d="M256 208v-22" opacity="0.65"/>
+    <path d="M246 198h20" opacity="0.65"/>
+  </g>
+</svg>

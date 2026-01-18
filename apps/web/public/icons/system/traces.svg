@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none" aria-hidden="true">
+  <!-- transparent background -->
+  <g stroke="currentColor" stroke-width="14" stroke-linecap="round" stroke-linejoin="round">
+    <!-- outer circle container -->
+    <circle cx="256" cy="256" r="180"/>
+
+    <!-- magnifying glass -->
+    <circle cx="236" cy="236" r="76"/>
+    <path d="M292 292l64 64"/>
+
+    <!-- geometric trace pattern (tracking) -->
+    <path d="M206 236h60" opacity="0.65"/>
+    <path d="M236 206v60" opacity="0.65"/>
+    <circle cx="214" cy="258" r="8"/>
+    <circle cx="258" cy="214" r="8" opacity="0.85"/>
+    <path d="M214 258l44-44" opacity="0.75"/>
+  </g>
+</svg>

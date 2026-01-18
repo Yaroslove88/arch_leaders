@@ -25,7 +25,7 @@ export default function SessionsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-bg-main p-8">
+      <div className="min-h-screen bg-obsidian-core p-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center text-ui-text-muted">Загрузка...</div>
         </div>
@@ -34,12 +34,12 @@ export default function SessionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-bg-main p-8">
+    <div className="min-h-screen bg-obsidian-core p-8">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8 text-ui-text-main">Анализы ситуаций</h1>
+        <h1 className="text-3xl font-bold mb-8 text-ash-light">Анализы ситуаций</h1>
 
         {sessions.length === 0 ? (
-          <div className="bg-bg-panel border border-ui-border-soft rounded-lg shadow-panel p-8 text-center text-ui-text-muted">
+          <div className="bg-graphite-structure border border-ui-border-soft rounded-lg shadow-panel p-8 text-center text-ui-text-muted">
             Нет проанализированных ситуаций
           </div>
         ) : (
@@ -48,11 +48,11 @@ export default function SessionsPage() {
               <Link
                 key={session.id}
                 href={`/sessions/${session.id}`}
-                className="block bg-bg-panel border border-ui-border-soft rounded-lg shadow-panel p-6 hover:shadow-active transition bg-panel-gradient"
+                className="block bg-graphite-structure border border-ui-border-soft rounded-lg shadow-panel p-6 hover:shadow-active transition bg-panel-gradient"
               >
                 <div className="flex justify-between items-start mb-2">
-                  <h3 className="text-lg font-semibold text-ui-text-main">Анализ ситуации</h3>
-                  <span className="px-3 py-1 bg-bg-secondary border border-system-growth/30 text-system-growth rounded text-sm">
+                  <h3 className="text-lg font-semibold text-ash-light">Анализ ситуации</h3>
+                  <span className="px-3 py-1 bg-bg-secondary border border-system-growth/30 text-sage-green rounded text-sm">
                     {session.status === 'done' ? 'Завершён' : 
                      session.status === 'analyzing' ? 'Анализируется' : 
                      session.status === 'pending' ? 'Ожидает' : session.status}
@@ -62,7 +62,7 @@ export default function SessionsPage() {
                 {session.themes.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     {session.themes.slice(0, 5).map((theme, i) => (
-                      <span key={i} className="text-xs bg-bg-secondary border border-system-focus/30 text-system-focus px-2 py-1 rounded">
+                      <span key={i} className="text-xs bg-bg-secondary border border-strategic-blue/30 text-strategic-blue px-2 py-1 rounded">
                         {theme}
                       </span>
                     ))}

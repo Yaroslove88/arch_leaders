@@ -6,6 +6,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import * as net from 'net';
 
 // Sentry инициализация (опционально, только если SENTRY_DSN установлен)
 let Sentry: any = null;
@@ -14,6 +15,42 @@ try {
   Sentry = sentryModule;
 } catch (e) {
   // Sentry не установлен или не настроен
+}
+
+// Helper function to check if port is available
+async function isPortAvailable(port: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    const server = net.createServer();
+    server.listen(port, () => {
+      server.once('close', () => resolve(true));
+      server.close();
+    });
+    server.on('error', () => resolve(false));
+  });
+}
+
+// Helper function to get process using port (Windows)
+async function getProcessUsingPort(port: number): Promise<string | null> {
+  try {
+    const { execSync } = require('child_process');
+    const result = execSync(`netstat -ano | findstr :${port}`, { encoding: 'utf-8' });
+    const lines = result.trim().split('\n');
+    if (lines.length > 0) {
+      const parts = lines[0].trim().split(/\s+/);
+      const pid = parts[parts.length - 1];
+      if (pid) {
+        try {
+          const processInfo = execSync(`tasklist /FI "PID eq ${pid}" /FO CSV`, { encoding: 'utf-8' });
+          return processInfo;
+        } catch {
+          return `PID: ${pid}`;
+        }
+      }
+    }
+  } catch (error) {
+    // Command failed or no process found
+  }
+  return null;
 }
 
 async function bootstrap() {
@@ -50,12 +87,17 @@ async function bootstrap() {
   app.useGlobalInterceptors(new LoggingInterceptor());
 
   // CORS настройка с белым списком
+  // По умолчанию Next.js может работать на разных портах (3000, 3001, 3002...)
   const webUrl = configService.get<string>('WEB_URL') || 'http://localhost:3000';
   const allowedOrigins = [webUrl];
   
   // В development добавляем дополнительные origins для удобства разработки
+  // Next.js может запускаться на разных портах (3000, 3001, 3002, ...)
   if (configService.get<string>('NODE_ENV') === 'development') {
-    allowedOrigins.push('http://localhost:3000', 'http://127.0.0.1:3000');
+    // Добавляем стандартные порты для Next.js
+    for (let port = 3000; port <= 3010; port++) {
+      allowedOrigins.push(`http://localhost:${port}`, `http://127.0.0.1:${port}`);
+    }
   }
 
   app.enableCors({
@@ -79,7 +121,42 @@ async function bootstrap() {
   // Swagger документация
   // Временно отключено для диагностики ошибок
   // Раскомментируйте после добавления всех декораторов Swagger
+  // API всегда на порту 3001, Next.js на 3000
   const port = configService.get<number>('PORT') || 3001;
+  
+  // Проверка доступности порта перед запуском
+  const portAvailable = await isPortAvailable(port);
+  
+  if (!portAvailable) {
+    const processInfo = await getProcessUsingPort(port);
+    
+    // Extract PID from process info
+    let pid: string | null = null;
+    if (processInfo) {
+      const pidMatch = processInfo.match(/"node\.exe","(\d+)"/);
+      if (pidMatch) {
+        pid = pidMatch[1];
+      }
+    }
+    
+    console.error(`\n❌ Port ${port} is already in use!`);
+    if (pid) {
+      console.error(`📋 Process using port ${port}: node.exe (PID: ${pid})`);
+      console.error(`\n💡 To kill the process, run:`);
+      console.error(`   taskkill /PID ${pid} /F`);
+    } else {
+      console.error(`📋 Another process is using port ${port}`);
+      console.error(`\n💡 To find the process, run:`);
+      console.error(`   netstat -ano | findstr :${port}`);
+    }
+    console.error(`\n💡 Alternative solutions:`);
+    console.error(`   1. Stop the existing instance of the API`);
+    console.error(`   2. Change the PORT in your .env file`);
+    console.error(`   3. Use: pnpm run kill-port (if available)\n`);
+    
+    // Exit gracefully instead of throwing
+    process.exit(1);
+  }
   
   const enableSwagger = configService.get<string>('ENABLE_SWAGGER') !== 'false' 
     && configService.get<string>('NODE_ENV') !== 'production';
@@ -117,9 +194,42 @@ async function bootstrap() {
     }
   }
   
-  await app.listen(port);
-  console.log(`🚀 Leadership Architect API running on http://localhost:${port}`);
-  console.log(`📡 CORS enabled for: ${allowedOrigins.join(', ')}`);
+  try {
+    await app.listen(port);
+    console.log(`🚀 Leadership Architect API running on http://localhost:${port}`);
+    console.log(`📡 CORS enabled for: ${allowedOrigins.join(', ')}`);
+  } catch (error: any) {
+    
+    if (error?.code === 'EADDRINUSE') {
+      // Fallback error handling (in case of race condition between check and listen)
+      const processInfo = await getProcessUsingPort(port);
+      let pid: string | null = null;
+      if (processInfo) {
+        const pidMatch = processInfo.match(/"node\.exe","(\d+)"/);
+        if (pidMatch) {
+          pid = pidMatch[1];
+        }
+      }
+      
+      console.error(`\n❌ Port ${port} is already in use!`);
+      if (pid) {
+        console.error(`📋 Process using port ${port}: node.exe (PID: ${pid})`);
+        console.error(`\n💡 To kill the process, run:`);
+        console.error(`   taskkill /PID ${pid} /F`);
+      } else {
+        console.error(`📋 Another process is using port ${port}`);
+        console.error(`\n💡 To find the process, run:`);
+        console.error(`   netstat -ano | findstr :${port}`);
+      }
+      console.error(`\n💡 Alternative solutions:`);
+      console.error(`   1. Stop the existing instance of the API`);
+      console.error(`   2. Change the PORT in your .env file`);
+      console.error(`   3. Use: pnpm run kill-port (if available)\n`);
+      
+      process.exit(1);
+    }
+    throw error;
+  }
 }
 bootstrap();
 

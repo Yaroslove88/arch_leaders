@@ -1,5 +1,13 @@
 # Правила проекта Leadership Architect
 
+## Design System (Обязательно к прочтению перед UI-правками)
+- **Архитектура**: См. подробное описание в `docs/DESIGN_SYSTEM_ARCHITECTURE.md`.
+- **Tokens v2**: Цвета (base/structure/core/state), типографика, spacing, радиусы, тени — из `@leadership-architect/ui/src/tokens.ts`. Используем только семантические токены/CSS vars. Прямое использование HEX/Tailwind utility-цветов (напр. `text-blue-500`) ЗАПРЕЩЕНО.
+- **Маппинг**: Состояния (напр. `locked/active`) мапятся на визуальные тона (`focus/growth`) через `apps/web/src/lib/ui-utils.ts`. Это гарантирует консистентность.
+- **Контраст**: Основной текст `ash-light` на тёмных фонах. Badge/label/secondary текст ≥ `ash-light`/`ui-text-muted` на фоне `graphite-structure`.
+- **A11y**: `aria-label`/`aria-disabled`, focus-ring токены. Закрытие модалок по клику на фон и Escape обязательно.
+- **Примитивы**: `Surface/Card/Button/Badge/Progress/PillTabs` из `@leadership-architect/ui`. Не дублировать локальные стили.
+
 ## Обязательные правила кодирования
 
 ### 1. Swagger декораторы (обязательно для всех API endpoints)
@@ -199,76 +207,25 @@ try {
    const value = obj.property; // obj может быть undefined!
    ```
 
-2. **any типы для параметров:**
+2. **Отсутствие обработчиков ошибок:**
    ```typescript
-   async method(@Body() body: any) { } // Создайте DTO!
+   try {
+     await this.prisma.entity.create({ data });
+   } catch (error) {
+     // ❌ Ничего не делаем
+   }
    ```
+   ✅ Используйте `handlePrismaError` для обработки и логирования
 
-3. **Интерфейсы для DTO:**
-   ```typescript
-   export interface CreateDto { } // Используйте класс!
-   ```
-
-4. **Отсутствие декораторов Swagger:**
-   ```typescript
-   @Get(':id')
-   async getById(@Param('id') id: string) { } // Добавьте декораторы!
-   ```
-
-5. **Prisma запросы без проверки:**
-   ```typescript
-   const entity = await this.prisma.entity.findUnique({ where: { id } });
-   return entity.data; // entity может быть null!
-   ```
+3. **any для DTO/параметров** — используйте строгие типы и DTO.
 
 ---
 
-## Автоматические проверки
-
-### Скрипт проверки Swagger декораторов
-```bash
-ts-node scripts/fix-swagger-decorators.ts
-```
-
-### ESLint правила (рекомендуется добавить)
-```json
-{
-  "rules": {
-    "@typescript-eslint/no-non-null-assertion": "warn",
-    "@typescript-eslint/prefer-nullish-coalescing": "error",
-    "@typescript-eslint/prefer-optional-chain": "error",
-    "@typescript-eslint/strict-boolean-expressions": "warn",
-    "@typescript-eslint/no-explicit-any": "error"
-  }
-}
-```
-
----
-
-## Документация
-
-Подробные руководства:
-- `docs/SWAGGER_TROUBLESHOOTING.md` - решение проблем Swagger
-- `docs/ERROR_HANDLING_GUIDE.md` - обработка ошибок
-- `docs/SYSTEMATIC_ERROR_RESOLUTION.md` - системный подход
-
----
-
-## Чеклист перед коммитом
-
-### Swagger:
-- [ ] Все контроллеры имеют `@ApiTags`
-- [ ] Все параметры имеют соответствующие декораторы
-- [ ] Все DTO - классы с `@ApiProperty`
-- [ ] Нет использования `any`
-
-### Обработка ошибок:
-- [ ] Все зависимости проверены
-- [ ] Все Prisma запросы проверяют результат
-- [ ] Используется optional chaining
-- [ ] Используются утилиты
-
----
-
-**Следуйте этим правилам при написании кода!**
+## Чеклист перед PR
+- [ ] Пройдены `pnpm check:quality` / `pnpm precommit`
+- [ ] Swagger декораторы расставлены
+- [ ] Обработка ошибок и optional chaining на месте
+- [ ] Использованы утилиты (assertExists, findUniqueOrThrow)
+- [ ] Соблюдены правила Design System (tokens, контраст, a11y, компоненты UI)
+- [ ] При необходимости обновлены тесты
 

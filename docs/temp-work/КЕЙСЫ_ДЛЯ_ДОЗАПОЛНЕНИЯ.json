@@ -1,0 +1,3027 @@
+{
+  "metadata": {
+    "description": "Незаполненные кейсы для дозаполнения контентом",
+    "date": "2026-01-13",
+    "total_cases": 27
+  },
+  "incomplete_cases": [
+    {
+      "id": "case_role_differentiation_2",
+      "title": "Роли в конфликте",
+      "node_id": "node_role_differentiation",
+      "branch_id": "branch_subjectivity",
+      "difficulty": "intermediate",
+      "portal": {
+        "header_title": "КЕЙС",
+        "case_name": "Роли в конфликте",
+        "subtitle": "",
+        "access_bar": "Уровень II"
+      },
+      "event": {
+        "label": "Ситуация",
+        "summary": ""
+      },
+      "space_map": {
+        "company": "Консалтинг, 40 человек",
+        "environment": "Ты — партнёр компании, но также:\n- Руководитель проекта для Клиента А\n- Ментор для джуна Кати\n- Коллега для других партнёров",
+        "constraints": "",
+        "people": "Катя — джун, 8 месяцев, ты её ментор. Она талантлива, но допустила\nсерьёзную ошибку из-за неопытности.",
+        "mode": ""
+      },
+      "dilemma": {
+        "question": "В какой роли ты будешь принимать решение?"
+      },
+      "positions": [
+        {
+          "id": "А",
+          "description": "Ментор — защищать Катю, дать ей второй шанс",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Б",
+          "description": "Партнёр — согласиться с коллегами, уволить Катю",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "В",
+          "description": "Project manager — убрать Катю с проекта, но оставить в компании",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Г",
+          "description": "Осознанно назвать конфликт ролей — попросить другого партнёра принять решение",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        }
+      ],
+      "context": "Компания: Консалтинг, 40 человек\nСреда: Ты — партнёр компании, но также:\n- Руководитель проекта для Клиента А\n- Ментор для джуна Кати\n- Коллега для других партнёров\nУчастники: Катя — джун, 8 месяцев, ты её ментор. Она талантлива, но допустила\nсерьёзную ошибку из-за неопытности.",
+      "options": [
+        {
+          "id": "А",
+          "text": "Ментор — защищать Катю, дать ей второй шанс",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Б",
+          "text": "Партнёр — согласиться с коллегами, уволить Катю",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "В",
+          "text": "Project manager — убрать Катю с проекта, но оставить в компании",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Г",
+          "text": "Осознанно назвать конфликт ролей — попросить другого партнёра принять решение",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        }
+      ],
+      "reflection": {
+        "questions": [],
+        "after_choice_insights": [
+          "Конфликт ролей — это не слабость. Это честность о том, что ты не можешь быть всем для всех."
+        ]
+      },
+      "maturity_level": "средняя"
+    },
+    {
+      "id": "case_role_differentiation_3",
+      "title": "Множественность ролей",
+      "node_id": "node_role_differentiation",
+      "branch_id": "branch_subjectivity",
+      "difficulty": "advanced",
+      "portal": {
+        "header_title": "КЕЙС",
+        "case_name": "Множественность ролей",
+        "subtitle": "",
+        "access_bar": "Уровень III"
+      },
+      "event": {
+        "label": "Ситуация",
+        "summary": ""
+      },
+      "space_map": {
+        "company": "Ты — CEO компании 150 человек. Одновременно ты:\n- CEO для акционеров (должен показывать рост)\n- Лидер для команды (должен вдохновлять)\n- Работодатель (должен быть справедливым)\n- Человек (имеешь свои ценности и страхи)",
+        "environment": "",
+        "constraints": "",
+        "people": "",
+        "mode": ""
+      },
+      "dilemma": {
+        "question": "Как ты будешь держать все эти роли одновременно?"
+      },
+      "positions": [
+        {
+          "id": "А",
+          "description": "Выбрать главную роль — CEO для акционеров, сделать сокращения",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Б",
+          "description": "Отказаться от сокращений — сохранить роль 'заботливого лидера'",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "В",
+          "description": "Назвать конфликт ролей публично — сказать команде правду о дилемме",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Г",
+          "description": "Найти третий путь — временное снижение зарплат, опционы вместо увольнений",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        }
+      ],
+      "context": "Компания: Ты — CEO компании 150 человек. Одновременно ты:\n- CEO для акционеров (должен показывать рост)\n- Лидер для команды (должен вдохновлять)\n- Работодатель (должен быть справедливым)\n- Человек (имеешь свои ценности и страхи)",
+      "options": [
+        {
+          "id": "А",
+          "text": "Выбрать главную роль — CEO для акционеров, сделать сокращения",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Б",
+          "text": "Отказаться от сокращений — сохранить роль 'заботливого лидера'",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "В",
+          "text": "Назвать конфликт ролей публично — сказать команде правду о дилемме",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Г",
+          "text": "Найти третий путь — временное снижение зарплат, опционы вместо увольнений",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        }
+      ],
+      "reflection": {
+        "questions": [],
+        "after_choice_insights": [
+          "Зрелость лидера — в способности держать напряжение между несовместимыми ролями, не убегая в одну."
+        ]
+      },
+      "maturity_level": "высокая"
+    },
+    {
+      "id": "case_subjectivity_transfer_2",
+      "title": "Субъектность команды",
+      "node_id": "node_subjectivity_transfer",
+      "branch_id": "branch_maturity_environment",
+      "difficulty": "intermediate",
+      "portal": {
+        "header_title": "КЕЙС",
+        "case_name": "Субъектность команды",
+        "subtitle": "",
+        "access_bar": "Уровень II"
+      },
+      "event": {
+        "label": "Ситуация",
+        "summary": ""
+      },
+      "space_map": {
+        "company": "IT-компания, команда 10 человек",
+        "environment": "Команда ждёт твоих решений по всему. Ты устал быть bottleneck.\nХочешь передать им субъектность — но они сопротивляются.",
+        "constraints": "",
+        "people": "",
+        "mode": ""
+      },
+      "dilemma": {
+        "question": "Как передать субъектность команде, которая не хочет?"
+      },
+      "positions": [
+        {
+          "id": "А",
+          "description": "Уйти в отпуск на месяц — пусть сами разбираются",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Б",
+          "description": "Постепенно расширять зону их решений",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "В",
+          "description": "Объяснить: 'Если не возьмёте субъектность, не сможете расти'",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Г",
+          "description": "Принять — не все хотят субъектности",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        }
+      ],
+      "context": "Компания: IT-компания, команда 10 человек\nСреда: Команда ждёт твоих решений по всему. Ты устал быть bottleneck.\nХочешь передать им субъектность — но они сопротивляются.",
+      "options": [
+        {
+          "id": "А",
+          "text": "Уйти в отпуск на месяц — пусть сами разбираются",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Б",
+          "text": "Постепенно расширять зону их решений",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "В",
+          "text": "Объяснить: 'Если не возьмёте субъектность, не сможете расти'",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Г",
+          "text": "Принять — не все хотят субъектности",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        }
+      ],
+      "reflection": {
+        "questions": [],
+        "after_choice_insights": [
+          "Субъектность — это не только право, но и ответственность. Не все её хотят."
+        ]
+      },
+      "maturity_level": "средняя"
+    },
+    {
+      "id": "case_subjectivity_transfer_3",
+      "title": "Передача субъектности в масштабе",
+      "node_id": "node_subjectivity_transfer",
+      "branch_id": "branch_maturity_environment",
+      "difficulty": "advanced",
+      "portal": {
+        "header_title": "КЕЙС",
+        "case_name": "Передача субъектности в масштабе",
+        "subtitle": "",
+        "access_bar": "Уровень III"
+      },
+      "event": {
+        "label": "Ситуация",
+        "summary": ""
+      },
+      "space_map": {
+        "company": "Компания 200 человек. Централизованная власть — всё через топ-менеджмент.\nТы — CEO. Хочешь distributed authority.",
+        "environment": "",
+        "constraints": "",
+        "people": "",
+        "mode": ""
+      },
+      "dilemma": {
+        "question": "Как передать субъектность 200 людям?"
+      },
+      "positions": [
+        {
+          "id": "А",
+          "description": "Self-management — отменить иерархию",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Б",
+          "description": "Subsidiarity principle — решения на самом низком возможном уровне",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "В",
+          "description": "Transparency + autonomy — вся информация доступна, решай сам",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Г",
+          "description": "Постепенная делегация — сначала middle management, потом дальше",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        }
+      ],
+      "context": "Компания: Компания 200 человек. Централизованная власть — всё через топ-менеджмент.\nТы — CEO. Хочешь distributed authority.",
+      "options": [
+        {
+          "id": "А",
+          "text": "Self-management — отменить иерархию",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Б",
+          "text": "Subsidiarity principle — решения на самом низком возможном уровне",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "В",
+          "text": "Transparency + autonomy — вся информация доступна, решай сам",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Г",
+          "text": "Постепенная делегация — сначала middle management, потом дальше",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        }
+      ],
+      "reflection": {
+        "questions": [],
+        "after_choice_insights": [
+          "Передача субъектности в масштабе — это культурная трансформация, а не процесс."
+        ]
+      },
+      "maturity_level": "высокая"
+    },
+    {
+      "id": "case_subject_in_system_1",
+      "title": "Найти своё место",
+      "node_id": "node_subject_in_system",
+      "branch_id": "branch_subjectivity",
+      "difficulty": "basic",
+      "portal": {
+        "header_title": "КЕЙС",
+        "case_name": "Найти своё место",
+        "subtitle": "",
+        "access_bar": "Уровень I"
+      },
+      "event": {
+        "label": "Ситуация",
+        "summary": "Новая работа, первый месяц. Не понимаешь, где твоё место в системе"
+      },
+      "space_map": {
+        "company": "IT-компания, 60 человек, ты — новый product manager",
+        "environment": "Все дружелюбны, но непонятны правила: кто с кем согласовывает,\nкто принимает решения, где твоя зона ответственности.",
+        "constraints": "",
+        "people": "",
+        "mode": ""
+      },
+      "dilemma": {
+        "question": "Как найти своё место в системе?"
+      },
+      "positions": [
+        {
+          "id": "А",
+          "description": "Наблюдать — изучать, как работает система, прежде чем действовать",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Б",
+          "description": "Спросить напрямую — 'Где моя зона ответственности?'",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "В",
+          "description": "Действовать — брать инициативу, границы проявятся",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Г",
+          "description": "Копировать успешных — делать как те, кто уже встроен",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        }
+      ],
+      "context": "Компания: IT-компания, 60 человек, ты — новый product manager\nСреда: Все дружелюбны, но непонятны правила: кто с кем согласовывает,\nкто принимает решения, где твоя зона ответственности.",
+      "options": [
+        {
+          "id": "А",
+          "text": "Наблюдать — изучать, как работает система, прежде чем действовать",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Б",
+          "text": "Спросить напрямую — 'Где моя зона ответственности?'",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "В",
+          "text": "Действовать — брать инициативу, границы проявятся",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Г",
+          "text": "Копировать успешных — делать как те, кто уже встроен",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        }
+      ],
+      "reflection": {
+        "questions": [],
+        "after_choice_insights": [
+          "Субъект в системе — это не данность. Это позиция, которую нужно найти или создать."
+        ]
+      },
+      "maturity_level": "низкая"
+    },
+    {
+      "id": "case_subject_in_system_2",
+      "title": "Изменить своё место",
+      "node_id": "node_subject_in_system",
+      "branch_id": "branch_subjectivity",
+      "difficulty": "intermediate",
+      "portal": {
+        "header_title": "КЕЙС",
+        "case_name": "Изменить своё место",
+        "subtitle": "",
+        "access_bar": "Уровень II"
+      },
+      "event": {
+        "label": "Ситуация",
+        "summary": ""
+      },
+      "space_map": {
+        "company": "Ты 2 года в компании как middle manager. Понимаешь: застрял.\nТвоя роль — исполнитель решений сверху. Хочешь влиять на стратегию.",
+        "environment": "",
+        "constraints": "",
+        "people": "",
+        "mode": ""
+      },
+      "dilemma": {
+        "question": "Как изменить своё место в системе?"
+      },
+      "positions": [
+        {
+          "id": "А",
+          "description": "Попросить повышения — формальное изменение позиции",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Б",
+          "description": "Начать влиять неформально — предлагать идеи, брать инициативу",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "В",
+          "description": "Создать новую роль — предложить то, чего нет в структуре",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Г",
+          "description": "Принять — признать, что эта позиция не для тебя, уйти",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        }
+      ],
+      "context": "Компания: Ты 2 года в компании как middle manager. Понимаешь: застрял.\nТвоя роль — исполнитель решений сверху. Хочешь влиять на стратегию.",
+      "options": [
+        {
+          "id": "А",
+          "text": "Попросить повышения — формальное изменение позиции",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Б",
+          "text": "Начать влиять неформально — предлагать идеи, брать инициативу",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "В",
+          "text": "Создать новую роль — предложить то, чего нет в структуре",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Г",
+          "text": "Принять — признать, что эта позиция не для тебя, уйти",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        }
+      ],
+      "reflection": {
+        "questions": [],
+        "after_choice_insights": [
+          "Субъектность в системе — это способность менять своё место, а не только занимать данное."
+        ]
+      },
+      "maturity_level": "средняя"
+    },
+    {
+      "id": "case_subject_in_system_3",
+      "title": "Быть системой",
+      "node_id": "node_subject_in_system",
+      "branch_id": "branch_subjectivity",
+      "difficulty": "advanced",
+      "portal": {
+        "header_title": "КЕЙС",
+        "case_name": "Быть системой",
+        "subtitle": "",
+        "access_bar": "Уровень III"
+      },
+      "event": {
+        "label": "Ситуация",
+        "summary": ""
+      },
+      "space_map": {
+        "company": "Ты — CEO. Раньше ты был субъектом в системе. Теперь ты — система для других.\nТвои решения создают позиции для всех остальных.",
+        "environment": "",
+        "constraints": "",
+        "people": "",
+        "mode": ""
+      },
+      "dilemma": {
+        "question": "Как быть субъектом, когда ты сам стал системой для других?"
+      },
+      "positions": [
+        {
+          "id": "А",
+          "description": "Создавать пространство для субъектности других — distributed authority",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Б",
+          "description": "Принять роль архитектора — проектировать систему, где другие могут быть субъектами",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "В",
+          "description": "Найти мета-систему — найти систему над собой (совет, инвесторы), где ты снова субъект",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Г",
+          "description": "Осознать парадокс — ты одновременно субъект и система",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        }
+      ],
+      "context": "Компания: Ты — CEO. Раньше ты был субъектом в системе. Теперь ты — система для других.\nТвои решения создают позиции для всех остальных.",
+      "options": [
+        {
+          "id": "А",
+          "text": "Создавать пространство для субъектности других — distributed authority",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Б",
+          "text": "Принять роль архитектора — проектировать систему, где другие могут быть субъектами",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "В",
+          "text": "Найти мета-систему — найти систему над собой (совет, инвесторы), где ты снова субъект",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Г",
+          "text": "Осознать парадокс — ты одновременно субъект и система",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        }
+      ],
+      "reflection": {
+        "questions": [],
+        "after_choice_insights": [
+          "На высшем уровне субъектность — это не про свободу от системы, а про ответственность за неё."
+        ]
+      },
+      "maturity_level": "высокая"
+    },
+    {
+      "id": "case_decision_authorship_1",
+      "title": "Моё решение",
+      "node_id": "node_decision_authorship",
+      "branch_id": "branch_subjectivity",
+      "difficulty": "basic",
+      "portal": {
+        "header_title": "КЕЙС",
+        "case_name": "Моё решение",
+        "subtitle": "",
+        "access_bar": "Уровень I"
+      },
+      "event": {
+        "label": "Ситуация",
+        "summary": "Команда спрашивает: 'Что делать?' Ты знаешь ответ, но..."
+      },
+      "space_map": {
+        "company": "Стартап, проектная команда 5 человек",
+        "environment": "",
+        "constraints": "",
+        "people": "Все ждут твоего решения. Ты можешь решить сам или дать им выбрать",
+        "mode": ""
+      },
+      "dilemma": {
+        "question": "Чьё это будет решение — моё или их?"
+      },
+      "positions": [
+        {
+          "id": "А",
+          "description": "Моё решение — 'Делаем так', беру авторство",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Б",
+          "description": "Их решение — 'Что вы думаете?', даю выбрать им",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "В",
+          "description": "Совместное — 'Давайте вместе', ищем консенсус",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Г",
+          "description": "Ничьё — 'Давайте не будем решать сейчас'",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        }
+      ],
+      "context": "Компания: Стартап, проектная команда 5 человек\nУчастники: Все ждут твоего решения. Ты можешь решить сам или дать им выбрать",
+      "options": [
+        {
+          "id": "А",
+          "text": "Моё решение — 'Делаем так', беру авторство",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Б",
+          "text": "Их решение — 'Что вы думаете?', даю выбрать им",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "В",
+          "text": "Совместное — 'Давайте вместе', ищем консенсус",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Г",
+          "text": "Ничьё — 'Давайте не будем решать сейчас'",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        }
+      ],
+      "reflection": {
+        "questions": [],
+        "after_choice_insights": [
+          "Авторство решения — это не только право, но и ответственность за последствия."
+        ]
+      },
+      "maturity_level": "низкая"
+    },
+    {
+      "id": "case_decision_authorship_2",
+      "title": "Отказ от авторства",
+      "node_id": "node_decision_authorship",
+      "branch_id": "branch_subjectivity",
+      "difficulty": "intermediate",
+      "portal": {
+        "header_title": "КЕЙС",
+        "case_name": "Отказ от авторства",
+        "subtitle": "",
+        "access_bar": "Уровень II"
+      },
+      "event": {
+        "label": "Ситуация",
+        "summary": ""
+      },
+      "space_map": {
+        "company": "Ты — руководитель. Принял решение, которое провалилось.\nКоманда обвиняет тебя. Можешь взять ответственность или переложить.",
+        "environment": "",
+        "constraints": "",
+        "people": "",
+        "mode": ""
+      },
+      "dilemma": {
+        "question": "Возьмёшь ли ты авторство провала?"
+      },
+      "positions": [
+        {
+          "id": "А",
+          "description": "Взять полностью — 'Моё решение, моя ответственность'",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Б",
+          "description": "Разделить — 'Я решил, но обстоятельства изменились'",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "В",
+          "description": "Переложить — 'Вы не так выполнили'",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Г",
+          "description": "Системно — 'Система привела к такому решению'",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        }
+      ],
+      "context": "Компания: Ты — руководитель. Принял решение, которое провалилось.\nКоманда обвиняет тебя. Можешь взять ответственность или переложить.",
+      "options": [
+        {
+          "id": "А",
+          "text": "Взять полностью — 'Моё решение, моя ответственность'",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Б",
+          "text": "Разделить — 'Я решил, но обстоятельства изменились'",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "В",
+          "text": "Переложить — 'Вы не так выполнили'",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Г",
+          "text": "Системно — 'Система привела к такому решению'",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        }
+      ],
+      "reflection": {
+        "questions": [],
+        "after_choice_insights": [
+          "Авторство провала тяжелее авторства успеха. Но без него нет настоящей субъектности."
+        ]
+      },
+      "maturity_level": "средняя"
+    },
+    {
+      "id": "case_decision_authorship_3",
+      "title": "Авторство будущего",
+      "node_id": "node_decision_authorship",
+      "branch_id": "branch_subjectivity",
+      "difficulty": "advanced",
+      "portal": {
+        "header_title": "КЕЙС",
+        "case_name": "Авторство будущего",
+        "subtitle": "",
+        "access_bar": "Уровень III"
+      },
+      "event": {
+        "label": "Ситуация",
+        "summary": ""
+      },
+      "space_map": {
+        "company": "Ты — основатель компании 5 лет. Компания выросла до 200 человек.\nТеперь решения принимаются коллективно, через процессы.",
+        "environment": "",
+        "constraints": "",
+        "people": "",
+        "mode": ""
+      },
+      "dilemma": {
+        "question": "Что значит авторство, когда ты больше не единственный автор?"
+      },
+      "positions": [
+        {
+          "id": "А",
+          "description": "Вернуть контроль — 'Это моя компания, я решаю'",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Б",
+          "description": "Принять распределённое авторство — компания больше не 'моя'",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "В",
+          "description": "Изменить форму авторства — от 'автора содержания' к 'автору условий'",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Г",
+          "description": "Уйти — передать авторство полностью другим",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        }
+      ],
+      "context": "Компания: Ты — основатель компании 5 лет. Компания выросла до 200 человек.\nТеперь решения принимаются коллективно, через процессы.",
+      "options": [
+        {
+          "id": "А",
+          "text": "Вернуть контроль — 'Это моя компания, я решаю'",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Б",
+          "text": "Принять распределённое авторство — компания больше не 'моя'",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "В",
+          "text": "Изменить форму авторства — от 'автора содержания' к 'автору условий'",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Г",
+          "text": "Уйти — передать авторство полностью другим",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        }
+      ],
+      "reflection": {
+        "questions": [
+          "Можешь ли ты быть автором системы, не контролируя каждое решение?",
+          "Что происходит с авторством, когда масштаб превышает возможности одного человека?"
+        ],
+        "after_choice_insights": [
+          "Высшее авторство — это создание условий, где другие становятся авторами."
+        ]
+      },
+      "maturity_level": "высокая"
+    },
+    {
+      "id": "case_responsibility_as_form_1",
+      "title": "Кто за это отвечает?",
+      "node_id": "node_responsibility_as_form",
+      "branch_id": "branch_responsibility",
+      "difficulty": "basic",
+      "portal": {
+        "header_title": "КЕЙС",
+        "case_name": "Кто за это отвечает?",
+        "subtitle": "Ответственность — Форма — Начало",
+        "access_bar": "Уровень I"
+      },
+      "event": {
+        "label": "Ситуация",
+        "summary": "Проект провалился. Команда говорит: 'Никто конкретно за это не отвечал'"
+      },
+      "space_map": {
+        "company": "Стартап, 12 человек, 8 месяцев после запуска",
+        "environment": "Быстрый темп, все делают всё. Формальных ролей нет.\nКультура \"помогаем друг другу\" работала, пока было 6 человек.",
+        "constraints": "",
+        "people": "Ты — основатель. Команда разработки 5 человек, все senior,\nвсе привыкли брать инициативу. Проект для крупного клиента сорвался —\nникто не контролировал дедлайны, каждый думал \"кто-то следит\".",
+        "mode": ""
+      },
+      "dilemma": {
+        "question": "Как придать ответственности форму?"
+      },
+      "positions": [
+        {
+          "id": "А",
+          "description": "Назначить project owner для каждого проекта — один человек отвечает за всё",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Б",
+          "description": "Создать RACI-матрицу — прописать зоны ответственности для каждой роли",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "В",
+          "description": "Ввести ритуал: в начале проекта явно озвучивать 'кто за что'",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Г",
+          "description": "Оставить как есть — 'мы команда, все за всё'",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        }
+      ],
+      "context": "Компания: Стартап, 12 человек, 8 месяцев после запуска\nСреда: Быстрый темп, все делают всё. Формальных ролей нет.\nКультура \"помогаем друг другу\" работала, пока было 6 человек.\nУчастники: Ты — основатель. Команда разработки 5 человек, все senior,\nвсе привыкли брать инициативу. Проект для крупного клиента сорвался —\nникто не контролировал дедлайны, каждый думал \"кто-то следит\".",
+      "options": [
+        {
+          "id": "А",
+          "text": "Назначить project owner для каждого проекта — один человек отвечает за всё",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Б",
+          "text": "Создать RACI-матрицу — прописать зоны ответственности для каждой роли",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "В",
+          "text": "Ввести ритуал: в начале проекта явно озвучивать 'кто за что'",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Г",
+          "text": "Оставить как есть — 'мы команда, все за всё'",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        }
+      ],
+      "reflection": {
+        "questions": [
+          "Когда ответственность размыта — это свобода или хаос?",
+          "Как ты сам понимаешь, за что отвечаешь?"
+        ],
+        "after_choice_insights": [
+          "Ответственность без формы — это иллюзия ответственности."
+        ]
+      },
+      "maturity_level": "низкая",
+      "facts": {
+        "strict_facts": "- Клиент ждал релиз 2 недели назад\n- На ретро все говорят \"я думал X отвечает\"\n- Это уже второй сорванный проект за месяц"
+      }
+    },
+    {
+      "id": "case_responsibility_as_form_2",
+      "title": "Граница ответственности",
+      "node_id": "node_responsibility_as_form",
+      "branch_id": "branch_responsibility",
+      "difficulty": "intermediate",
+      "portal": {
+        "header_title": "КЕЙС",
+        "case_name": "Граница ответственности",
+        "subtitle": "",
+        "access_bar": "Уровень II"
+      },
+      "event": {
+        "label": "Ситуация",
+        "summary": ""
+      },
+      "space_map": {
+        "company": "Продуктовая компания, 45 человек",
+        "environment": "",
+        "constraints": "",
+        "people": "Ты — Head of Product. Команда продукта 8 человек: менеджеры, дизайнеры, аналитики.\nМаркетинг — отдельная команда (12 человек), независимый директор.",
+        "mode": ""
+      },
+      "dilemma": {
+        "question": "Где граница ответственности между продуктом и маркетингом?"
+      },
+      "positions": [
+        {
+          "id": "А",
+          "description": "Продукт отвечает за product-market fit, маркетинг — за донесение ценности",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Б",
+          "description": "Создать кросс-функциональную команду — размыть границы",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "В",
+          "description": "Один человек отвечает за весь путь клиента — от идеи до продажи",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Г",
+          "description": "Признать, что разделение ответственности здесь не работает",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        }
+      ],
+      "context": "Компания: Продуктовая компания, 45 человек\nУчастники: Ты — Head of Product. Команда продукта 8 человек: менеджеры, дизайнеры, аналитики.\nМаркетинг — отдельная команда (12 человек), независимый директор.",
+      "options": [
+        {
+          "id": "А",
+          "text": "Продукт отвечает за product-market fit, маркетинг — за донесение ценности",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Б",
+          "text": "Создать кросс-функциональную команду — размыть границы",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "В",
+          "text": "Один человек отвечает за весь путь клиента — от идеи до продажи",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Г",
+          "text": "Признать, что разделение ответственности здесь не работает",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        }
+      ],
+      "reflection": {
+        "questions": [],
+        "after_choice_insights": [
+          "Граница ответственности — это не стена. Это интерфейс взаимодействия."
+        ]
+      },
+      "maturity_level": "средняя",
+      "facts": {
+        "strict_facts": "- Релиз готовили 4 месяца\n- Маркетинг не участвовал в разработке гипотез\n- CEO просит \"разобраться, кто виноват\""
+      }
+    },
+    {
+      "id": "case_responsibility_as_form_3",
+      "title": "Ответственность как архитектура",
+      "node_id": "node_responsibility_as_form",
+      "branch_id": "branch_responsibility",
+      "difficulty": "advanced",
+      "portal": {
+        "header_title": "КЕЙС",
+        "case_name": "Ответственность как архитектура",
+        "subtitle": "",
+        "access_bar": "Уровень III"
+      },
+      "event": {
+        "label": "Ситуация",
+        "summary": ""
+      },
+      "space_map": {
+        "company": "Холдинг, 3 бизнес-юнита (B2C, B2B, Enterprise), 350 человек.\nТы — COO. Каждый юнит автономен: свой P&L, свои команды.",
+        "environment": "",
+        "constraints": "",
+        "people": "",
+        "mode": ""
+      },
+      "dilemma": {
+        "question": "Как перепроектировать архитектуру ответственности для всего холдинга?"
+      },
+      "positions": [
+        {
+          "id": "А",
+          "description": "Создать единую Customer Success команду над юнитами",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Б",
+          "description": "Изменить KPI: бонусы за lifetime value клиента в холдинге, а не в юните",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "В",
+          "description": "Создать 'клиентские пути' — кросс-юнитовые команды под сегменты",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Г",
+          "description": "Принять автономность юнитов, но создать прозрачность данных о клиентах",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        }
+      ],
+      "context": "Компания: Холдинг, 3 бизнес-юнита (B2C, B2B, Enterprise), 350 человек.\nТы — COO. Каждый юнит автономен: свой P&L, свои команды.",
+      "options": [
+        {
+          "id": "А",
+          "text": "Создать единую Customer Success команду над юнитами",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Б",
+          "text": "Изменить KPI: бонусы за lifetime value клиента в холдинге, а не в юните",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "В",
+          "text": "Создать 'клиентские пути' — кросс-юнитовые команды под сегменты",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Г",
+          "text": "Принять автономность юнитов, но создать прозрачность данных о клиентах",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        }
+      ],
+      "reflection": {
+        "questions": [],
+        "after_choice_insights": [
+          "Архитектура ответственности определяет архитектуру бизнеса."
+        ]
+      },
+      "maturity_level": "высокая",
+      "facts": {
+        "strict_facts": "- Клиент начал в B2C, вырос, хотел перейти в B2B\n- B2C пытался его удержать (бонус менеджера зависит от retention)\n- B2B не стал подключаться (клиент \"чужой\")\n- Клиент ушёл к конкуренту"
+      }
+    },
+    {
+      "id": "case_institutionalization_1",
+      "title": "Встроить практику",
+      "node_id": "node_institutionalization",
+      "branch_id": "branch_maturity_environment",
+      "difficulty": "basic",
+      "portal": {
+        "header_title": "КЕЙС",
+        "case_name": "Встроить практику",
+        "subtitle": "",
+        "access_bar": "Уровень I"
+      },
+      "event": {
+        "label": "Ситуация",
+        "summary": "Провели классную ретроспективу, команда в восторге. Через месяц — забыли"
+      },
+      "space_map": {
+        "company": "Digital-агентство, 15 человек",
+        "environment": "",
+        "constraints": "",
+        "people": "Ты — agile-коуч. Видишь паттерн: классные практики умирают\nчерез месяц-два после внедрения.",
+        "mode": ""
+      },
+      "dilemma": {
+        "question": "Как встроить практику в систему, чтобы она жила без тебя?"
+      },
+      "positions": [
+        {
+          "id": "А",
+          "description": "Регулярность — сделать обязательной в календаре",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Б",
+          "description": "Владелец — кто-то из команды отвечает за практику",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "В",
+          "description": "Метрики — измерять, работает ли",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Г",
+          "description": "Культура — сделать частью identity команды",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        }
+      ],
+      "context": "Компания: Digital-агентство, 15 человек\nУчастники: Ты — agile-коуч. Видишь паттерн: классные практики умирают\nчерез месяц-два после внедрения.",
+      "options": [
+        {
+          "id": "А",
+          "text": "Регулярность — сделать обязательной в календаре",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Б",
+          "text": "Владелец — кто-то из команды отвечает за практику",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "В",
+          "text": "Метрики — измерять, работает ли",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Г",
+          "text": "Культура — сделать частью identity команды",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        }
+      ],
+      "reflection": {
+        "questions": [],
+        "after_choice_insights": [
+          "Институционализация — это когда практика переживает её создателя."
+        ]
+      },
+      "maturity_level": "низкая"
+    },
+    {
+      "id": "case_institutionalization_2",
+      "title": "Встроить культуру feedback",
+      "node_id": "node_institutionalization",
+      "branch_id": "branch_maturity_environment",
+      "difficulty": "intermediate",
+      "portal": {
+        "header_title": "КЕЙС",
+        "case_name": "Встроить культуру feedback",
+        "subtitle": "",
+        "access_bar": "Уровень II"
+      },
+      "event": {
+        "label": "Ситуация",
+        "summary": ""
+      },
+      "space_map": {
+        "company": "IT-компания, 50 человек",
+        "environment": "Год назад внедрили культуру обратной связи. Были тренинги, энтузиазм.\nСейчас — только формальные performance reviews раз в полгода.",
+        "constraints": "",
+        "people": "",
+        "mode": ""
+      },
+      "dilemma": {
+        "question": "Как институционализировать культуру, а не только процесс?"
+      },
+      "positions": [
+        {
+          "id": "А",
+          "description": "Изменить KPI лидеров — оценивать по тому, как дают ОС",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Б",
+          "description": "Встроить в ритуалы — каждая встреча заканчивается ОС",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "В",
+          "description": "Публичное признание — тех, кто даёт хорошую ОС",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Г",
+          "description": "Обучение как onboarding — каждый новичок проходит",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        }
+      ],
+      "context": "Компания: IT-компания, 50 человек\nСреда: Год назад внедрили культуру обратной связи. Были тренинги, энтузиазм.\nСейчас — только формальные performance reviews раз в полгода.",
+      "options": [
+        {
+          "id": "А",
+          "text": "Изменить KPI лидеров — оценивать по тому, как дают ОС",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Б",
+          "text": "Встроить в ритуалы — каждая встреча заканчивается ОС",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "В",
+          "text": "Публичное признание — тех, кто даёт хорошую ОС",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Г",
+          "text": "Обучение как onboarding — каждый новичок проходит",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        }
+      ],
+      "reflection": {
+        "questions": [],
+        "after_choice_insights": [
+          "Институционализация культуры — это когда она становится 'так мы здесь делаем'."
+        ]
+      },
+      "maturity_level": "средняя"
+    },
+    {
+      "id": "case_institutionalization_3",
+      "title": "Институционализировать инновации",
+      "node_id": "node_institutionalization",
+      "branch_id": "branch_maturity_environment",
+      "difficulty": "advanced",
+      "portal": {
+        "header_title": "КЕЙС",
+        "case_name": "Институционализировать инновации",
+        "subtitle": "",
+        "access_bar": "Уровень III"
+      },
+      "event": {
+        "label": "Ситуация",
+        "summary": ""
+      },
+      "space_map": {
+        "company": "Компания 500 человек. Хочет быть инновационной. Но все инновации —\nрезультат героизма отдельных людей, которые выгорают.",
+        "environment": "",
+        "constraints": "",
+        "people": "",
+        "mode": ""
+      },
+      "dilemma": {
+        "question": "Как институционализировать инновации?"
+      },
+      "positions": [
+        {
+          "id": "А",
+          "description": "Innovation budget — каждое подразделение 10% бюджета на эксперименты",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Б",
+          "description": "20% time — каждый тратит день в неделю на свои проекты",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "В",
+          "description": "Внутренний венчур — фонд для employee-led проектов",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Г",
+          "description": "Изменить метрики успеха — считать не только revenue, но и эксперименты",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        }
+      ],
+      "context": "Компания: Компания 500 человек. Хочет быть инновационной. Но все инновации —\nрезультат героизма отдельных людей, которые выгорают.",
+      "options": [
+        {
+          "id": "А",
+          "text": "Innovation budget — каждое подразделение 10% бюджета на эксперименты",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Б",
+          "text": "20% time — каждый тратит день в неделю на свои проекты",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "В",
+          "text": "Внутренний венчур — фонд для employee-led проектов",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Г",
+          "text": "Изменить метрики успеха — считать не только revenue, но и эксперименты",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        }
+      ],
+      "reflection": {
+        "questions": [],
+        "after_choice_insights": [
+          "Институционализировать инновации — значит встроить риск и эксперимент в ДНК компании."
+        ]
+      },
+      "maturity_level": "высокая"
+    },
+    {
+      "id": "case_scene_holding_1",
+      "title": "Удержать пространство конфликта",
+      "node_id": "node_scene_holding",
+      "branch_id": "branch_maturity_environment",
+      "difficulty": "basic",
+      "portal": {
+        "header_title": "КЕЙС",
+        "case_name": "Удержать пространство конфликта",
+        "subtitle": "",
+        "access_bar": "Уровень I"
+      },
+      "event": {
+        "label": "Ситуация",
+        "summary": "На встрече два человека начинают спорить, эмоции растут"
+      },
+      "space_map": {
+        "company": "Стартап, команда 8 человек",
+        "environment": "",
+        "constraints": "",
+        "people": "Ты — фасилитатор встречи. Конфликт между двумя коллегами.\nОстальные смотрят, напряжение.",
+        "mode": ""
+      },
+      "dilemma": {
+        "question": "Как ты удержишь пространство для этого конфликта?"
+      },
+      "positions": [
+        {
+          "id": "А",
+          "description": "Прервать — 'Давайте обсудим это позже наедине'",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Б",
+          "description": "Удержать — 'Продолжайте, мы все здесь'",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "В",
+          "description": "Структурировать — 'По очереди, 2 минуты каждый'",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Г",
+          "description": "Перевести внимание — 'Давайте вернёмся к повестке'",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        }
+      ],
+      "context": "Компания: Стартап, команда 8 человек\nУчастники: Ты — фасилитатор встречи. Конфликт между двумя коллегами.\nОстальные смотрят, напряжение.",
+      "options": [
+        {
+          "id": "А",
+          "text": "Прервать — 'Давайте обсудим это позже наедине'",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Б",
+          "text": "Удержать — 'Продолжайте, мы все здесь'",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "В",
+          "text": "Структурировать — 'По очереди, 2 минуты каждый'",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Г",
+          "text": "Перевести внимание — 'Давайте вернёмся к повестке'",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        }
+      ],
+      "reflection": {
+        "questions": [],
+        "after_choice_insights": [
+          "Удержание сцены — это не подавление конфликта, а создание безопасного контейнера для него."
+        ]
+      },
+      "maturity_level": "низкая"
+    },
+    {
+      "id": "case_leader_liberation_1",
+      "title": "Освободить время",
+      "node_id": "node_leader_liberation",
+      "branch_id": "branch_responsibility",
+      "difficulty": "basic",
+      "portal": {
+        "header_title": "КЕЙС",
+        "case_name": "Освободить время",
+        "subtitle": "",
+        "access_bar": "Уровень I"
+      },
+      "event": {
+        "label": "Ситуация",
+        "summary": ""
+      },
+      "space_map": {
+        "company": "Стартап, ты — основатель",
+        "environment": "",
+        "constraints": "",
+        "people": "Команда 6 человек. Ты делаешь всё: продажи, найм, продукт, операции",
+        "mode": ""
+      },
+      "dilemma": {
+        "question": "От чего освободиться первым?"
+      },
+      "positions": [
+        {
+          "id": "А",
+          "description": "От операционки — делегировать рутину",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Б",
+          "description": "От продаж — нанять sales",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "В",
+          "description": "От продукта — нанять product manager",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Г",
+          "description": "Ни от чего — 'я быстрее и лучше всех'",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        }
+      ],
+      "context": "Компания: Стартап, ты — основатель\nУчастники: Команда 6 человек. Ты делаешь всё: продажи, найм, продукт, операции",
+      "options": [
+        {
+          "id": "А",
+          "text": "От операционки — делегировать рутину",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Б",
+          "text": "От продаж — нанять sales",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "В",
+          "text": "От продукта — нанять product manager",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Г",
+          "text": "Ни от чего — 'я быстрее и лучше всех'",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        }
+      ],
+      "reflection": {
+        "questions": [],
+        "after_choice_insights": [
+          "Освобождение лидера — это не лень. Это инвестиция в масштабируемость."
+        ]
+      },
+      "maturity_level": "низкая",
+      "facts": {
+        "strict_facts": "Работаешь 70 часов в неделю, выгорание близко"
+      }
+    },
+    {
+      "id": "case_mature_parting_1",
+      "title": "Первое увольнение",
+      "node_id": "node_mature_parting",
+      "branch_id": "branch_maturity_environment",
+      "difficulty": "basic",
+      "portal": {
+        "header_title": "КЕЙС",
+        "case_name": "Первое увольнение",
+        "subtitle": "",
+        "access_bar": "Уровень I"
+      },
+      "event": {
+        "label": "Ситуация",
+        "summary": "Сотрудник говорит: 'Я ухожу'. Ты — впервые в роли руководителя"
+      },
+      "space_map": {
+        "company": "Стартап, 10 человек, ты — тимлид",
+        "environment": "",
+        "constraints": "",
+        "people": "Ваня — разработчик, работает год. Нашёл другую работу, $+30% к зарплате.\nХороший специалист, но не ключевой.",
+        "mode": ""
+      },
+      "dilemma": {
+        "question": "Как провести это расставание?"
+      },
+      "positions": [
+        {
+          "id": "А",
+          "description": "Попытаться удержать — counterоffer",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Б",
+          "description": "Поддержать решение — 'Рад за тебя, давай хорошо завершим'",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "В",
+          "description": "Exit-интервью — узнать настоящие причины",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Г",
+          "description": "Обидеться — 'Предатель, мы столько в тебя вложили'",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        }
+      ],
+      "context": "Компания: Стартап, 10 человек, ты — тимлид\nУчастники: Ваня — разработчик, работает год. Нашёл другую работу, $+30% к зарплате.\nХороший специалист, но не ключевой.",
+      "options": [
+        {
+          "id": "А",
+          "text": "Попытаться удержать — counterоffer",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Б",
+          "text": "Поддержать решение — 'Рад за тебя, давай хорошо завершим'",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "В",
+          "text": "Exit-интервью — узнать настоящие причины",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Г",
+          "text": "Обидеться — 'Предатель, мы столько в тебя вложили'",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        }
+      ],
+      "reflection": {
+        "questions": [],
+        "after_choice_insights": [
+          "Зрелое расставание — это когда ты желаешь человеку роста, даже если он не с тобой."
+        ]
+      },
+      "maturity_level": "низкая"
+    },
+    {
+      "id": "case_leader_liberation_2",
+      "title": "Выйти из микроменеджмента",
+      "node_id": "node_leader_liberation",
+      "branch_id": "branch_responsibility",
+      "difficulty": "intermediate",
+      "portal": {
+        "header_title": "КЕЙС",
+        "case_name": "Выйти из микроменеджмента",
+        "subtitle": "",
+        "access_bar": "Уровень II"
+      },
+      "event": {
+        "label": "Ситуация",
+        "summary": ""
+      },
+      "space_map": {
+        "company": "Продуктовая компания, 25 человек",
+        "environment": "",
+        "constraints": "",
+        "people": "Команда говорит: \"Ты везде, контролируешь каждое решение\".\nExit-интервью: \"Не было автономии, всё через основателя\".",
+        "mode": ""
+      },
+      "dilemma": {
+        "question": "Как освободить себя от привычки контролировать?"
+      },
+      "positions": [
+        {
+          "id": "А",
+          "description": "Установить правило: не участвовать в решениях уровня X",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Б",
+          "description": "Найти зону, где доверяешь полностью — начать оттуда",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "В",
+          "description": "Попросить команду говорить, когда ты микроменеджишь",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Г",
+          "description": "Взять отпуск на месяц — пусть система работает без тебя",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        }
+      ],
+      "context": "Компания: Продуктовая компания, 25 человек\nУчастники: Команда говорит: \"Ты везде, контролируешь каждое решение\".\nExit-интервью: \"Не было автономии, всё через основателя\".",
+      "options": [
+        {
+          "id": "А",
+          "text": "Установить правило: не участвовать в решениях уровня X",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Б",
+          "text": "Найти зону, где доверяешь полностью — начать оттуда",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "В",
+          "text": "Попросить команду говорить, когда ты микроменеджишь",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Г",
+          "text": "Взять отпуск на месяц — пусть система работает без тебя",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        }
+      ],
+      "reflection": {
+        "questions": [],
+        "after_choice_insights": [
+          "Микроменеджмент — это не забота о качестве. Это страх потери контроля."
+        ]
+      },
+      "maturity_level": "средняя"
+    },
+    {
+      "id": "case_leader_liberation_3",
+      "title": "Освобождение как стратегия",
+      "node_id": "node_leader_liberation",
+      "branch_id": "branch_responsibility",
+      "difficulty": "advanced",
+      "portal": {
+        "header_title": "КЕЙС",
+        "case_name": "Освобождение как стратегия",
+        "subtitle": "",
+        "access_bar": "Уровень III"
+      },
+      "event": {
+        "label": "Ситуация",
+        "summary": ""
+      },
+      "space_map": {
+        "company": "Компания 150 человек, ты — CEO, работаешь 5 лет",
+        "environment": "",
+        "constraints": "",
+        "people": "Осознал: компания не может расти дальше, потому что ты — bottleneck.\nВсе ключевые решения через тебя. Нанял strong топ-команду,\nно они тоже ждут твоего approval.",
+        "mode": ""
+      },
+      "dilemma": {
+        "question": "Как системно освободить себя из центра всех процессов?"
+      },
+      "positions": [
+        {
+          "id": "А",
+          "description": "Уйти в advisory role — нанять операционного CEO",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Б",
+          "description": "Переопределить свою роль: от 'всё решаю' к 'создаю условия'",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "В",
+          "description": "Убрать себя из процессов принятия решений — только наблюдатель",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Г",
+          "description": "Признать, что пока не готов — компания останется на этом размере",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        }
+      ],
+      "context": "Компания: Компания 150 человек, ты — CEO, работаешь 5 лет\nУчастники: Осознал: компания не может расти дальше, потому что ты — bottleneck.\nВсе ключевые решения через тебя. Нанял strong топ-команду,\nно они тоже ждут твоего approval.",
+      "options": [
+        {
+          "id": "А",
+          "text": "Уйти в advisory role — нанять операционного CEO",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Б",
+          "text": "Переопределить свою роль: от 'всё решаю' к 'создаю условия'",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "В",
+          "text": "Убрать себя из процессов принятия решений — только наблюдатель",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Г",
+          "text": "Признать, что пока не готов — компания останется на этом размере",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        }
+      ],
+      "reflection": {
+        "questions": [],
+        "after_choice_insights": [
+          "Величайшее освобождение лидера — освободить компанию от зависимости от себя."
+        ]
+      },
+      "maturity_level": "высокая"
+    },
+    {
+      "id": "case_maturity_environment_2",
+      "title": "Среда для всей команды",
+      "node_id": "node_maturity_environment",
+      "branch_id": "branch_maturity_environment",
+      "difficulty": "intermediate",
+      "portal": {
+        "header_title": "КЕЙС",
+        "case_name": "Среда для всей команды",
+        "subtitle": "",
+        "access_bar": "Уровень II"
+      },
+      "event": {
+        "label": "Ситуация",
+        "summary": ""
+      },
+      "space_map": {
+        "company": "Продуктовая компания, 45 человек",
+        "environment": "Ты — Head of Product. Видишь: команда застряла. Все делают свою работу хорошо,\nно никто не растёт. Нет новых идей, нет экспериментов.",
+        "constraints": "",
+        "people": "",
+        "mode": ""
+      },
+      "dilemma": {
+        "question": "Как создать среду, где вся команда развивается?"
+      },
+      "positions": [
+        {
+          "id": "А",
+          "description": "20% time — каждый тратит день в неделю на обучение/эксперименты",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Б",
+          "description": "Rotation — раз в квартал люди меняются ролями/проектами",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "В",
+          "description": "Learning budget + обязательность — каждый должен потратить на обучение",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Г",
+          "description": "Создать культуру безопасности провала — можно ошибаться",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        }
+      ],
+      "context": "Компания: Продуктовая компания, 45 человек\nСреда: Ты — Head of Product. Видишь: команда застряла. Все делают свою работу хорошо,\nно никто не растёт. Нет новых идей, нет экспериментов.",
+      "options": [
+        {
+          "id": "А",
+          "text": "20% time — каждый тратит день в неделю на обучение/эксперименты",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Б",
+          "text": "Rotation — раз в квартал люди меняются ролями/проектами",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "В",
+          "text": "Learning budget + обязательность — каждый должен потратить на обучение",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Г",
+          "text": "Создать культуру безопасности провала — можно ошибаться",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        }
+      ],
+      "reflection": {
+        "questions": [],
+        "after_choice_insights": [
+          "Среда зрелости для команды — это система, где рост неизбежен."
+        ]
+      },
+      "maturity_level": "средняя"
+    },
+    {
+      "id": "case_maturity_environment_3",
+      "title": "Deliberately Developmental Organization",
+      "node_id": "node_maturity_environment",
+      "branch_id": "branch_maturity_environment",
+      "difficulty": "advanced",
+      "portal": {
+        "header_title": "КЕЙС",
+        "case_name": "Deliberately Developmental Organization",
+        "subtitle": "",
+        "access_bar": "Уровень III"
+      },
+      "event": {
+        "label": "Ситуация",
+        "summary": ""
+      },
+      "space_map": {
+        "company": "Компания 150 человек. Ты — CEO. Хочешь сделать развитие людей\nне HR-программой, а core business model.",
+        "environment": "",
+        "constraints": "",
+        "people": "",
+        "mode": ""
+      },
+      "dilemma": {
+        "question": "Как создать организацию, где развитие людей — главная цель?"
+      },
+      "positions": [
+        {
+          "id": "А",
+          "description": "Все процессы компании переделать под развитие (DDO модель)",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Б",
+          "description": "Создать внутренний университет — место для обучения",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "В",
+          "description": "KPI на развитие команды — часть оценки каждого лидера",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Г",
+          "description": "Культура feedback 360° — все учат всех",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        }
+      ],
+      "context": "Компания: Компания 150 человек. Ты — CEO. Хочешь сделать развитие людей\nне HR-программой, а core business model.",
+      "options": [
+        {
+          "id": "А",
+          "text": "Все процессы компании переделать под развитие (DDO модель)",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Б",
+          "text": "Создать внутренний университет — место для обучения",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "В",
+          "text": "KPI на развитие команды — часть оценки каждого лидера",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Г",
+          "text": "Культура feedback 360° — все учат всех",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        }
+      ],
+      "reflection": {
+        "questions": [],
+        "after_choice_insights": [
+          "DDO — это когда компания существует для развития людей, а бизнес — побочный эффект."
+        ]
+      },
+      "maturity_level": "высокая"
+    },
+    {
+      "id": "case_scene_holding_2",
+      "title": "Сцена для сложного процесса",
+      "node_id": "node_scene_holding",
+      "branch_id": "branch_maturity_environment",
+      "difficulty": "intermediate",
+      "portal": {
+        "header_title": "КЕЙС",
+        "case_name": "Сцена для сложного процесса",
+        "subtitle": "",
+        "access_bar": "Уровень II"
+      },
+      "event": {
+        "label": "Ситуация",
+        "summary": ""
+      },
+      "space_map": {
+        "company": "Компания переживает реорганизацию, 60 человек",
+        "environment": "Неопределённость, страхи, слухи. Ты — HR директор.\nНужно провести town hall.",
+        "constraints": "",
+        "people": "",
+        "mode": ""
+      },
+      "dilemma": {
+        "question": "Как удержать пространство для страхов и вопросов?"
+      },
+      "positions": [
+        {
+          "id": "А",
+          "description": "Презентация + Q&A — контроль над процессом",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Б",
+          "description": "Open space — все могут высказаться",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "В",
+          "description": "Small groups — безопаснее делиться",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Г",
+          "description": "Честность CEO — 'Вот что я знаю, вот что не знаю'",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        }
+      ],
+      "context": "Компания: Компания переживает реорганизацию, 60 человек\nСреда: Неопределённость, страхи, слухи. Ты — HR директор.\nНужно провести town hall.",
+      "options": [
+        {
+          "id": "А",
+          "text": "Презентация + Q&A — контроль над процессом",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Б",
+          "text": "Open space — все могут высказаться",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "В",
+          "text": "Small groups — безопаснее делиться",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Г",
+          "text": "Честность CEO — 'Вот что я знаю, вот что не знаю'",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        }
+      ],
+      "reflection": {
+        "questions": [],
+        "after_choice_insights": [
+          "Удержание сцены в кризисе — это готовность находиться с неопределённостью."
+        ]
+      },
+      "maturity_level": "средняя"
+    },
+    {
+      "id": "case_scene_holding_3",
+      "title": "Держатель сцены трансформации",
+      "node_id": "node_scene_holding",
+      "branch_id": "branch_maturity_environment",
+      "difficulty": "advanced",
+      "portal": {
+        "header_title": "КЕЙС",
+        "case_name": "Держатель сцены трансформации",
+        "subtitle": "",
+        "access_bar": "Уровень III"
+      },
+      "event": {
+        "label": "Ситуация",
+        "summary": ""
+      },
+      "space_map": {
+        "company": "Компания 300 человек, культурная трансформация.\nОт hierarchy к self-management. 2 года процесса.\nСопротивление, хаос, часть людей уходит.",
+        "environment": "",
+        "constraints": "",
+        "people": "",
+        "mode": ""
+      },
+      "dilemma": {
+        "question": "Как удерживать сцену многолетней трансформации?"
+      },
+      "positions": [
+        {
+          "id": "А",
+          "description": "Постоянная коммуникация — каждую неделю town hall",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Б",
+          "description": "Символы и ритуалы — создать якоря стабильности",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "В",
+          "description": "Transparency о процессе — показывать, где мы в journey",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Г",
+          "description": "Личная устойчивость — быть спокойным центром хаоса",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        }
+      ],
+      "context": "Компания: Компания 300 человек, культурная трансформация.\nОт hierarchy к self-management. 2 года процесса.\nСопротивление, хаос, часть людей уходит.",
+      "options": [
+        {
+          "id": "А",
+          "text": "Постоянная коммуникация — каждую неделю town hall",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Б",
+          "text": "Символы и ритуалы — создать якоря стабильности",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "В",
+          "text": "Transparency о процессе — показывать, где мы в journey",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Г",
+          "text": "Личная устойчивость — быть спокойным центром хаоса",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        }
+      ],
+      "reflection": {
+        "questions": [],
+        "after_choice_insights": [
+          "Держать сцену трансформации — значит выдерживать хаос, не пытаясь его устранить."
+        ]
+      },
+      "maturity_level": "высокая"
+    },
+    {
+      "id": "case_mature_parting_2",
+      "title": "Уволить друга",
+      "node_id": "node_mature_parting",
+      "branch_id": "branch_maturity_environment",
+      "difficulty": "intermediate",
+      "portal": {
+        "header_title": "КЕЙС",
+        "case_name": "Уволить друга",
+        "subtitle": "",
+        "access_bar": "Уровень II"
+      },
+      "event": {
+        "label": "Ситуация",
+        "summary": ""
+      },
+      "space_map": {
+        "company": "Компания 30 человек",
+        "environment": "",
+        "constraints": "",
+        "people": "Андрей — твой друг, вместе основывали компанию. Но он не справляется\nс ролью CTO. Компания растёт, ему нужен более сильный технический лидер.",
+        "mode": ""
+      },
+      "dilemma": {
+        "question": "Как зрело расстаться с человеком, с которым начинал?"
+      },
+      "positions": [
+        {
+          "id": "А",
+          "description": "Честный разговор — 'Нам нужен более сильный CTO'",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Б",
+          "description": "Предложить другую роль — 'Можешь быть senior dev'",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "В",
+          "description": "Golden parachute — щедрый выходной пакет",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Г",
+          "description": "Терпеть — 'Не могу предать друга'",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        }
+      ],
+      "context": "Компания: Компания 30 человек\nУчастники: Андрей — твой друг, вместе основывали компанию. Но он не справляется\nс ролью CTO. Компания растёт, ему нужен более сильный технический лидер.",
+      "options": [
+        {
+          "id": "А",
+          "text": "Честный разговор — 'Нам нужен более сильный CTO'",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Б",
+          "text": "Предложить другую роль — 'Можешь быть senior dev'",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "В",
+          "text": "Golden parachute — щедрый выходной пакет",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Г",
+          "text": "Терпеть — 'Не могу предать друга'",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        }
+      ],
+      "reflection": {
+        "questions": [],
+        "after_choice_insights": [
+          "Зрелое расставание с co-founder — это любовь к компании и к человеку одновременно."
+        ]
+      },
+      "maturity_level": "средняя"
+    },
+    {
+      "id": "case_mature_parting_3",
+      "title": "Закрыть компанию",
+      "node_id": "node_mature_parting",
+      "branch_id": "branch_maturity_environment",
+      "difficulty": "advanced",
+      "portal": {
+        "header_title": "КЕЙС",
+        "case_name": "Закрыть компанию",
+        "subtitle": "",
+        "access_bar": "Уровень III"
+      },
+      "event": {
+        "label": "Ситуация",
+        "summary": ""
+      },
+      "space_map": {
+        "company": "Компания 80 человек, 5 лет работы. Рынок изменился, продукт неактуален.\nДенег хватит на 6 месяцев. Ты — CEO, основатель.",
+        "environment": "",
+        "constraints": "",
+        "people": "",
+        "mode": ""
+      },
+      "dilemma": {
+        "question": "Как зрело расстаться с компанией, которую создал?"
+      },
+      "positions": [
+        {
+          "id": "А",
+          "description": "Pivot — попытаться найти новую модель",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Б",
+          "description": "Продать — найти покупателя",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "В",
+          "description": "Закрыть сейчас — честно, вернуть деньги, помочь команде найти работу",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        },
+        {
+          "id": "Г",
+          "description": "Бороться до конца — использовать все 6 месяцев",
+          "position_type": "",
+          "consequence": {},
+          "reflection_prompt": ""
+        }
+      ],
+      "context": "Компания: Компания 80 человек, 5 лет работы. Рынок изменился, продукт неактуален.\nДенег хватит на 6 месяцев. Ты — CEO, основатель.",
+      "options": [
+        {
+          "id": "А",
+          "text": "Pivot — попытаться найти новую модель",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Б",
+          "text": "Продать — найти покупателя",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "В",
+          "text": "Закрыть сейчас — честно, вернуть деньги, помочь команде найти работу",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        },
+        {
+          "id": "Г",
+          "text": "Бороться до конца — использовать все 6 месяцев",
+          "skill_used": "",
+          "consequence": {
+            "immediate": "",
+            "second_order": "",
+            "systemic": ""
+          },
+          "hint": ""
+        }
+      ],
+      "reflection": {
+        "questions": [
+          "Что сложнее — начать или завершить?",
+          "Как отличить упорство от упрямства?"
+        ],
+        "after_choice_insights": [
+          "Зрелое расставание с компанией — это признание, что не всё нужно спасать. Иногда завершение — это успех."
+        ]
+      },
+      "maturity_level": "высокая"
+    }
+  ]
+}

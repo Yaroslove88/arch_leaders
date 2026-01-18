@@ -2,6 +2,7 @@
  * API клиент для работы с Leadership Architect API
  */
 
+// API всегда на порту 3001
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 /**
@@ -286,6 +287,8 @@ export interface NodeAbilityState {
   progress: number; // 0..1 (вычисляется на лету из xp_current / xp_required)
   relevance: number; // 0..1
   last_activity_date?: string; // дата последней активности
+  stored_experience?: number; // сохраненный опыт для узла
+  internal_progress?: number; // внутренний прогресс (неограничен)
 }
 
 export async function getUserAbilityStates(userId?: string): Promise<Record<string, NodeAbilityState>> {
@@ -445,7 +448,7 @@ export interface InteractiveCase {
 
   // === FACTS & BACKGROUND ===
   facts?: {
-    strict_facts: string;
+    strict_facts: string | string[];
   };
   background?: {
     story: string;
@@ -466,8 +469,9 @@ export interface InteractiveCase {
       immediate: string;
       second_order: string;
       systemic: string;
+      reflection_prompt?: string;  // В JSON хранится здесь
     };
-    reflection_prompt?: string;
+    reflection_prompt?: string;  // Legacy, обычно пустое
   }>;
 
   // === OPTIONS (старый формат для обратной совместимости) ===
@@ -515,6 +519,41 @@ export interface InteractiveCase {
   };
 }
 
+/**
+ * Проверяет, что кейс имеет достаточно контента для отображения
+ * Фильтрует кейсы с пустыми consequence, event.summary и т.д.
+ */
+function isCaseContentComplete(case_: InteractiveCase): boolean {
+  // Должен быть event.summary или context
+  const hasEvent = !!(case_.event?.summary || case_.context);
+  if (!hasEvent) return false;
+
+  // Должны быть позиции с заполненными последствиями
+  // Проверяем первую позицию (если positions есть) или первый option
+  const firstPosition = case_.positions?.[0];
+  const firstOption = case_.options?.[0];
+
+  if (firstPosition) {
+    // Новый формат: проверяем consequence.immediate
+    const hasConsequence = !!(
+      firstPosition.consequence?.immediate ||
+      firstPosition.consequence?.second_order ||
+      firstPosition.consequence?.systemic
+    );
+    if (!hasConsequence) return false;
+  } else if (firstOption) {
+    // Legacy формат: проверяем options[0].consequence.immediate
+    const hasConsequence = !!(
+      firstOption.consequence?.immediate ||
+      firstOption.consequence?.second_order ||
+      firstOption.consequence?.systemic
+    );
+    if (!hasConsequence) return false;
+  }
+
+  return true;
+}
+
 export async function getCases(): Promise<{ cases: InteractiveCase[] }> {
   try {
     const response = await fetch(`${API_URL}/cases`);
@@ -523,7 +562,9 @@ export async function getCases(): Promise<{ cases: InteractiveCase[] }> {
       return { cases: [] };
     }
     const data = await response.json();
-    return data;
+    // Фильтруем кейсы с неполным контентом
+    const completeCases = (data.cases || []).filter(isCaseContentComplete);
+    return { cases: completeCases };
   } catch (error) {
     console.error('Error fetching cases:', error);
     return { cases: [] };
@@ -539,13 +580,19 @@ export async function getCase(id: string): Promise<InteractiveCase> {
 export async function getCasesByNode(nodeId: string): Promise<{ cases: InteractiveCase[] }> {
   const response = await fetch(`${API_URL}/cases/by-node/${nodeId}`);
   if (!response.ok) throw new Error('Failed to fetch cases by node');
-  return response.json();
+  const data = await response.json();
+  // Фильтруем кейсы с неполным контентом
+  const completeCases = (data.cases || []).filter(isCaseContentComplete);
+  return { cases: completeCases };
 }
 
 export async function getCasesByBranch(branchId: string): Promise<{ cases: InteractiveCase[] }> {
   const response = await fetch(`${API_URL}/cases/by-branch/${branchId}`);
   if (!response.ok) throw new Error('Failed to fetch cases by branch');
-  return response.json();
+  const data = await response.json();
+  // Фильтруем кейсы с неполным контентом
+  const completeCases = (data.cases || []).filter(isCaseContentComplete);
+  return { cases: completeCases };
 }
 
 export interface CaseAvailability {
@@ -866,6 +913,7 @@ export interface BuildStatus {
   build_id: string;
   name: string;
   icon: string;
+  color?: string;
   is_active: boolean;
   activation_percentage: number;
   matched_conditions: string[];
@@ -1224,5 +1272,137 @@ export async function getNodeDescription(nodeId: string): Promise<NodeDescriptio
     console.error(`Error fetching node description for ${nodeId}:`, error);
     throw error;
   }
+}
+
+// =============================================================================
+// CORE LOOP API
+// =============================================================================
+
+/**
+ * Типы для Core Loop API
+ */
+export interface CoreLoopProcessRequest {
+  text: string;
+  type?: 'situation' | 'reflection' | 'observation';
+  participants?: string[];
+  context?: Record<string, any>;
+  generateQuest?: boolean;
+}
+
+export interface CoreLoopRationale {
+  summary: string;
+  reasons: string[];
+  evidenceLinks?: string[];
+  linkedNodes?: string[];
+  confidence?: number;
+}
+
+export interface CoreLoopProcessResponse {
+  entry: {
+    id: string;
+    text: string;
+    type: string;
+    created_at: string;
+  };
+  session: {
+    id: string;
+    summary: string;
+    themes: string[];
+    patterns: string[];
+    ability_signals: Array<{ node_id: string; signal: string }>;
+    rationale?: CoreLoopRationale;
+  };
+  quest?: {
+    id: string;
+    title: string;
+    description: string;
+    type: string;
+    linked_nodes: string[];
+    rationale?: CoreLoopRationale;
+  };
+  treeChanges?: Array<{
+    node_id: string;
+    node_name?: string;
+    xpBefore: number;
+    xpAfter: number;
+    xpDelta: number;
+    stateBefore: string;
+    stateAfter: string;
+    newlyUnlocked?: string[];
+  }>;
+  currentStage: string;
+}
+
+export interface CoreLoopCompleteRequest {
+  questId: string;
+  evidence: {
+    what_happened: string;
+    what_noticed: string;
+    notes?: string;
+  };
+}
+
+export interface CoreLoopCompleteResponse {
+  evidence: {
+    id: string;
+    what_happened: string;
+    what_noticed: string;
+    created_at: string;
+  };
+  questCompleted: boolean;
+  treeChanges: Array<{
+    node_id: string;
+    node_name?: string;
+    xpBefore: number;
+    xpAfter: number;
+    xpDelta: number;
+    stateBefore: string;
+    stateAfter: string;
+    newlyUnlocked?: string[];
+  }>;
+  rationale: CoreLoopRationale;
+  currentStage: string;
+}
+
+/**
+ * Обработать ситуацию через Core Loop
+ * Entry -> Analysis -> Quest (опционально)
+ */
+export async function processCoreLoop(
+  request: CoreLoopProcessRequest
+): Promise<CoreLoopProcessResponse> {
+  const response = await fetch(`${API_URL}/core-loop/process`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.message || `Failed to process: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Завершить квест с evidence через Core Loop
+ * Evidence -> Quest Completion -> Tree Update
+ */
+export async function completeCoreLoop(
+  request: CoreLoopCompleteRequest
+): Promise<CoreLoopCompleteResponse> {
+  const response = await fetch(`${API_URL}/core-loop/complete`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.message || `Failed to complete: ${response.status}`);
+  }
+
+  return response.json();
 }
 

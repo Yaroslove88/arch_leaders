@@ -44,3 +44,9 @@ pnpm-debug.log*
 # OS
 Thumbs.db
 
+# Plans (отслеживаем в git)
+# !plans/*.plan.md
+
+# Exports (не отслеживаем, могут содержать чувствительные данные)
+exports/
+*.export.json

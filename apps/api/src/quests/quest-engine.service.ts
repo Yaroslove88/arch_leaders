@@ -112,10 +112,8 @@ export class QuestEngine {
         description: `Собрать ${rule.target} доказательства применения способности "${signal.signal}"`,
       };
 
-      const reward: QuestReward = {
-        xp: rule.xp,
-        skill_xp: rule.skillXp,
-      };
+      // Используем новую систему: Base XP + Reflection XP
+      const reward = this.calculateReward(rule.type);
 
       quests.push({
         title: `Развить: ${nodeName}`,
@@ -151,10 +149,8 @@ export class QuestEngine {
         description: `Выполнить ${rule.target} действий, связанных с "${focusItem.area}"`,
       };
 
-      const reward: QuestReward = {
-        xp: rule.xp,
-        skill_xp: rule.skillXp,
-      };
+      // Используем новую систему: Base XP + Reflection XP
+      const reward = this.calculateReward(rule.type);
 
       quests.push({
         title: `Фокус: ${focusItem.area}`,
@@ -188,9 +184,8 @@ export class QuestEngine {
       description: `Создать 3 записи-рефлексии на тему "${mainTheme}"`,
     };
 
-    const reward: QuestReward = {
-      xp: rule.xp,
-    };
+    // Используем новую систему: Base XP + Reflection XP
+    const reward = this.calculateReward(rule.type);
 
     quests.push({
       title: `Исследовать тему: ${mainTheme}`,
@@ -212,34 +207,31 @@ export class QuestEngine {
   }
 
   /**
-   * Вычислить награду для квеста на основе типа и сложности
+   * Вычислить награду для квеста на основе типа
+   * Новая система: Base XP + Reflection XP (рефлексия - основной источник XP)
    */
   calculateReward(
     questType: 'micro' | 'weekly' | 'story' | 'in-person',
     nodeLevel?: 'basic' | 'mid' | 'advanced' | 'master',
+    prerequisitesMet?: boolean, // Выполнены ли предварительные условия (не используется в новой системе)
   ): QuestReward {
-    const baseRewards: Record<string, { xp: number; skillXp: number }> = {
-      micro: { xp: 100, skillXp: 50 },
-      weekly: { xp: 200, skillXp: 100 },
-      story: { xp: 300, skillXp: 150 },
-      'in-person': { xp: 500, skillXp: 250 },
+    // Новая система: Base XP + Reflection XP
+    const baseRewards: Record<string, { baseXp: number; reflectionXp: number; max: number }> = {
+      micro: { baseXp: 20, reflectionXp: 80, max: 100 },
+      weekly: { baseXp: 40, reflectionXp: 160, max: 200 },
+      story: { baseXp: 60, reflectionXp: 240, max: 300 },
+      'in-person': { baseXp: 100, reflectionXp: 400, max: 500 },
     };
 
-    const base = baseRewards[questType] || { xp: 100, skillXp: 50 };
-
-    // Множитель сложности
-    const levelMultiplier: Record<string, number> = {
-      basic: 1.0,
-      mid: 1.2,
-      advanced: 1.5,
-      master: 2.0,
-    };
-
-    const multiplier = nodeLevel ? levelMultiplier[nodeLevel] || 1.0 : 1.0;
+    const base = baseRewards[questType] || { baseXp: 20, reflectionXp: 80, max: 100 };
 
     return {
-      xp: Math.round(base.xp * multiplier),
-      skill_xp: Math.round(base.skillXp * multiplier),
+      base_xp: base.baseXp,
+      reflection_xp: base.reflectionXp,
+      max: base.max,
+      // Обратная совместимость (deprecated)
+      xp: base.max,
+      skill_xp: base.reflectionXp, // reflection_xp для обратной совместимости
     };
   }
 

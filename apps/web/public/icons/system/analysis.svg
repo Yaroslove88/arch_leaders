@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none" aria-hidden="true">
+  <!-- transparent background -->
+  <g stroke="currentColor" stroke-width="14" stroke-linecap="round" stroke-linejoin="round">
+    <!-- outer circle container -->
+    <circle cx="256" cy="256" r="180"/>
+
+    <!-- abstract brain outline (geometric, not realistic) -->
+    <path d="M214 192c-28 6-46 30-46 60 0 20 9 38 24 50-6 28 14 54 42 58 10 22 34 36 60 30"/>
+    <path d="M298 192c28 6 46 30 46 60 0 20-9 38-24 50 6 28-14 54-42 58-10 22-34 36-60 30"/>
+
+    <!-- neural network inside -->
+    <circle cx="216" cy="260" r="10"/>
+    <circle cx="256" cy="232" r="10"/>
+    <circle cx="296" cy="260" r="10"/>
+    <circle cx="240" cy="308" r="10" opacity="0.85"/>
+    <circle cx="272" cy="308" r="10" opacity="0.85"/>
+
+    <path d="M216 260l40-28"/>
+    <path d="M296 260l-40-28"/>
+    <path d="M216 260l24 48" opacity="0.8"/>
+    <path d="M296 260l-24 48" opacity="0.8"/>
+    <path d="M240 308h32" opacity="0.75"/>
+
+    <!-- subtle "automation" tick -->
+    <path d="M256 176v22" opacity="0.55"/>
+  </g>
+</svg>

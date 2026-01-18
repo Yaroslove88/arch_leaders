@@ -10,6 +10,7 @@ import type { AbilitySignal, FocusPoint } from '../common/schemas/session.schema
 import { SessionAnalysisResult, GeneratedQuest } from './quest-generation.types';
 import { QuestEngine } from './quest-engine.service';
 import type { NodeInfo } from './quest-engine.types';
+import { Rationale, DecisionType } from '@leadership-architect/shared';
 
 /**
  * Сервис для генерации квестов на основе анализа
@@ -79,17 +80,42 @@ export class QuestGenerationService {
     const generatedQuests: GeneratedQuest[] = [];
 
     for (const questData of engineResult.quests) {
+      // Гарантируем наличие description в criteria и преобразуем theory_and_examples в строку
+      const theoryAndExamples = questData.criteria.theory_and_examples;
+      const theoryAndExamplesString = typeof theoryAndExamples === 'string' 
+        ? theoryAndExamples 
+        : typeof theoryAndExamples === 'object' && theoryAndExamples !== null
+          ? [theoryAndExamples.theory, theoryAndExamples.examples].filter(Boolean).join('\n\n')
+          : undefined;
+
+      const criteria = {
+        type: questData.criteria.type,
+        target: questData.criteria.target,
+        description: questData.criteria.description || '',
+        theory_and_examples: theoryAndExamplesString,
+      };
+
+      // Создаём rationale для объяснимости
+      const rationale = this.createQuestRationale({
+        questTitle: questData.title,
+        linkedNodes: questData.linked_nodes || [],
+        themes,
+        sessionId,
+        nodeInfos,
+      });
+
       const generatedQuest: GeneratedQuest = {
         userId,
         title: questData.title,
         description: questData.description,
         type: questData.type,
-        criteria: questData.criteria,
+        criteria,
         reward: questData.reward || undefined,
         linked_nodes: questData.linked_nodes,
         session_id: sessionId,
         source: 'session_analysis',
         tags: questData.tags,
+        rationale,
       };
 
       // Генерируем теорию и примеры для квеста через LLM
@@ -134,6 +160,7 @@ export class QuestGenerationService {
     }
 
     const nodeInfos = new Map<string, NodeInfo>();
+    const missing: string[] = [];
 
     try {
       const tree = await this.treeService.getSemantic();
@@ -146,7 +173,16 @@ export class QuestGenerationService {
             level: (node as any).level,
             branch: (node as any).branch,
           });
+        } else {
+          missing.push(nodeId);
         }
+      }
+      if (missing.length > 0) {
+        console.warn(
+          `[QuestGeneration] nodeIds not found in tree: ${missing
+            .slice(0, 5)
+            .join(', ')}${missing.length > 5 ? '...' : ''}`,
+        );
       }
     } catch (error) {
       console.error('[QuestGeneration] Failed to load node infos:', error);
@@ -207,6 +243,48 @@ export class QuestGenerationService {
 
     // Возвращаем ID старых квестов для архивации
     return activeQuests.slice(5).map((quest) => quest.id);
+  }
+
+  /**
+   * Создать rationale для сгенерированного квеста
+   * Объясняет почему именно этот квест был создан
+   * 
+   * @see packages/shared/src/ontology.ts для структуры Rationale
+   */
+  private createQuestRationale(params: {
+    questTitle: string;
+    linkedNodes: string[];
+    themes: string[];
+    sessionId: string;
+    nodeInfos: Map<string, NodeInfo>;
+  }): Rationale {
+    const { questTitle, linkedNodes, themes, sessionId, nodeInfos } = params;
+    
+    const reasons: string[] = [];
+    
+    // Добавляем причины на основе связанных узлов
+    if (linkedNodes.length > 0) {
+      const nodeNames = linkedNodes
+        .map((id) => nodeInfos.get(id)?.name || id)
+        .join(', ');
+      reasons.push(`Связан с развитием способностей: ${nodeNames}`);
+    }
+    
+    // Добавляем причины на основе тем анализа
+    if (themes.length > 0) {
+      reasons.push(`Основан на темах из анализа: ${themes.slice(0, 3).join(', ')}`);
+    }
+    
+    // Добавляем связь с сессией
+    reasons.push(`Сгенерирован на основе анализа сессии`);
+    
+    return {
+      summary: `Квест "${questTitle}" создан для развития выявленных в анализе способностей`,
+      reasons,
+      evidenceLinks: [sessionId],
+      linkedNodes,
+      confidence: linkedNodes.length > 0 ? 0.8 : 0.6,
+    };
   }
 }
 

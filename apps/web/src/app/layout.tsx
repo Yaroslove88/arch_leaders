@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { QueryProvider } from '../providers/QueryProvider';
+import { TelegramProvider } from '../providers/TelegramProvider';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { ToastProvider } from '../components/ToastProvider';
 import { ConditionalNavigation } from '../components/ConditionalNavigation';
@@ -19,13 +20,15 @@ export default function RootLayout({
     <html lang="ru">
       <body>
         <ErrorBoundary>
-          <QueryProvider>
-            <ToastProvider>
-              <ConditionalNavigation />
-              <main>{children}</main>
-              <ConditionalNavigation showAdminToggle />
-            </ToastProvider>
-          </QueryProvider>
+          <TelegramProvider>
+            <QueryProvider>
+              <ToastProvider>
+                <ConditionalNavigation />
+                <main>{children}</main>
+                <ConditionalNavigation showAdminToggle />
+              </ToastProvider>
+            </QueryProvider>
+          </TelegramProvider>
         </ErrorBoundary>
       </body>
     </html>

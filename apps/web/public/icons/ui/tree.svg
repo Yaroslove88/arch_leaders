@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+  <g stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- trunk -->
+    <path d="M12 21v-7"/>
+    <!-- main split -->
+    <path d="M12 14l-4-4"/>
+    <path d="M12 14l4-4"/>
+    <!-- secondary branches -->
+    <path d="M8 10l-2-2"/>
+    <path d="M8 10l2-2"/>
+    <path d="M16 10l-2-2"/>
+    <path d="M16 10l2-2"/>
+    <!-- nodes (skills) -->
+    <circle cx="6" cy="8" r="1.5"/>
+    <circle cx="10" cy="8" r="1.5"/>
+    <circle cx="14" cy="8" r="1.5"/>
+    <circle cx="18" cy="8" r="1.5"/>
+    <circle cx="12" cy="21" r="1.5"/>
+  </g>
+</svg>

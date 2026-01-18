@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none" aria-hidden="true">
+  <!-- transparent background -->
+  <g stroke="currentColor" stroke-width="14" stroke-linecap="round" stroke-linejoin="round">
+    <!-- outer circle container -->
+    <circle cx="256" cy="256" r="180"/>
+
+    <!-- trunk -->
+    <path d="M256 356v-76"/>
+
+    <!-- main branches -->
+    <path d="M256 280l-78-78"/>
+    <path d="M256 280l78-78"/>
+
+    <!-- secondary branches -->
+    <path d="M178 202l-44-44"/>
+    <path d="M178 202l44-44"/>
+    <path d="M334 202l-44-44"/>
+    <path d="M334 202l44-44"/>
+
+    <!-- nodes (skills) -->
+    <circle cx="134" cy="158" r="12"/>
+    <circle cx="222" cy="158" r="12"/>
+    <circle cx="290" cy="158" r="12"/>
+    <circle cx="378" cy="158" r="12"/>
+    <circle cx="256" cy="356" r="12"/>
+
+    <!-- progress core -->
+    <circle cx="256" cy="280" r="10" opacity="0.7"/>
+  </g>
+</svg>

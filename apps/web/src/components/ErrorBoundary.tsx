@@ -33,11 +33,11 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     if (this.state.hasError) {
       return (
         this.props.fallback || (
-          <div className="min-h-screen flex items-center justify-center bg-bg-main">
-            <div className="max-w-md w-full bg-bg-panel border border-ui-border-soft shadow-floating rounded-lg p-6">
-              <div className="flex items-center justify-center w-12 h-12 mx-auto bg-bg-secondary border border-system-critical/30 rounded-full">
+          <div className="min-h-screen flex items-center justify-center bg-obsidian-core">
+            <div className="max-w-md w-full bg-graphite-structure border border-ui-border-soft shadow-floating rounded-lg p-6">
+              <div className="flex items-center justify-center w-12 h-12 mx-auto bg-obsidian-core border border-tension-red/30 rounded-full">
                 <svg
-                  className="w-6 h-6 text-system-critical"
+                  className="w-6 h-6 text-tension-red"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -50,14 +50,14 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                   />
                 </svg>
               </div>
-              <h2 className="mt-4 text-center text-xl font-semibold text-ui-text-main">
+              <h2 className="mt-4 text-center text-xl font-semibold text-ash-light">
                 Что-то пошло не так
               </h2>
               <p className="mt-2 text-center text-sm text-ui-text-muted">
                 Произошла ошибка при загрузке страницы. Пожалуйста, попробуйте обновить страницу.
               </p>
               {this.state.error && process.env.NODE_ENV === 'development' && (
-                <div className="mt-4 p-3 bg-bg-secondary border border-ui-border-soft rounded text-xs text-ui-text-dim font-mono overflow-auto">
+                <div className="mt-4 p-3 bg-obsidian-core border border-ui-border-soft rounded text-xs text-ui-text-dim font-mono overflow-auto">
                   {this.state.error.message}
                 </div>
               )}
@@ -67,7 +67,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                     this.setState({ hasError: false, error: undefined });
                     window.location.reload();
                   }}
-                  className="px-4 py-2 bg-bg-secondary border border-system-focus text-system-focus rounded-md hover:border-system-focus/70 hover:bg-bg-panel focus:outline-none focus:ring-2 focus:ring-system-focus transition-colors"
+                  className="px-4 py-2 bg-obsidian-core border border-strategic-blue text-strategic-blue rounded-md hover:border-strategic-blue/70 hover:bg-graphite-structure focus:outline-none focus:ring-2 focus:ring-strategic-blue transition-colors"
                 >
                   Обновить страницу
                 </button>
