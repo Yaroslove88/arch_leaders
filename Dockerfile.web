@@ -22,9 +22,8 @@ RUN pnpm install --frozen-lockfile
 # Build shared packages first
 RUN pnpm --filter @leadership-architect/shared build || true
 
-# Build web app
-ARG NEXT_PUBLIC_API_URL
-ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+# Build web app with API URL
+ENV NEXT_PUBLIC_API_URL=https://yaroslove88-arch-leaders-12c6.twc1.net
 
 RUN pnpm --filter @leadership-architect/web build
 
@@ -51,5 +50,6 @@ EXPOSE 3000
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
+ENV NEXT_PUBLIC_API_URL=https://yaroslove88-arch-leaders-12c6.twc1.net
 
 CMD ["node", "apps/web/server.js"]
