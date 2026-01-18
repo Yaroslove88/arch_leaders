@@ -39,10 +39,11 @@ else
 fi
 
 # Hotfix: ensure required columns exist even if migrations are blocked (P3009).
-# This is idempotent and matches prisma migration 20250115000000_add_experience_system_fields.
+# This is idempotent and matches prisma migrations.
 echo "DIAG entrypoint: db hotfix START ts=$(date -Iseconds)"
 set +e
 npx prisma db execute --schema=./prisma/schema.prisma --stdin <<'SQL'
+-- Experience system fields (migration 20250115000000)
 ALTER TABLE "ability_nodes"
 ADD COLUMN IF NOT EXISTS "prerequisites" TEXT[] DEFAULT ARRAY[]::TEXT[];
 
@@ -50,6 +51,15 @@ ALTER TABLE "user_ability_state"
 ADD COLUMN IF NOT EXISTS "internal_progress" DECIMAL(10,4) NOT NULL DEFAULT 0.0,
 ADD COLUMN IF NOT EXISTS "stored_experience" DECIMAL(10,4) NOT NULL DEFAULT 0.0,
 ADD COLUMN IF NOT EXISTS "last_activity_date" TIMESTAMP(3);
+
+-- Monetization fields (migration 20260118000000)
+ALTER TABLE "users"
+ADD COLUMN IF NOT EXISTS "subscription_plan" TEXT NOT NULL DEFAULT 'free',
+ADD COLUMN IF NOT EXISTS "subscription_expires_at" TIMESTAMP(3),
+ADD COLUMN IF NOT EXISTS "is_verified" BOOLEAN NOT NULL DEFAULT false;
+
+-- Index for subscription queries
+CREATE INDEX IF NOT EXISTS "users_subscription_plan_idx" ON "users"("subscription_plan");
 SQL
 HOTFIX_EXIT=$?
 set -e
