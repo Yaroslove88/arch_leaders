@@ -12,7 +12,7 @@ else
 fi
 for f in /app/data/builds.json /app/data/interactive-cases.json /app/data/node-descriptions.json /app/data/quest-templates.json; do
   if [ -f "$f" ]; then
-    echo "DIAG entrypoint: file exists $f size=$(wc -c < \"$f\" 2>/dev/null || echo '?')"
+    echo "DIAG entrypoint: file exists $f size=$(wc -c < "$f" 2>/dev/null || echo '?')"
   else
     echo "DIAG entrypoint: file MISSING $f"
   fi
@@ -27,8 +27,16 @@ fi
 # Apply database migrations
 echo "📦 Applying database migrations..."
 echo "DIAG entrypoint: migrate deploy START ts=$(date -Iseconds)"
+set +e
 npx prisma migrate deploy --schema=./prisma/schema.prisma
-echo "DIAG entrypoint: migrate deploy DONE ts=$(date -Iseconds)"
+MIGRATE_EXIT=$?
+set -e
+if [ "$MIGRATE_EXIT" -ne 0 ]; then
+  echo "DIAG entrypoint: migrate deploy FAILED exit=${MIGRATE_EXIT} ts=$(date -Iseconds)"
+  echo "DIAG entrypoint: continuing startup despite migration failure (likely needs prisma migrate resolve)"
+else
+  echo "DIAG entrypoint: migrate deploy DONE ts=$(date -Iseconds)"
+fi
 
 # Seed admin user if not exists
 echo "👤 Checking admin user..."
