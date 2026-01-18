@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { createEvidence } from '@/lib/api';
 import { useToast } from '@/components/ToastProvider';
 import Link from 'next/link';
 
-export default function NewEvidencePage() {
+function NewEvidencePageInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const toast = useToast();
@@ -115,6 +115,14 @@ export default function NewEvidencePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function NewEvidencePage() {
+  return (
+    <Suspense fallback={null}>
+      <NewEvidencePageInner />
+    </Suspense>
   );
 }
 

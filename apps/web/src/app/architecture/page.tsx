@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { Suspense, useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { getSemanticTree, getCurrentBuild, getNodeDescription, getNodeDescriptions, getBuilds, SemanticTree, BuildStatus, NodeDescription } from '../../lib/api';
 import { useQuery } from '@tanstack/react-query';
@@ -44,7 +44,7 @@ function translateNodeName(name: string): string {
 
 type ArchitectureTab = 'system' | 'tree' | 'builds' | 'history';
 
-export default function ArchitecturePage() {
+function ArchitecturePageInner() {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<ArchitectureTab>('system');
   const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
@@ -255,6 +255,14 @@ export default function ArchitecturePage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function ArchitecturePage() {
+  return (
+    <Suspense fallback={<LoadingSpinner />}>
+      <ArchitecturePageInner />
+    </Suspense>
   );
 }
 

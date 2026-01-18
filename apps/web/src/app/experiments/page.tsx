@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { Suspense, useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useQuests } from '../../hooks/useQuests';
@@ -115,7 +115,7 @@ function getNodeName(nodeId: string, nodeDescriptions?: Record<string, { name: s
   return translateNodeName(fallbackName);
 }
 
-export default function ExperimentsPage() {
+function ExperimentsPageInner() {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<ExperimentTab>('active');
   const [baseQuestTypeFilter, setBaseQuestTypeFilter] = useState<'all' | 'micro' | 'weekly' | 'story'>('all');
@@ -387,6 +387,14 @@ export default function ExperimentsPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function ExperimentsPage() {
+  return (
+    <Suspense fallback={<LoadingSpinner />}>
+      <ExperimentsPageInner />
+    </Suspense>
   );
 }
 

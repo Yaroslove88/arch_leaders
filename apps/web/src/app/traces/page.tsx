@@ -10,8 +10,50 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 type TracesView = 'map' | 'journal' | 'connections';
 
 // Связки
-function ConnectionsView({ evidences, quests, entries, sessions, activeBuilds, tree }: any) {
+function ConnectionsView({
+  evidences,
+  quests,
+  entries,
+  sessions,
+  activeBuilds,
+  tree,
+}: {
+  evidences: Evidence[];
+  quests: any[];
+  entries: any[];
+  sessions: any[];
+  activeBuilds: any[];
+  tree: any;
+}) {
   const router = useRouter();
+
+  const abilityNodeIds = useMemo(() => {
+    const rawIds: string[] = evidences
+      .map((e) => e.ability_node_id)
+      .filter((id): id is string => typeof id === 'string' && id.length > 0);
+
+    const ids: string[] = Array.from(new Set<string>(rawIds)).filter((id) => id !== 'unknown');
+
+    // #region agent log
+    if (process.env.NEXT_PUBLIC_AGENT_DEBUG === '1') {
+      fetch('http://127.0.0.1:7242/ingest/d62f3774-e975-44dd-84db-681709a5074c', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: 'debug-session',
+          runId: 'pre-fix',
+          hypothesisId: 'H1',
+          location: 'apps/web/src/app/traces/page.tsx:abilityNodeIds',
+          message: 'Computed abilityNodeIds',
+          data: { evidencesLen: Array.isArray(evidences) ? evidences.length : null, rawIdsLen: rawIds.length, idsLen: ids.length },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {});
+    }
+    // #endregion
+
+    return ids;
+  }, [evidences]);
   
   // Функция перевода названий узлов
   const translateNodeName = (name: string): string => {
@@ -78,9 +120,7 @@ function ConnectionsView({ evidences, quests, entries, sessions, activeBuilds, t
           <p className="text-ui-text-muted">Нет следов, связанных с узлами</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Array.from(new Set(evidences.map((e: Evidence) => e.ability_node_id).filter(Boolean)))
-              .filter((nodeId: string) => nodeId !== 'unknown')
-              .map((nodeId: string) => {
+            {abilityNodeIds.map((nodeId) => {
                 const nodeEvidences = evidences.filter((e: Evidence) => e.ability_node_id === nodeId);
                 const node = tree?.nodes?.find((n: any) => n.node_id === nodeId);
                 const branch = node?.branch_id 
@@ -706,7 +746,9 @@ function TimeGroup({ title, evidences }: { title: string; evidences: Evidence[] 
 }
 
 // Личный журнал
-function JournalView({ evidences }: { evidences: Evidence[] }) {
+function JournalView({ evidences, tree }: { evidences: Evidence[]; tree: any }) {
+  const router = useRouter();
+
   if (evidences.length === 0) {
     return (
       <div className="bg-bg-panel border border-ui-border-soft rounded-lg shadow-panel p-12 text-center">
@@ -751,26 +793,31 @@ function JournalView({ evidences }: { evidences: Evidence[] }) {
                 Квест →
               </Link>
             )}
-            {evidence.ability_node_id && evidence.ability_node_id !== 'unknown' && (
-              <button
-                onClick={() => {
-                  const node = tree?.nodes?.find((n: any) => n.node_id === evidence.ability_node_id);
-                  const branch = node?.branch_id 
-                    ? tree?.branches?.find((b: any) => b.branch_id === node.branch_id)
-                    : null;
-                  const params = new URLSearchParams();
-                  params.set('tab', 'tree');
-                  if (branch?.branch_id) {
-                    params.set('branch', branch.branch_id);
-                  }
-                  params.set('node', evidence.ability_node_id);
-                  router.push(`/architecture?${params.toString()}`);
-                }}
-                className="text-xs text-system-focus hover:underline"
-              >
-                Узел →
-              </button>
-            )}
+            {(() => {
+              const nodeId = evidence.ability_node_id;
+              if (!nodeId || nodeId === 'unknown') return null;
+
+              return (
+                <button
+                  onClick={() => {
+                    const node = tree?.nodes?.find((n: any) => n.node_id === nodeId);
+                    const branch = node?.branch_id 
+                      ? tree?.branches?.find((b: any) => b.branch_id === node.branch_id)
+                      : null;
+                    const params = new URLSearchParams();
+                    params.set('tab', 'tree');
+                    if (branch?.branch_id) {
+                      params.set('branch', branch.branch_id);
+                    }
+                    params.set('node', nodeId);
+                    router.push(`/architecture?${params.toString()}`);
+                  }}
+                  className="text-xs text-system-focus hover:underline"
+                >
+                  Узел →
+                </button>
+              );
+            })()}
             {evidence.session_id && (
               <Link
                 href={`/sessions/${evidence.session_id}`}
