@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import * as path from 'path';
 import { existsSync } from 'fs';
 
@@ -8,17 +8,30 @@ import { existsSync } from 'fs';
  */
 @Injectable()
 export class PathConfigService {
+  private readonly logger = new Logger(PathConfigService.name);
   private projectRoot: string | null = null;
   private workspaceRoot: string | null = null;
 
   /**
    * Получить корень проекта (где находится leadership-architect)
+   * В Docker контейнере это /app, в локальной разработке определяется от process.cwd()
    */
   getProjectRoot(): string {
     if (this.projectRoot) {
       return this.projectRoot;
     }
 
+    // 1. Для Docker: проверяем абсолютный путь /app
+    // В Docker data файлы находятся в /app/data/
+    const dockerRoot = '/app';
+    const dockerDataPath = path.join(dockerRoot, 'data');
+    if (existsSync(dockerDataPath)) {
+      this.logger.log(`Using Docker project root: ${dockerRoot}`);
+      this.projectRoot = dockerRoot;
+      return dockerRoot;
+    }
+
+    // 2. Для локальной разработки: определяем от process.cwd()
     let projectRoot = process.cwd();
     
     // Если мы в apps/api, поднимаемся на 2 уровня вверх к корню проекта
@@ -43,6 +56,7 @@ export class PathConfigService {
     }
     
     const normalizedProjectRoot = path.normalize(projectRoot);
+    this.logger.log(`Using local project root: ${normalizedProjectRoot}`);
     this.projectRoot = normalizedProjectRoot;
     return normalizedProjectRoot;
   }
@@ -75,6 +89,13 @@ export class PathConfigService {
       }
     }
 
+    // 1. Для Docker: проверяем абсолютный путь
+    const dockerSeedPath = '/app/packages/shared/src/seed/initial-ability-tree.json';
+    if (existsSync(dockerSeedPath)) {
+      return dockerSeedPath;
+    }
+
+    // 2. Для локальной разработки
     const projectRoot = this.getProjectRoot();
     const seedPath = path.resolve(
       projectRoot,

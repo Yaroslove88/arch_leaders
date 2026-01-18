@@ -25,15 +25,29 @@ export class AdminAuthService {
 
   async login(loginDto: AdminLoginDto): Promise<{ access_token: string; admin: any }> {
     // Поддерживаем вход по telegramUsername или email
-    let admin;
+    let admin: any = null;
+    let isFromUsersTable = false;
     
     if (loginDto.telegramUsername) {
-      // Ищем по telegramUsername (email может быть в формате username@admin.local)
       const username = loginDto.telegramUsername.replace('@', '');
+      
+      // 1. Сначала ищем в admin_users по email формата username@admin.local
       const email = `${username}@admin.local`;
       admin = await this.prisma.adminUser.findUnique({
         where: { email },
       });
+      
+      // 2. Fallback: ищем в обычной таблице users с role='admin'
+      if (!admin) {
+        const regularAdmin = await this.prisma.user.findUnique({
+          where: { telegramUsername: username },
+        });
+        
+        if (regularAdmin && regularAdmin.role === 'admin') {
+          admin = regularAdmin;
+          isFromUsersTable = true;
+        }
+      }
     } else if (loginDto.email) {
       admin = await this.prisma.adminUser.findUnique({
         where: { email: loginDto.email },
@@ -51,35 +65,50 @@ export class AdminAuthService {
       throw new UnauthorizedException('Неверный Telegram username или пароль');
     }
 
-    // Обновляем last_login_at
-    await this.prisma.adminUser.update({
-      where: { id: admin.id },
-      data: { last_login_at: new Date() },
-    });
+    // Обновляем last_login_at / last_seen_at
+    if (isFromUsersTable) {
+      await this.prisma.user.update({
+        where: { id: admin.id },
+        data: { last_seen_at: new Date() },
+      });
+    } else {
+      await this.prisma.adminUser.update({
+        where: { id: admin.id },
+        data: { last_login_at: new Date() },
+      });
+    }
 
-    // Извлекаем telegramUsername из email (если формат username@admin.local)
-    const telegramUsername = admin.email.replace('@admin.local', '');
+    // Определяем telegramUsername и email
+    const telegramUsername = isFromUsersTable 
+      ? admin.telegramUsername 
+      : admin.email.replace('@admin.local', '');
+    const email = isFromUsersTable 
+      ? (admin.email || `${admin.telegramUsername}@admin.local`)
+      : admin.email;
+    const role = isFromUsersTable ? 'super_admin' : admin.role;
 
     const payload: AdminJwtPayload = {
       sub: admin.id,
-      email: admin.email,
+      email: email,
       telegramUsername,
-      role: admin.role,
+      role: role,
     };
 
     return {
       access_token: this.jwtService.sign(payload),
       admin: {
         id: admin.id,
-        email: admin.email,
+        email: email,
         telegramUsername,
-        role: admin.role,
+        role: role,
+        source: isFromUsersTable ? 'users' : 'admin_users',
       },
     };
   }
 
   async getMe(adminId: string) {
-    const admin = await this.prisma.adminUser.findUnique({
+    // 1. Сначала ищем в таблице admin_users
+    const adminUser = await this.prisma.adminUser.findUnique({
       where: { id: adminId },
       select: {
         id: true,
@@ -90,11 +119,38 @@ export class AdminAuthService {
       },
     });
 
-    if (!admin) {
-      throw new UnauthorizedException('Admin not found');
+    if (adminUser) {
+      return adminUser;
     }
 
-    return admin;
+    // 2. Fallback: ищем в обычной таблице users с role='admin'
+    // Это нужно для совместимости, т.к. AdminAuthGuard уже имеет такой fallback
+    const regularAdmin = await this.prisma.user.findUnique({
+      where: { id: adminId },
+      select: {
+        id: true,
+        email: true,
+        telegramUsername: true,
+        role: true,
+        created_at: true,
+        last_seen_at: true,
+      },
+    });
+
+    if (regularAdmin && regularAdmin.role === 'admin') {
+      return {
+        id: regularAdmin.id,
+        email: regularAdmin.email || `${regularAdmin.telegramUsername}@admin.local`,
+        role: 'super_admin', // Обычный админ получает полные права
+        created_at: regularAdmin.created_at,
+        last_login_at: regularAdmin.last_seen_at,
+        // Дополнительно для фронтенда
+        telegramUsername: regularAdmin.telegramUsername,
+        source: 'users', // Индикатор что это админ из таблицы users
+      };
+    }
+
+    throw new UnauthorizedException('Admin not found');
   }
 }
 
