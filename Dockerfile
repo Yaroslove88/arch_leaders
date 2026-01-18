@@ -60,8 +60,6 @@ COPY --from=builder /app/packages ./packages
 # Copy package.json for runtime
 COPY --from=builder /app/apps/api/package.json ./apps/api/
 
-USER nestjs
-
 EXPOSE 3000
 
 ENV NODE_ENV=production
@@ -69,4 +67,9 @@ ENV PORT=3000
 
 WORKDIR /app/apps/api
 
-CMD ["node", "dist/main.js"]
+# Create entrypoint script that runs migrations then starts the app
+RUN echo '#!/bin/sh\necho "Running database migrations..."\nnpx prisma migrate deploy\necho "Starting application..."\nexec node dist/main.js' > /app/entrypoint.sh && chmod +x /app/entrypoint.sh
+
+USER nestjs
+
+CMD ["/bin/sh", "/app/entrypoint.sh"]
