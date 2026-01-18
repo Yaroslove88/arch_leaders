@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../hooks/useAuth';
-import { LoginDto } from '../../lib/api';
 
 declare global {
   interface Window {
@@ -34,12 +33,7 @@ declare global {
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, isAuthenticated, isLoading } = useAuth();
-  const [showPasswordForm, setShowPasswordForm] = useState(false);
-  const [formData, setFormData] = useState<LoginDto>({
-    telegramUsername: '',
-    password: '',
-  });
+  const { isAuthenticated, isLoading } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [telegramBotId, setTelegramBotId] = useState<string>('');
@@ -59,6 +53,14 @@ export default function LoginPage() {
       process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME ||
       process.env.NEXT_PUBLIC_TELEGRAM_BOT_ID ||
       '';
+    
+    // Debug: логируем в консоль для проверки (только в development)
+    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+      console.log('[Login] NEXT_PUBLIC_TELEGRAM_BOT_USERNAME:', process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME);
+      console.log('[Login] NEXT_PUBLIC_TELEGRAM_BOT_ID:', process.env.NEXT_PUBLIC_TELEGRAM_BOT_ID);
+      console.log('[Login] Final botId:', botId);
+    }
+    
     setTelegramBotId(botId);
 
     // Загружаем Telegram Login Widget скрипт
@@ -134,20 +136,6 @@ export default function LoginPage() {
     }
   }, [router]);
 
-  const handlePasswordLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setIsSubmitting(true);
-
-    try {
-      await login(formData);
-      router.push('/dashboard');
-    } catch (err: any) {
-      setError(err.message || 'Неверный логин или пароль');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   // Показываем загрузку, пока проверяем аутентификацию
   if (isLoading) {
@@ -244,90 +232,27 @@ export default function LoginPage() {
               Быстрый вход через Telegram. Можно начать с одной ситуации.
             </p>
 
-            {/* Telegram OAuth кнопка или форма пароля */}
-            {!showPasswordForm ? (
-              <>
-                {telegramBotId ? (
-                  <div className="mb-4">
-                    <div id="telegram-login-container"></div>
-                  </div>
-                ) : (
-                  <div className="mb-4 p-4 bg-bg-secondary border border-ui-border-soft rounded text-sm text-ui-text-muted">
-                    Telegram OAuth не настроен. Укажите NEXT_PUBLIC_TELEGRAM_BOT_USERNAME в Dockerfile или env.
-                  </div>
-                )}
-
-                {/* Разделитель */}
-                <div className="relative my-6">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-ui-border-soft"></div>
-                  </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-bg-panel text-ui-text-muted">или</span>
-                  </div>
-                </div>
-
-                {/* Кнопка переключения на форму пароля */}
-                <button
-                  onClick={() => setShowPasswordForm(true)}
-                  className="w-full py-2 px-4 border border-ui-border-soft rounded-lg hover:bg-bg-secondary transition-colors text-ui-text-main"
-                >
-                  Войти через логин и пароль
-                </button>
-              </>
-            ) : (
-              <form onSubmit={handlePasswordLogin} className="space-y-4">
-                <div>
-                  <label htmlFor="telegramUsername" className="block text-sm font-medium text-ui-text-main mb-1">
-                    Telegram username (без @)
-                  </label>
-                  <input
-                    id="telegramUsername"
-                    type="text"
-                    value={formData.telegramUsername}
-                    onChange={(e) => setFormData({ ...formData, telegramUsername: e.target.value })}
-                    className="w-full px-4 py-2 bg-bg-secondary border border-ui-border-soft rounded-lg text-ui-text-main placeholder-ui-text-dim focus:outline-none focus:ring-2 focus:ring-system-focus focus:border-transparent"
-                    placeholder="username"
-                    required
-                  />
-                </div>
-                <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-ui-text-main mb-1">
-                    Пароль
-                  </label>
-                  <input
-                    id="password"
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="w-full px-4 py-2 bg-bg-secondary border border-ui-border-soft rounded-lg text-ui-text-main placeholder-ui-text-dim focus:outline-none focus:ring-2 focus:ring-system-focus focus:border-transparent"
-                    placeholder="••••••••"
-                    required
-                  />
-                </div>
+            {/* Telegram OAuth - единственный способ входа */}
+            {telegramBotId ? (
+              <div className="mb-4">
+                <div id="telegram-login-container"></div>
                 {error && (
-                  <div className="p-3 bg-system-critical/10 border border-system-critical/30 rounded-lg text-sm text-system-critical">
+                  <div className="mt-4 p-3 bg-system-critical/10 border border-system-critical/30 rounded-lg text-sm text-system-critical">
                     {error}
                   </div>
                 )}
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full py-2 px-4 bg-system-focus hover:bg-system-focus/80 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isSubmitting ? 'Вход...' : 'Войти'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowPasswordForm(false);
-                    setError(null);
-                  }}
-                  className="w-full text-sm text-ui-text-muted hover:text-ui-text-main transition-colors"
-                >
-                  Вернуться к Telegram входу
-                </button>
-              </form>
+                {isSubmitting && (
+                  <div className="mt-4 text-center text-sm text-ui-text-muted">
+                    Вход через Telegram...
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="mb-4 p-4 bg-bg-secondary border border-ui-border-soft rounded text-sm text-ui-text-muted">
+                <p className="mb-2">Telegram OAuth не настроен.</p>
+                <p className="text-xs">Укажите NEXT_PUBLIC_TELEGRAM_BOT_USERNAME в Dockerfile или env переменных Timeweb.</p>
+                <p className="text-xs mt-2 font-mono">Текущее значение: {telegramBotId || '(пусто)'}</p>
+              </div>
             )}
 
             {/* Лейбл доверия */}

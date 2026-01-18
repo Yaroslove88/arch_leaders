@@ -276,5 +276,25 @@ export class AuthController {
     
     return this.authService.loginWithTelegramWebApp(webAppDto);
   }
+
+  @Delete('me')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Удалить свой аккаунт' })
+  @ApiResponse({
+    status: 200,
+    description: 'Аккаунт успешно удален',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string', example: 'Аккаунт успешно удален' },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: 'Не авторизован' })
+  async deleteMyAccount(@CurrentUser() user: { sub: string }) {
+    return this.authService.deleteUser(user.sub);
+  }
 }
 

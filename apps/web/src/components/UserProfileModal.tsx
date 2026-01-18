@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '../hooks/useAuth';
-import { changePassword } from '../lib/api';
+import { changePassword, deleteMyAccount } from '../lib/api';
 
 interface UserProfileModalProps {
   isOpen: boolean;
@@ -10,6 +11,7 @@ interface UserProfileModalProps {
 }
 
 export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
+  const router = useRouter();
   const { user, login, register, logout, isAuthenticated } = useAuth();
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [showChangePassword, setShowChangePassword] = useState(false);
@@ -52,6 +54,26 @@ export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
     logout();
     setPassword('');
     setError(null);
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!confirm('Вы уверены? Это действие нельзя отменить. Все ваши данные будут удалены.')) {
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      await deleteMyAccount();
+      logout();
+      onClose();
+      router.push('/login');
+    } catch (err: any) {
+      setError(err.message || 'Ошибка при удалении аккаунта');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleChangePassword = async (e: React.FormEvent) => {
@@ -137,12 +159,21 @@ export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
                   >
                     Сменить пароль
                   </button>
-                  <button
-                    onClick={handleLogout}
-                    className="w-full bg-bg-secondary border border-system-critical text-system-critical py-2 px-4 rounded-lg hover:border-system-critical/70 hover:bg-bg-panel transition-colors"
-                  >
-                    Выйти
-                  </button>
+                  <div className="space-y-2">
+                    <button
+                      onClick={handleLogout}
+                      className="w-full bg-bg-secondary border border-ui-border-soft text-ui-text-muted py-2 px-4 rounded-lg hover:border-ui-border-strong hover:text-ui-text-main transition-colors"
+                    >
+                      Выйти
+                    </button>
+                    <button
+                      onClick={handleDeleteAccount}
+                      disabled={isLoading}
+                      className="w-full bg-bg-secondary border border-system-critical text-system-critical py-2 px-4 rounded-lg hover:border-system-critical/70 hover:bg-bg-panel transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isLoading ? 'Удаление...' : 'Удалить аккаунт'}
+                    </button>
+                  </div>
                 </>
               ) : (
                 <form onSubmit={handleChangePassword} className="space-y-4">

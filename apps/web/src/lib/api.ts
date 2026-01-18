@@ -1073,6 +1073,28 @@ export function removeToken(): void {
   localStorage.removeItem('auth_token');
 }
 
+export async function deleteMyAccount(): Promise<{ message: string }> {
+  const token = getToken();
+  if (!token) {
+    throw new Error('Not authenticated');
+  }
+
+  const response = await fetch(`${API_URL}/auth/me`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to delete account' }));
+    throw new Error(error.message || 'Failed to delete account');
+  }
+
+  return response.json();
+}
+
 export interface ChangePasswordDto {
   currentPassword: string;
   newPassword: string;
