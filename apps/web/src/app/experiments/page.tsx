@@ -154,18 +154,12 @@ export default function ExperimentsPage() {
     queryFn: getCases,
     retry: 2,
     retryDelay: 1000,
-    onError: (error) => {
-      console.error('Failed to load cases:', error);
-    },
   });
   const { data: nodeDescriptionsData, error: nodeDescriptionsError } = useQuery({
     queryKey: ['nodeDescriptions'],
     queryFn: getNodeDescriptions,
     retry: 2,
     retryDelay: 1000,
-    onError: (error) => {
-      console.error('Failed to load node descriptions:', error);
-    },
   });
 
   // Проверяем, есть ли токен авторизации для квестов
