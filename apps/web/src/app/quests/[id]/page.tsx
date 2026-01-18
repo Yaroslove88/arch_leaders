@@ -663,7 +663,7 @@ export default function QuestDetailPage() {
                 <div className="p-4 bg-bg-secondary rounded-lg border border-ui-border-soft">
                   <p className="text-sm font-semibold text-ui-text-main mb-3">Прогресс по способностям:</p>
                   <div className="flex flex-wrap gap-2">
-                    {Object.entries(quest.reward.nodes).map(([nodeId, points]) => (
+                    {Object.entries(quest.reward.nodes).map(([nodeId, points]: [string, number]) => (
                       <div key={nodeId} className="px-4 py-2 bg-bg-panel border border-system-stable text-system-stable rounded-lg">
                         <span className="font-bold text-lg">+{points as number}</span>
                         <span className="text-sm ml-2">к {getNodeName(nodeId, nodeDescriptions)}</span>
