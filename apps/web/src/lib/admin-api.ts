@@ -4,6 +4,13 @@
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
+const ADMIN_TOKEN_STORAGE_KEY = 'admin_token';
+
+function getAdminToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(ADMIN_TOKEN_STORAGE_KEY);
+}
+
 /**
  * Получить заголовки с токеном аутентификации
  */
@@ -12,7 +19,13 @@ function getAuthHeaders(): HeadersInit {
     'Content-Type': 'application/json',
   };
   
-  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  // Админ-эндпоинты требуют токен из `/admin/v1/auth/login`.
+  // Для fail-safe совместимости оставляем fallback на `auth_token`,
+  // но при наличии — всегда используем `admin_token`.
+  const token =
+    typeof window !== 'undefined'
+      ? (getAdminToken() || localStorage.getItem('auth_token'))
+      : null;
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }

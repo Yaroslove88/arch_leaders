@@ -1,5 +1,93 @@
 # Timeweb Cloud — деплой Leadership Architect (монорепа)
 
+## Быстрый старт: ENV переменные
+
+### API (NestJS) — прописать в Timeweb App Platform
+
+```bash
+DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DBNAME?schema=public
+PORT=3001
+NODE_ENV=production
+WEB_URL=https://yaroslove88-arch-leaders-3cd4.twc1.net
+JWT_SECRET=eb9dcb841e6d5b8e0c052e00a035b98b0ad602d1e7198c1fe5e24b5397699849
+JWT_EXPIRES_IN=604800
+TELEGRAM_BOT_TOKEN=8492047562:AAH_iSTGvjWQKNUCsOA4Cl5AQlSOonFq6Iw
+```
+
+### WEB (Next.js) — прописать в Timeweb App Platform
+
+```bash
+NEXT_PUBLIC_API_URL=https://yaroslove88-arch-leaders-12c6.twc1.net
+NEXT_PUBLIC_TELEGRAM_BOT_USERNAME=life_yaroslav_rpg_bot
+```
+
+---
+
+## Настройка Telegram Mini App
+
+### 1. Настроить бота через @BotFather
+
+```
+/mybots
+→ @life_yaroslav_rpg_bot
+→ Bot Settings
+→ Menu Button → Configure menu button
+→ URL: https://yaroslove88-arch-leaders-3cd4.twc1.net
+→ Текст: Открыть
+```
+
+### 2. Результат
+
+После настройки у бота появится кнопка "Открыть" которая запустит сайт как Mini App внутри Telegram с автоматической авторизацией.
+
+---
+
+## Создание админа
+
+### Через SSH/Console в Timeweb App Platform
+
+Подключись к контейнеру API и выполни:
+
+```bash
+# Применить миграции (если ещё не применены)
+npx prisma migrate deploy
+
+# Создать админа yaroslav с паролем LeaderArch2025!
+node -e "
+const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcrypt');
+const prisma = new PrismaClient();
+
+async function createAdmin() {
+  const username = 'yaroslav';
+  const password = 'LeaderArch2025!';
+  
+  const existing = await prisma.user.findUnique({ where: { telegramUsername: username } });
+  if (existing) {
+    await prisma.user.update({ where: { id: existing.id }, data: { role: 'admin' } });
+    console.log('✅ Upgraded to admin:', username);
+  } else {
+    const hash = await bcrypt.hash(password, 10);
+    await prisma.user.create({ data: { telegramUsername: username, password: hash, role: 'admin', status: 'active' } });
+    console.log('✅ Created admin:', username);
+  }
+}
+createAdmin().finally(() => prisma.\$disconnect());
+"
+```
+
+### Через ENV переменные (автоматически при деплое)
+
+Добавь в ENV приложения API:
+```
+ADMIN_USERNAME=yaroslav
+ADMIN_PASSWORD=LeaderArch2025!
+```
+
+Entrypoint автоматически создаст админа при старте.
+
+---
+
 ## TL;DR (структура в Timeweb)
 
 - **PostgreSQL (Managed DB)**: отдельный ресурс в Timeweb Cloud.

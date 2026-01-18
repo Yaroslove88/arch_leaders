@@ -7,6 +7,7 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { TelegramAuthDto } from './dto/telegram-auth.dto';
+import { TelegramWebAppDto } from './dto/telegram-webapp.dto';
 import * as crypto from 'crypto';
 
 export interface JwtPayload {
@@ -295,7 +296,48 @@ export class AuthService {
       })
       .join('\n');
 
-    // Вычисляем secret_key из bot token
+    // Telegram Login Widget: secret_key = SHA256(bot_token) (bytes),
+    // затем hash = HMAC-SHA256(data_check_string, secret_key).
+    // (Важно: это НЕ алгоритм Telegram WebApp initData)
+    const secretKey = crypto.createHash('sha256').update(botToken).digest();
+
+    // Вычисляем hash
+    const calculatedHash = crypto
+      .createHmac('sha256', secretKey)
+      .update(dataCheckString)
+      .digest('hex');
+
+    // Проверяем, что hash совпадает
+    return calculatedHash === data.hash;
+  }
+
+  /**
+   * Верификация initData от Telegram Mini App (WebApp)
+   * Алгоритм: https://core.telegram.org/bots/webapps#validating-data-received-via-the-mini-app
+   */
+  private verifyTelegramWebAppData(initData: string): { isValid: boolean; user?: any } {
+    const botToken = this.configService.get<string>('TELEGRAM_BOT_TOKEN');
+    if (!botToken) {
+      // В development пропускаем проверку
+      const params = new URLSearchParams(initData);
+      const userStr = params.get('user');
+      return { isValid: true, user: userStr ? JSON.parse(decodeURIComponent(userStr)) : null };
+    }
+
+    const params = new URLSearchParams(initData);
+    const hash = params.get('hash');
+    if (!hash) {
+      return { isValid: false };
+    }
+
+    // Удаляем hash из параметров и сортируем
+    params.delete('hash');
+    const dataCheckString = Array.from(params.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, value]) => `${key}=${value}`)
+      .join('\n');
+
+    // WebApp secret: HMAC_SHA256("WebAppData", bot_token)
     const secretKey = crypto
       .createHmac('sha256', 'WebAppData')
       .update(botToken)
@@ -307,8 +349,72 @@ export class AuthService {
       .update(dataCheckString)
       .digest('hex');
 
-    // Проверяем, что hash совпадает
-    return calculatedHash === data.hash;
+    const isValid = calculatedHash === hash;
+    
+    if (isValid) {
+      const userStr = params.get('user');
+      const user = userStr ? JSON.parse(decodeURIComponent(userStr)) : null;
+      return { isValid: true, user };
+    }
+
+    return { isValid: false };
+  }
+
+  /**
+   * Аутентификация через Telegram Mini App (WebApp)
+   */
+  async loginWithTelegramWebApp(webAppDto: TelegramWebAppDto): Promise<{ access_token: string; user: { id: string; telegramUsername: string; role: string } }> {
+    const { isValid, user: tgUser } = this.verifyTelegramWebAppData(webAppDto.initData);
+    
+    if (!isValid) {
+      throw new UnauthorizedException('Неверная подпись Telegram WebApp данных');
+    }
+
+    if (!tgUser || !tgUser.id) {
+      throw new BadRequestException('Данные пользователя отсутствуют в initData');
+    }
+
+    // Определяем username
+    const username = tgUser.username || `tg_${tgUser.id}`;
+
+    // Ищем или создаём пользователя
+    let user = await this.prisma.user.findUnique({
+      where: { telegramUsername: username },
+    });
+
+    if (!user) {
+      const randomPassword = crypto.randomBytes(32).toString('hex');
+      const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+      user = await this.prisma.user.create({
+        data: {
+          telegramUsername: username,
+          password: hashedPassword,
+          role: 'user',
+          status: 'active',
+        },
+      });
+    } else {
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { last_seen_at: new Date() },
+      });
+    }
+
+    const payload: JwtPayload = {
+      sub: user.id,
+      telegramUsername: user.telegramUsername,
+      role: user.role,
+    };
+
+    return {
+      access_token: await this.generateToken(payload),
+      user: {
+        id: user.id,
+        telegramUsername: user.telegramUsername,
+        role: user.role,
+      },
+    };
   }
 
   /**

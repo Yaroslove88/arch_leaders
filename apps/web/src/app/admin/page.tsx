@@ -11,6 +11,7 @@ import { AdminContent } from '../../components/admin/AdminContent';
 import { AdminAI } from '../../components/admin/AdminAI';
 import { AdminJobs } from '../../components/admin/AdminJobs';
 import { AdminAudit } from '../../components/admin/AdminAudit';
+import { adminLogin, getAdminMe } from '../../lib/admin-api';
 
 const tabs = [
   { id: 'overview', label: 'Обзор', icon: '📊' },
@@ -22,10 +23,17 @@ const tabs = [
   { id: 'audit', label: 'Аудит', icon: '🔒' },
 ];
 
+const ADMIN_TOKEN_STORAGE_KEY = 'admin_token';
+
 export default function AdminPage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
+  const [adminAuthLoading, setAdminAuthLoading] = useState(true);
+  const [isAdminAuthed, setIsAdminAuthed] = useState(false);
+  const [adminLoginForm, setAdminLoginForm] = useState({ telegramUsername: '', password: '' });
+  const [adminLoginError, setAdminLoginError] = useState<string | null>(null);
+  const [adminLoginSubmitting, setAdminLoginSubmitting] = useState(false);
 
   useEffect(() => {
     if (!authLoading && (!isAuthenticated || user?.role !== 'admin')) {
@@ -33,12 +41,121 @@ export default function AdminPage() {
     }
   }, [isAuthenticated, user, authLoading, router]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function checkAdminAuth() {
+      try {
+        setAdminAuthLoading(true);
+        setAdminLoginError(null);
+
+        const token = typeof window !== 'undefined' ? localStorage.getItem(ADMIN_TOKEN_STORAGE_KEY) : null;
+        if (!token) {
+          if (!cancelled) setIsAdminAuthed(false);
+          return;
+        }
+
+        await getAdminMe();
+        if (!cancelled) setIsAdminAuthed(true);
+      } catch {
+        // Токен есть, но невалиден — сбрасываем, чтобы не ловить циклы 401
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
+        }
+        if (!cancelled) setIsAdminAuthed(false);
+      } finally {
+        if (!cancelled) setAdminAuthLoading(false);
+      }
+    }
+
+    checkAdminAuth();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function handleAdminPanelLogin(e: React.FormEvent) {
+    e.preventDefault();
+    setAdminLoginError(null);
+    setAdminLoginSubmitting(true);
+
+    try {
+      const res = await adminLogin(adminLoginForm.telegramUsername, adminLoginForm.password);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(ADMIN_TOKEN_STORAGE_KEY, res.access_token);
+      }
+      setIsAdminAuthed(true);
+    } catch (err: any) {
+      setAdminLoginError(err?.message || 'Не удалось войти в админку');
+      setIsAdminAuthed(false);
+    } finally {
+      setAdminLoginSubmitting(false);
+    }
+  }
+
   if (authLoading) {
     return <LoadingSpinner fullScreen text="Загрузка..." />;
   }
 
   if (!isAuthenticated || user?.role !== 'admin') {
     return null;
+  }
+
+  if (adminAuthLoading) {
+    return <LoadingSpinner fullScreen text="Проверка доступа к админке..." />;
+  }
+
+  if (!isAdminAuthed) {
+    return (
+      <div className="min-h-screen bg-bg-canvas flex items-center justify-center p-6">
+        <div className="w-full max-w-md bg-bg-panel border border-ui-border-soft rounded-lg p-6">
+          <h1 className="text-xl font-bold text-ui-text-main mb-2">Админ-панель</h1>
+          <p className="text-sm text-ui-text-muted mb-6">
+            Для доступа нужен отдельный админ-токен (таблица <span className="font-mono">admin_users</span>).
+          </p>
+
+          <form onSubmit={handleAdminPanelLogin} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-ui-text-main mb-1">Telegram username (без @)</label>
+              <input
+                type="text"
+                value={adminLoginForm.telegramUsername}
+                onChange={(e) => setAdminLoginForm({ ...adminLoginForm, telegramUsername: e.target.value })}
+                className="w-full px-4 py-2 bg-bg-secondary border border-ui-border-soft rounded-lg text-ui-text-main placeholder-ui-text-dim focus:outline-none focus:ring-2 focus:ring-system-focus focus:border-transparent"
+                placeholder="admin"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-ui-text-main mb-1">Пароль</label>
+              <input
+                type="password"
+                value={adminLoginForm.password}
+                onChange={(e) => setAdminLoginForm({ ...adminLoginForm, password: e.target.value })}
+                className="w-full px-4 py-2 bg-bg-secondary border border-ui-border-soft rounded-lg text-ui-text-main placeholder-ui-text-dim focus:outline-none focus:ring-2 focus:ring-system-focus focus:border-transparent"
+                placeholder="••••••••"
+                required
+              />
+            </div>
+
+            {adminLoginError && (
+              <div className="p-3 bg-system-critical/10 border border-system-critical/30 rounded-lg text-sm text-system-critical">
+                {adminLoginError}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={adminLoginSubmitting}
+              className="w-full py-2 px-4 bg-system-focus hover:bg-system-focus/80 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {adminLoginSubmitting ? 'Вход...' : 'Войти в админку'}
+            </button>
+          </form>
+        </div>
+      </div>
+    );
   }
 
   return (

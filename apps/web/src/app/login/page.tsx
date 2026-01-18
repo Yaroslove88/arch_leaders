@@ -53,7 +53,12 @@ export default function LoginPage() {
 
   useEffect(() => {
     // Загружаем Telegram Bot ID из переменных окружения
-    const botId = process.env.NEXT_PUBLIC_TELEGRAM_BOT_ID || '';
+    // В Telegram Login Widget параметр data-telegram-login ожидает username бота (без @).
+    // Поддерживаем оба названия env для обратной совместимости.
+    const botId =
+      process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME ||
+      process.env.NEXT_PUBLIC_TELEGRAM_BOT_ID ||
+      '';
     setTelegramBotId(botId);
 
     // Загружаем Telegram Login Widget скрипт
@@ -248,7 +253,7 @@ export default function LoginPage() {
                   </div>
                 ) : (
                   <div className="mb-4 p-4 bg-bg-secondary border border-ui-border-soft rounded text-sm text-ui-text-muted">
-                    Telegram OAuth не настроен. Укажите NEXT_PUBLIC_TELEGRAM_BOT_ID в переменных окружения.
+                    Telegram OAuth не настроен. Укажите NEXT_PUBLIC_TELEGRAM_BOT_USERNAME в Dockerfile или env.
                   </div>
                 )}
 

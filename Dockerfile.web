@@ -22,8 +22,9 @@ RUN pnpm install --frozen-lockfile
 # Build shared packages first
 RUN pnpm --filter @leadership-architect/shared build || true
 
-# Build web app with API URL
+# Build web app with API URL and Telegram config
 ENV NEXT_PUBLIC_API_URL=https://yaroslove88-arch-leaders-12c6.twc1.net
+ENV NEXT_PUBLIC_TELEGRAM_BOT_USERNAME=life_yaroslav_rpg_bot
 
 RUN pnpm --filter @leadership-architect/web build
 
