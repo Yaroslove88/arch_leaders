@@ -3,6 +3,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PrismaModule } from '../prisma/prisma.module';
+import { UserModule } from '../user/user.module';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
@@ -15,6 +16,8 @@ import { RolesGuard } from './guards/roles.guard';
     ConfigModule,
     // PrismaModule уже глобальный (@Global), но явно импортируем для ясности
     PrismaModule,
+    // Модуль для инициализации пользователя
+    UserModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       // ConfigModule уже глобальный, но нужно импортировать для useFactory

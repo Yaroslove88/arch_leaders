@@ -3,19 +3,25 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3000",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:chromium": "playwright test --project=chromium",
+    "test:e2e:firefox": "playwright test --project=firefox",
+    "test:e2e:webkit": "playwright test --project=webkit"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.16",
+    "@leadership-architect/ui": "workspace:*",
     "@twa-dev/sdk": "^8.0.2",
-    "html2canvas": "^1.4.1",
     "next": "^14.2.18",
     "node-telegram-bot-api": "^0.67.0",
     "react": "^18.2.0",
@@ -24,10 +30,10 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@playwright/test": "^1.49.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.1",
     "@testing-library/user-event": "^14.6.1",
-    "@types/html2canvas": "^1.0.0",
     "@types/jest": "^29.5.14",
     "@types/node": "^20.0.0",
     "@types/node-telegram-bot-api": "^0.64.13",

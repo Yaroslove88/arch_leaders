@@ -11,14 +11,14 @@ export interface Build {
   fantasy: string;
   description: string;
   entry_conditions: {
-    required_skills?: string[];
+    required_nodes: string[];
+    optional_nodes?: string[];
     behavioral_patterns?: Record<string, any>;
-    min_skills_count?: number;
+    min_required_count?: number;
   };
   bonuses: Record<string, any>;
   hidden_costs: Record<string, any>;
   exit_conditions: Record<string, any>;
-  related_nodes: string[];
   color: string;
 }
 
@@ -124,8 +124,9 @@ export class BuildsService {
     const tree = await this.treeService.getSemantic(userId);
     
     // Получаем активные/разблокированные узлы
+    // 'available' означает что узел разблокирован (XP >= threshold), но еще не активен
     const activeNodes = tree.nodes.filter(
-      (n) => n.state === 'active' || n.state === 'unlocked' || n.state === 'integrated'
+      (n) => n.state === 'active' || n.state === 'available' || n.state === 'unlocked' || n.state === 'integrated'
     );
     const activeNodeIds = activeNodes.map((n) => n.node_id);
     
@@ -140,32 +141,34 @@ export class BuildsService {
       let activationScore = 0;
       let maxScore = 0;
 
-      // Проверка навыков
-      if (build.entry_conditions.required_skills) {
-        const requiredSkills = build.entry_conditions.required_skills;
-        const minSkillsCount = build.entry_conditions.min_skills_count || requiredSkills.length;
-        maxScore += minSkillsCount;
+      // Проверка обязательных узлов
+      if (build.entry_conditions.required_nodes && build.entry_conditions.required_nodes.length > 0) {
+        const requiredNodes = build.entry_conditions.required_nodes;
+        const minRequiredCount = build.entry_conditions.min_required_count || requiredNodes.length;
+        maxScore += minRequiredCount;
 
-        const matchedSkills = requiredSkills.filter((skillId) =>
-          activeNodeIds.includes(skillId)
+        const matchedRequired = requiredNodes.filter((nodeId) =>
+          activeNodeIds.includes(nodeId)
         );
         
-        if (matchedSkills.length >= minSkillsCount) {
-          matchedConditions.push(`Навыки: ${matchedSkills.length}/${requiredSkills.length}`);
-          activationScore += matchedSkills.length;
+        if (matchedRequired.length >= minRequiredCount) {
+          matchedConditions.push(`Обязательные узлы: ${matchedRequired.length}/${requiredNodes.length}`);
+          activationScore += matchedRequired.length;
         } else {
-          missingConditions.push(`Навыки: нужно ${minSkillsCount}, есть ${matchedSkills.length}`);
+          missingConditions.push(`Обязательные узлы: нужно ${minRequiredCount}, есть ${matchedRequired.length}`);
         }
       }
 
-      // Проверка связанных узлов (дополнительный бонус)
-      const relatedActive = build.related_nodes.filter((nodeId) =>
-        activeNodeIds.includes(nodeId)
-      );
-      if (relatedActive.length >= 2) {
-        matchedConditions.push(`Связанные узлы: ${relatedActive.length}`);
-        activationScore += 0.5;
-        maxScore += 0.5;
+      // Проверка опциональных узлов (дополнительный бонус)
+      if (build.entry_conditions.optional_nodes && build.entry_conditions.optional_nodes.length > 0) {
+        const optionalActive = build.entry_conditions.optional_nodes.filter((nodeId) =>
+          activeNodeIds.includes(nodeId)
+        );
+        if (optionalActive.length >= 2) {
+          matchedConditions.push(`Опциональные узлы: ${optionalActive.length}`);
+          activationScore += 0.5;
+          maxScore += 0.5;
+        }
       }
 
       const activationPercentage = maxScore > 0 ? (activationScore / maxScore) * 100 : 0;
@@ -194,8 +197,8 @@ export class BuildsService {
   async getBuildsByNode(nodeId: string): Promise<{ builds: Build[] }> {
     const builds = await this.loadBuilds();
     const filtered = builds.filter((b) =>
-      b.related_nodes.includes(nodeId) ||
-      b.entry_conditions.required_skills?.includes(nodeId)
+      b.entry_conditions.required_nodes?.includes(nodeId) ||
+      b.entry_conditions.optional_nodes?.includes(nodeId)
     );
     return { builds: filtered };
   }

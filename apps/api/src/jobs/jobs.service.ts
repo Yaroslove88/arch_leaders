@@ -8,7 +8,8 @@ export type JobType =
   | 'reembed_entry'
   | 'regenerate_quests'
   | 'send_telegram'
-  | 'backfill';
+  | 'backfill'
+  | 'degrade_experience';
 
 export type JobStatus = 'pending' | 'running' | 'succeeded' | 'failed' | 'cancelled';
 

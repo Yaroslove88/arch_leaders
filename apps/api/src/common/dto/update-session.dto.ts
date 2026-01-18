@@ -15,14 +15,16 @@ export class UpdateSessionDto {
     example: [{ type: 'pattern', description: 'Обнаружен паттерн...' }],
   })
   @IsOptional()
-  insights_json?: any;
+  @IsArray()
+  insights_json?: Array<{ type: string; description: string; [key: string]: unknown }>;
 
   @ApiPropertyOptional({
     description: 'Массив фокусных точек в формате JSON',
     example: [{ area: 'decision-making', priority: 'high' }],
   })
   @IsOptional()
-  focus_json?: any;
+  @IsArray()
+  focus_json?: Array<{ area: string; priority: string; [key: string]: unknown }>;
 
   @ApiPropertyOptional({
     description: 'Извлеченные темы',
@@ -59,7 +61,8 @@ export class UpdateSessionDto {
     example: [{ node_id: 'node_architecture_coupling', strength: 0.8 }],
   })
   @IsOptional()
-  ability_signals_json?: any;
+  @IsArray()
+  ability_signals_json?: Array<{ node_id: string; strength: number; [key: string]: unknown }>;
 
   @ApiPropertyOptional({
     description: 'Статус сессии',

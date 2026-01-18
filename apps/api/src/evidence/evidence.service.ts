@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Inject, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Inject, InternalServerErrorException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -10,9 +10,9 @@ export class EvidenceService {
   }
 
   /**
-   * Получить все evidence
+   * Получить все evidence пользователя
    */
-  async getAll(params?: {
+  async getAll(userId: string, params?: {
     type?: string;
     quest_id?: string;
     ability_node_id?: string;
@@ -24,7 +24,13 @@ export class EvidenceService {
       throw new InternalServerErrorException('Prisma evidence model is not available');
     }
 
-    const where: any = {};
+    const where: {
+      userId: string;
+      type?: string;
+      quest_id?: string;
+      ability_node_id?: string;
+      session_id?: string;
+    } = { userId };
 
     if (params?.type) {
       where.type = params.type;
@@ -65,7 +71,7 @@ export class EvidenceService {
   /**
    * Получить evidence по ID
    */
-  async getById(id: string) {
+  async getById(id: string, userId: string) {
     if (!this.prisma?.evidence) {
       throw new InternalServerErrorException('Prisma evidence model is not available');
     }
@@ -78,16 +84,20 @@ export class EvidenceService {
       throw new NotFoundException(`Evidence with ID ${id} not found`);
     }
 
+    // Проверяем, что evidence принадлежит пользователю
+    if (evidence.userId !== userId) {
+      throw new ForbiddenException('Access denied to this evidence');
+    }
+
     return this.transformEvidence(evidence);
   }
 
   /**
    * Создать новое evidence
    */
-  async create(data: {
+  async create(userId: string, data: {
     type: 'situation' | 'observation' | 'reflection' | 'feedback' | 'external_feedback';
     text: string;
-    userId?: string;
     quest_id?: string;
     ability_node_id?: string;
     session_id?: string;
@@ -121,35 +131,23 @@ export class EvidenceService {
       if (!quest) {
         throw new NotFoundException(`Quest with ID ${data.quest_id} not found`);
       }
+      // Проверяем, что quest принадлежит пользователю
+      if (quest.userId !== userId) {
+        throw new ForbiddenException('Quest does not belong to user');
+      }
     }
 
     if (data.session_id && this.prisma?.session) {
       const session = await this.prisma.session.findUnique({
         where: { id: data.session_id },
-        include: { entry: { select: { userId: true } } },
       });
       if (!session) {
         throw new NotFoundException(`Session with ID ${data.session_id} not found`);
       }
-      // Если userId не указан, используем userId из entry сессии
-      if (!data.userId && session.entry) {
-        data.userId = session.entry.userId;
+      // Проверяем, что session принадлежит пользователю
+      if (session.userId !== userId) {
+        throw new ForbiddenException('Session does not belong to user');
       }
-    }
-
-    // Если userId всё ещё не указан, пробуем получить из quest
-    if (!data.userId && data.quest_id && this.prisma?.quest) {
-      const quest = await this.prisma.quest.findUnique({
-        where: { id: data.quest_id },
-        select: { userId: true },
-      });
-      if (quest) {
-        data.userId = quest.userId;
-      }
-    }
-
-    if (!data.userId) {
-      throw new BadRequestException('userId is required. Provide userId directly or through session_id/quest_id');
     }
 
     // Маппим external_feedback на feedback для Prisma (если schema не поддерживает external_feedback)
@@ -159,7 +157,7 @@ export class EvidenceService {
       data: {
         type: prismaType,
         text: data.text,
-        user: { connect: { id: data.userId } },
+        user: { connect: { id: userId } },
         quest_id: data.quest_id || null,
         ability_node_id: data.ability_node_id || null,
         session_id: data.session_id || null,
@@ -173,7 +171,7 @@ export class EvidenceService {
   /**
    * Обновить evidence
    */
-  async update(id: string, data: {
+  async update(id: string, userId: string, data: {
     text?: string;
     tags?: string[];
   }) {
@@ -189,7 +187,12 @@ export class EvidenceService {
       throw new NotFoundException(`Evidence with ID ${id} not found`);
     }
 
-    const updateData: any = {};
+    // Проверяем, что evidence принадлежит пользователю
+    if (evidence.userId !== userId) {
+      throw new ForbiddenException('Access denied to this evidence');
+    }
+
+    const updateData: { text?: string; tags?: string[] } = {};
 
     if (data.text !== undefined) {
       if (data.text.trim().length === 0) {
@@ -216,7 +219,7 @@ export class EvidenceService {
   /**
    * Удалить evidence
    */
-  async delete(id: string) {
+  async delete(id: string, userId: string) {
     if (!this.prisma?.evidence) {
       throw new InternalServerErrorException('Prisma evidence model is not available');
     }
@@ -229,6 +232,11 @@ export class EvidenceService {
       throw new NotFoundException(`Evidence with ID ${id} not found`);
     }
 
+    // Проверяем, что evidence принадлежит пользователю
+    if (evidence.userId !== userId) {
+      throw new ForbiddenException('Access denied to this evidence');
+    }
+
     await this.prisma.evidence.delete({
       where: { id },
     });
@@ -239,22 +247,31 @@ export class EvidenceService {
   /**
    * Трансформация evidence для ответа
    */
-  private transformEvidence(evidence: any) {
+  private transformEvidence(evidence: {
+    id: string;
+    type: string;
+    text: string;
+    quest_id: string | null;
+    ability_node_id: string | null;
+    session_id: string | null;
+    tags: string[];
+    created_at: Date;
+    updated_at: Date;
+  } | null) {
     if (!evidence) {
       return null;
     }
 
     return {
-      id: evidence?.id,
-      type: evidence?.type,
-      text: evidence?.text,
-      quest_id: evidence?.quest_id,
-      ability_node_id: evidence?.ability_node_id,
-      session_id: evidence?.session_id,
-      tags: evidence?.tags,
-      created_at: evidence?.created_at,
-      updated_at: evidence?.updated_at,
+      id: evidence.id,
+      type: evidence.type,
+      text: evidence.text,
+      quest_id: evidence.quest_id,
+      ability_node_id: evidence.ability_node_id,
+      session_id: evidence.session_id,
+      tags: evidence.tags,
+      created_at: evidence.created_at,
+      updated_at: evidence.updated_at,
     };
   }
 }
-

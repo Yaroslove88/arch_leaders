@@ -189,29 +189,8 @@ describe('AbilityEngine', () => {
     });
   });
 
-  describe('calculateReward', () => {
-    it('should calculate base rewards for different quest types', () => {
-      const microReward = engine.calculateReward('micro');
-      expect(microReward.xp).toBe(100);
-      expect(microReward.skill_xp).toBe(50);
-
-      const weeklyReward = engine.calculateReward('weekly');
-      expect(weeklyReward.xp).toBe(200);
-      expect(weeklyReward.skill_xp).toBe(100);
-
-      const storyReward = engine.calculateReward('story');
-      expect(storyReward.xp).toBe(300);
-      expect(storyReward.skill_xp).toBe(150);
-    });
-
-    it('should apply level multiplier for advanced nodes', () => {
-      const basicReward = engine.calculateReward('micro', 'basic');
-      const advancedReward = engine.calculateReward('micro', 'advanced');
-
-      expect(advancedReward.xp).toBeGreaterThan(basicReward.xp);
-      expect(advancedReward.skill_xp).toBeGreaterThan(basicReward.skill_xp);
-    });
-  });
+  // Примечание: calculateReward находится в QuestEngine, не в AbilityEngine
+  // Этот тест был неправильным, удален
 
   describe('determineQuestType', () => {
     it('should determine quest type based on source', () => {

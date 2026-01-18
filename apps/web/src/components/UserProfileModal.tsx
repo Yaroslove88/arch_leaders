@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useAuth } from '../hooks/useAuth';
 import { changePassword } from '../lib/api';
 
@@ -91,14 +92,16 @@ export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto" onClick={onClose}>
-      <div className="flex min-h-screen items-center justify-center p-4">
-        <div
-          className="relative bg-bg-panel border border-ui-border-soft rounded-lg shadow-floating max-w-md w-full p-6"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-bold text-ui-text-main">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto" 
+      onClick={onClose}
+    >
+      <div
+        className="relative bg-graphite-structure border border-ui-border-soft rounded-lg shadow-floating max-w-md w-full p-6 my-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-bold text-ash-light">
               {isAuthenticated ? 'Личный кабинет' : isLoginMode ? 'Вход' : 'Регистрация'}
             </h2>
             <button
@@ -113,15 +116,15 @@ export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
             <div className="space-y-4">
               {!showChangePassword ? (
                 <>
-                  <div className="bg-bg-secondary border border-ui-border-soft rounded-lg p-4">
+                  <div className="bg-obsidian-core border border-ui-border-soft rounded-lg p-4">
                     <div className="space-y-2">
                       <div>
                         <span className="text-sm text-ui-text-dim">Telegram username:</span>
-                        <p className="text-lg font-semibold text-ui-text-main">@{user?.telegramUsername}</p>
+                        <p className="text-lg font-semibold text-ash-light">@{user?.telegramUsername}</p>
                       </div>
                       <div>
                         <span className="text-sm text-ui-text-dim">Роль:</span>
-                        <p className="text-lg font-semibold text-ui-text-main">
+                        <p className="text-lg font-semibold text-ash-light">
                           {user?.role === 'admin' ? 'Администратор' : 'Пользователь'}
                         </p>
                       </div>
@@ -131,15 +134,40 @@ export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
                       </div>
                     </div>
                   </div>
-                  <button
-                    onClick={() => setShowChangePassword(true)}
-                    className="w-full bg-bg-secondary border border-system-focus text-system-focus py-2 px-4 rounded-lg hover:border-system-focus/70 hover:bg-bg-panel transition-colors"
-                  >
-                    Сменить пароль
-                  </button>
+                  {/* Быстрые ссылки */}
+                  <div className="border-t border-ui-border-soft pt-4 mt-2">
+                    <p className="text-xs text-ui-text-dim mb-2">Ссылки</p>
+                    <div className="space-y-2">
+                      <Link
+                        href="/introduce"
+                        onClick={onClose}
+                        className="flex items-center gap-2 w-full bg-obsidian-core border border-ui-border-soft py-2 px-4 rounded-lg hover:border-system-focus hover:text-system-focus transition-colors text-ash-light text-sm"
+                      >
+                        <span>📖</span>
+                        <span>Об Архитекторе</span>
+                      </Link>
+                      <Link
+                        href="/architecture"
+                        onClick={onClose}
+                        className="flex items-center gap-2 w-full bg-obsidian-core border border-ui-border-soft py-2 px-4 rounded-lg hover:border-system-focus hover:text-system-focus transition-colors text-ash-light text-sm"
+                      >
+                        <span>🌳</span>
+                        <span>Моё дерево</span>
+                      </Link>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-ui-border-soft pt-4 mt-2">
+                    <button
+                      onClick={() => setShowChangePassword(true)}
+                      className="w-full bg-obsidian-core border border-ui-border-soft text-ui-text-muted py-2 px-4 rounded-lg hover:border-system-focus hover:text-system-focus transition-colors text-sm"
+                    >
+                      Сменить пароль
+                    </button>
+                  </div>
                   <button
                     onClick={handleLogout}
-                    className="w-full bg-bg-secondary border border-system-critical text-system-critical py-2 px-4 rounded-lg hover:border-system-critical/70 hover:bg-bg-panel transition-colors"
+                    className="w-full bg-obsidian-core border border-system-critical/50 text-system-critical py-2 px-4 rounded-lg hover:border-system-critical hover:bg-graphite-structure transition-colors text-sm"
                   >
                     Выйти
                   </button>
@@ -147,17 +175,17 @@ export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
               ) : (
                 <form onSubmit={handleChangePassword} className="space-y-4">
                   {error && (
-                    <div className="bg-bg-secondary border border-system-critical/30 text-system-critical px-4 py-3 rounded">
+                    <div className="bg-obsidian-core border border-system-critical/30 text-system-critical px-4 py-3 rounded">
                       {error}
                     </div>
                   )}
                   {success && (
-                    <div className="bg-bg-secondary border border-system-growth/30 text-system-growth px-4 py-3 rounded">
+                    <div className="bg-obsidian-core border border-system-growth/30 text-system-growth px-4 py-3 rounded">
                       {success}
                     </div>
                   )}
                   <div>
-                    <label htmlFor="currentPassword" className="block text-sm font-medium text-ui-text-main mb-1">
+                    <label htmlFor="currentPassword" className="block text-sm font-medium text-ash-light mb-1">
                       Текущий пароль
                     </label>
                     <input
@@ -167,11 +195,11 @@ export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
                       onChange={(e) => setCurrentPassword(e.target.value)}
                       placeholder="Введите текущий пароль"
                       required
-                      className="w-full px-3 py-2 bg-bg-secondary border border-ui-border-soft rounded-lg text-ui-text-main placeholder-ui-text-dim focus:outline-none focus:ring-2 focus:ring-system-focus focus:border-system-focus"
+                      className="w-full px-3 py-2 bg-obsidian-core border border-ui-border-soft rounded-lg text-ash-light placeholder-ui-text-dim focus:outline-none focus:ring-2 focus:ring-system-focus focus:border-system-focus"
                     />
                   </div>
                   <div>
-                    <label htmlFor="newPassword" className="block text-sm font-medium text-ui-text-main mb-1">
+                    <label htmlFor="newPassword" className="block text-sm font-medium text-ash-light mb-1">
                       Новый пароль
                     </label>
                     <input
@@ -182,11 +210,11 @@ export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
                       placeholder="Минимум 8 символов"
                       required
                       minLength={8}
-                      className="w-full px-3 py-2 bg-bg-secondary border border-ui-border-soft rounded-lg text-ui-text-main placeholder-ui-text-dim focus:outline-none focus:ring-2 focus:ring-system-focus focus:border-system-focus"
+                      className="w-full px-3 py-2 bg-obsidian-core border border-ui-border-soft rounded-lg text-ash-light placeholder-ui-text-dim focus:outline-none focus:ring-2 focus:ring-system-focus focus:border-system-focus"
                     />
                   </div>
                   <div>
-                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-ui-text-main mb-1">
+                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-ash-light mb-1">
                       Подтвердите новый пароль
                     </label>
                     <input
@@ -197,7 +225,7 @@ export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
                       placeholder="Повторите новый пароль"
                       required
                       minLength={8}
-                      className="w-full px-3 py-2 bg-bg-secondary border border-ui-border-soft rounded-lg text-ui-text-main placeholder-ui-text-dim focus:outline-none focus:ring-2 focus:ring-system-focus focus:border-system-focus"
+                      className="w-full px-3 py-2 bg-obsidian-core border border-ui-border-soft rounded-lg text-ash-light placeholder-ui-text-dim focus:outline-none focus:ring-2 focus:ring-system-focus focus:border-system-focus"
                     />
                   </div>
                   <div className="flex gap-2">
@@ -211,14 +239,14 @@ export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
                         setNewPassword('');
                         setConfirmPassword('');
                       }}
-                      className="flex-1 bg-bg-secondary border border-ui-border-soft text-ui-text-muted py-2 px-4 rounded-lg hover:border-ui-border-strong hover:text-ui-text-main transition-colors"
+                      className="flex-1 bg-obsidian-core border border-ui-border-soft text-ui-text-muted py-2 px-4 rounded-lg hover:border-ui-border-strong hover:text-ash-light transition-colors"
                     >
                       Отмена
                     </button>
                     <button
                       type="submit"
                       disabled={isLoading}
-                      className="flex-1 bg-bg-secondary border border-system-focus text-system-focus py-2 px-4 rounded-lg hover:border-system-focus/70 hover:bg-bg-panel transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 bg-obsidian-core border border-system-focus text-system-focus py-2 px-4 rounded-lg hover:border-system-focus/70 hover:bg-graphite-structure transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isLoading ? 'Сохранение...' : 'Изменить пароль'}
                     </button>
@@ -229,13 +257,13 @@ export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && (
-                <div className="bg-bg-secondary border border-system-critical/30 text-system-critical px-4 py-3 rounded">
+                <div className="bg-obsidian-core border border-system-critical/30 text-system-critical px-4 py-3 rounded">
                   {error}
                 </div>
               )}
 
               <div>
-                <label htmlFor="telegramUsername" className="block text-sm font-medium text-ui-text-main mb-1">
+                <label htmlFor="telegramUsername" className="block text-sm font-medium text-ash-light mb-1">
                   Telegram username
                 </label>
                 <input
@@ -245,12 +273,12 @@ export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
                   onChange={(e) => setTelegramUsername(e.target.value)}
                   placeholder="username"
                   required
-                  className="w-full px-3 py-2 bg-bg-secondary border border-ui-border-soft rounded-lg text-ui-text-main placeholder-ui-text-dim focus:outline-none focus:ring-2 focus:ring-system-focus focus:border-system-focus"
+                  className="w-full px-3 py-2 bg-obsidian-core border border-ui-border-soft rounded-lg text-ash-light placeholder-ui-text-dim focus:outline-none focus:ring-2 focus:ring-system-focus focus:border-system-focus"
                 />
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-ui-text-main mb-1">
+                <label htmlFor="password" className="block text-sm font-medium text-ash-light mb-1">
                   Пароль
                 </label>
                 <input
@@ -261,14 +289,14 @@ export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
                   placeholder={isLoginMode ? 'Введите пароль' : 'Минимум 8 символов'}
                   required
                   minLength={isLoginMode ? undefined : 8}
-                  className="w-full px-3 py-2 bg-bg-secondary border border-ui-border-soft rounded-lg text-ui-text-main placeholder-ui-text-dim focus:outline-none focus:ring-2 focus:ring-system-focus focus:border-system-focus"
+                  className="w-full px-3 py-2 bg-obsidian-core border border-ui-border-soft rounded-lg text-ash-light placeholder-ui-text-dim focus:outline-none focus:ring-2 focus:ring-system-focus focus:border-system-focus"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-bg-secondary border border-system-focus text-system-focus py-2 px-4 rounded-lg hover:border-system-focus/70 hover:bg-bg-panel transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-obsidian-core border border-system-focus text-system-focus py-2 px-4 rounded-lg hover:border-system-focus/70 hover:bg-graphite-structure transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? 'Загрузка...' : isLoginMode ? 'Войти' : 'Зарегистрироваться'}
               </button>
@@ -287,9 +315,7 @@ export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
               </div>
             </form>
           )}
-        </div>
       </div>
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm -z-10" />
     </div>
   );
 }

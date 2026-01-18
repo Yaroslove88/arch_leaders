@@ -64,30 +64,35 @@ export class AuditService {
       }
     }
 
-    const logs = await this.prisma.adminAuditLog.findMany({
-      where,
-      include: {
-        adminUser: {
-          select: {
-            id: true,
-            email: true,
-            role: true,
+    const [logs, total] = await Promise.all([
+      this.prisma.adminAuditLog.findMany({
+        where,
+        select: {
+          id: true,
+          admin_user_id: true,
+          action: true,
+          target_type: true,
+          target_id: true,
+          reason: true,
+          metadata: true,
+          ip: true,
+          created_at: true,
+        },
+        orderBy: {
+          created_at: 'desc',
+        },
+        take: filters.limit || 50,
+        ...(filters.cursor && {
+          skip: 1,
+          cursor: {
+            id: filters.cursor,
           },
-        },
-      },
-      orderBy: {
-        created_at: 'desc',
-      },
-      take: filters.limit || 50,
-      ...(filters.cursor && {
-        skip: 1,
-        cursor: {
-          id: filters.cursor,
-        },
+        }),
       }),
-    });
+      this.prisma.adminAuditLog.count({ where }),
+    ]);
 
-    return logs;
+    return { logs, total };
   }
 }
 

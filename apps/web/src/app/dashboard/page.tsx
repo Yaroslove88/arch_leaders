@@ -2,14 +2,20 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '../../hooks/useAuth';
 import { useQuests } from '../../hooks/useQuests';
 import { useSessions } from '../../hooks/useSessions';
 import { useEntries } from '../../hooks/useEntries';
-import { getSemanticTree, getCurrentBuild, getToken } from '../../lib/api';
-import { useQuery } from '@tanstack/react-query';
+import { getSemanticTree, getCurrentBuild, getToken, getCaseProgress, CaseProgress, getUserRetention, UserRetention, recordActivity, checkStreakRisk, createEntry, getUserAchievements, UserAchievement } from '../../lib/api';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { ProtectedRoute } from '../../components/ProtectedRoute';
-import { AddEntryModal } from '../../components/AddEntryModal';
+import { AddSituationModal, AddEvidenceModal, type SituationFormData, type EvidenceFormData } from '../../components/modals';
+import { createEvidence } from '../../lib/api';
+import { useToast } from '../../components/ToastProvider';
+import { StreakIndicator, AchievementPopup } from '../../components/gamification';
+import { Achievement, ACHIEVEMENTS } from '../../lib/gamification';
 
 interface NodeChange {
   nodeId: string;
@@ -23,20 +29,79 @@ function DashboardContent() {
   const [mounted, setMounted] = useState(false);
   const [recentChanges, setRecentChanges] = useState<NodeChange[]>([]);
   const [isEntryModalOpen, setIsEntryModalOpen] = useState(false);
+  const [isEvidenceModalOpen, setIsEvidenceModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [newAchievement, setNewAchievement] = useState<Achievement | null>(null);
+  const [lastAchievementsCount, setLastAchievementsCount] = useState<number>(0);
+  const { user } = useAuth();
+  const userId = user?.id; // Используем реальный userId из auth
+  const router = useRouter();
+  const toast = useToast();
+  const queryClient = useQueryClient();
+
+  // Обработчик сохранения новой ситуации
+  const handleSaveSituation = async (data: SituationFormData) => {
+    setIsSaving(true);
+    try {
+      const entry = await createEntry({
+        type: 'situation',
+        source: 'web',
+        text: data.description || data.title,
+        participants: [],
+        tags: [],
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ['entries'] });
+      toast.showToast('Ситуация добавлена в журнал', 'success');
+      setIsEntryModalOpen(false);
+      router.push('/traces');
+    } catch (error: any) {
+      toast.showToast(error?.message || 'Ошибка при создании ситуации', 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Обработчик сохранения рефлексии
+  const handleSaveEvidence = async (data: EvidenceFormData) => {
+    setIsSaving(true);
+    try {
+      await createEvidence({
+        type: 'reflection',
+        text: data.text,
+        quest_id: data.questId,
+        ability_node_id: data.nodeId,
+        tags: [],
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ['evidence'] });
+      queryClient.invalidateQueries({ queryKey: ['quests'] });
+      toast.showToast('Рефлексия добавлена', 'success');
+      setIsEvidenceModalOpen(false);
+    } catch (error: any) {
+      toast.showToast(error?.message || 'Ошибка при сохранении', 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // Получаем токен только на клиенте после монтирования
   useEffect(() => {
-    // Убеждаемся, что код выполняется только на клиенте
-    if (typeof window === 'undefined') {
-      return;
-    }
+    if (typeof window === 'undefined') return;
     
     try {
       setMounted(true);
       const currentToken = getToken();
       setToken(currentToken);
       
-      // Загружаем сохраненные изменения из localStorage
+      // Проверяем, прошел ли пользователь онбординг
+      const hasSeenIntroduce = localStorage.getItem('hasSeenIntroduce');
+      if (!hasSeenIntroduce && currentToken) {
+        // Первый вход - редиректим на страницу онбординга
+        router.push('/introduce');
+        return;
+      }
+      
       const savedChanges = localStorage.getItem('node_changes');
       if (savedChanges) {
         try {
@@ -51,10 +116,10 @@ function DashboardContent() {
     } catch (error) {
       console.error('Error initializing dashboard:', error);
     }
-  }, []);
+  }, [router]);
 
-  const { data: questsData, isLoading: questsLoading, error: questsError } = useQuests('active');
-  const { data: sessionsData, isLoading: sessionsLoading, error: sessionsError } = useSessions({ status: 'done' });
+  const { data: questsData, isLoading: questsLoading } = useQuests('active');
+  const { data: sessionsData, isLoading: sessionsLoading } = useSessions({ status: 'done' });
   const { data: entriesData } = useEntries({ limit: 10 });
   const { data: tree, isLoading: treeLoading } = useQuery({
     queryKey: ['tree', 'semantic'],
@@ -68,9 +133,75 @@ function DashboardContent() {
     enabled: !!token && mounted,
     retry: false,
   });
+  const { data: caseProgress } = useQuery({
+    queryKey: ['caseProgress'],
+    queryFn: getCaseProgress,
+    enabled: !!token && mounted,
+  });
+  const { data: retention } = useQuery({
+    queryKey: ['retention', userId],
+    queryFn: () => getUserRetention(userId!),
+    enabled: mounted && !!userId,
+  });
+  const { data: streakRisk } = useQuery({
+    queryKey: ['streakRisk', userId],
+    queryFn: () => checkStreakRisk(userId!),
+    enabled: mounted && !!userId,
+    refetchInterval: 60000, // Проверяем каждую минуту
+  });
+  const { data: userAchievements } = useQuery({
+    queryKey: ['achievements', userId],
+    queryFn: () => getUserAchievements(userId),
+    enabled: mounted && !!userId,
+  });
 
-  // Все вычисления должны быть до условного возврата, чтобы хуки вызывались в одном порядке
-  // Показываем пустые данные вместо ошибки для неавторизованных пользователей
+  // Записываем активность при загрузке дашборда
+  useEffect(() => {
+    if (mounted && userId) {
+      recordActivity(userId, 'any').catch(console.error);
+    }
+  }, [mounted, userId]);
+
+  // Отслеживаем новые достижения
+  useEffect(() => {
+    if (userAchievements && userAchievements.length > lastAchievementsCount) {
+      // Нашли новое достижение
+      const newAchievements = userAchievements.slice(lastAchievementsCount);
+      if (newAchievements.length > 0) {
+        // Показываем последнее разблокированное достижение
+        const latest = newAchievements[newAchievements.length - 1];
+        // Проверяем, что achievement_id существует
+        if (!latest?.achievement_id) {
+          setLastAchievementsCount(userAchievements.length);
+          return;
+        }
+        // Находим полную информацию о достижении из каталога
+        const achievementDef = ACHIEVEMENTS.find(a => a.id === latest.achievement_id);
+        if (achievementDef) {
+          setNewAchievement({
+            ...achievementDef,
+            isUnlocked: true,
+            unlockedAt: latest.unlocked_at,
+          });
+        } else {
+          // Fallback если достижение не найдено в каталоге
+          setNewAchievement({
+            id: latest.achievement_id,
+            title: latest.achievement_id.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+            description: `Достижение разблокировано`,
+            icon: '🏆',
+            category: 'first_steps',
+            isUnlocked: true,
+            unlockedAt: latest.unlocked_at,
+          });
+        }
+      }
+      setLastAchievementsCount(userAchievements.length);
+    } else if (userAchievements) {
+      setLastAchievementsCount(userAchievements.length);
+    }
+  }, [userAchievements, lastAchievementsCount]);
+
   const quests = questsData?.quests || [];
   const activeQuests = useMemo(() => 
     quests.filter((q: any) => q.status === 'active').slice(0, 5),
@@ -87,12 +218,8 @@ function DashboardContent() {
 
   const unlockedNodes = useMemo(() => 
     tree?.nodes?.filter((n: any) => 
-      n.state === 'unlocked' || n.state === 'integrated'
+      n.state === 'active' || n.state === 'available' || n.state === 'unlocked' || n.state === 'integrated'
     ).length || 0,
-    [tree]
-  );
-  const totalNodes = useMemo(() => 
-    tree?.nodes?.length || 0,
     [tree]
   );
 
@@ -101,19 +228,12 @@ function DashboardContent() {
     [currentBuilds]
   );
 
-  // Фокус недели - приоритетный активный квест или последняя ситуация
-  const weekFocus = useMemo(() => {
+  // Фокус - приоритетный активный квест
+  const currentFocus = useMemo(() => {
     if (activeQuests.length > 0) {
-      // Берем первый активный квест как фокус недели
-      return {
-        type: 'quest' as const,
-        data: activeQuests[0],
-      };
+      return { type: 'quest' as const, data: activeQuests[0] };
     } else if (recentEntries.length > 0) {
-      return {
-        type: 'entry' as const,
-        data: recentEntries[0],
-      };
+      return { type: 'entry' as const, data: recentEntries[0] };
     }
     return null;
   }, [activeQuests, recentEntries]);
@@ -133,7 +253,6 @@ function DashboardContent() {
         const previousState = previousStates[node.node_id];
 
         if (previousState && previousState !== node.state) {
-          // Узел изменил состояние
           if (node.state === 'available' && previousState === 'locked') {
             newChanges.push({
               nodeId: node.node_id,
@@ -148,21 +267,12 @@ function DashboardContent() {
               changeType: 'integrated',
               timestamp: new Date().toISOString(),
             });
-          } else if (node.state === 'locked' && (previousState === 'available' || previousState === 'unlocked')) {
-            newChanges.push({
-              nodeId: node.node_id,
-              nodeName: node.name || node.node_id,
-              changeType: 'lost_relevance',
-              timestamp: new Date().toISOString(),
-            });
           }
         }
       });
 
-      // Сохраняем текущие состояния
       localStorage.setItem('node_states', JSON.stringify(currentStates));
 
-      // Обновляем список изменений (сохраняем последние 20)
       if (newChanges.length > 0) {
         setRecentChanges((prev) => {
           const allChanges = [...newChanges, ...prev].slice(0, 20);
@@ -175,259 +285,302 @@ function DashboardContent() {
     }
   }, [tree, mounted]);
 
-  // Показываем загрузку, если еще не смонтирован или идет загрузка данных
   const isLoading = !mounted || questsLoading || sessionsLoading || treeLoading || buildsLoading;
 
   if (isLoading) {
     return <LoadingSpinner fullScreen text="Загрузка данных..." />;
   }
 
-  // Последние изменения (последние 5)
-  const latestChanges = recentChanges.slice(0, 5);
+  const latestChanges = recentChanges.slice(0, 3);
+  const solvedCasesCount = caseProgress?.solvedCases?.length || 0;
 
   return (
-    <main className="min-h-screen bg-bg-main p-8">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8 text-ui-text-main" id="page-title">Обзор</h1>
+    <main className="min-h-screen bg-obsidian-core p-4 md:p-8">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-2xl font-bold mb-6 text-ash-light tracking-tight">Обзор</h1>
 
-        {/* Фокус недели */}
-        {weekFocus && (
-          <section className="bg-bg-panel border border-ui-border-soft rounded-lg shadow-panel p-6 mb-8 bg-panel-gradient" aria-labelledby="week-focus-heading">
-            <h2 id="week-focus-heading" className="text-xl font-bold mb-4 text-ui-text-main flex items-center gap-2">
-              <span className="text-2xl">🎯</span>
-              Фокус недели
-            </h2>
-            {weekFocus.type === 'quest' ? (
-              <div className="border-l-4 border-system-focus pl-4 py-2 bg-bg-secondary rounded">
-                <h3 className="font-semibold text-ui-text-main mb-1">{weekFocus.data.title}</h3>
-                <p className="text-sm text-ui-text-muted mb-2">{weekFocus.data.description}</p>
-                <Link 
-                  href={`/quests/${weekFocus.data.id}`}
-                  className="text-sm text-system-focus hover:text-system-focus/80 hover:underline"
-                >
-                  Перейти к квесту →
-                </Link>
+        {/* Главный блок фокуса */}
+        <section className="bg-graphite-structure border border-ui-border-soft rounded-xl shadow-panel p-6 mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-xl">🎯</span>
+            <h2 className="text-lg font-semibold text-ash-light">Твой фокус сейчас</h2>
+          </div>
+
+          {currentFocus ? (
+            currentFocus.type === 'quest' ? (
+              <div className="bg-obsidian-core rounded-xl p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1">
+                    <p className="text-sm text-ui-text-muted mb-1">Квест</p>
+                    <h3 className="text-lg font-semibold text-ash-light mb-2">
+                      {currentFocus.data.title}
+                    </h3>
+                    <p className="text-sm text-ui-text-muted line-clamp-2">
+                      {currentFocus.data.description}
+                    </p>
+                  </div>
+                  <span className="text-xs bg-strategic-blue/20 text-strategic-blue px-2 py-1 rounded">
+                    {currentFocus.data.type === 'micro' ? 'Микро' : 
+                     currentFocus.data.type === 'weekly' ? 'Недельный' : 
+                     currentFocus.data.type === 'story' ? 'История' : currentFocus.data.type}
+                  </span>
+                </div>
+                
+                {/* Прогресс бар */}
+                <div className="mb-4">
+                  <div className="flex justify-between text-xs text-ui-text-muted mb-1">
+                    <span>Прогресс</span>
+                    <span>—</span>
+                  </div>
+                  <div className="w-full bg-obsidian-core rounded-full h-2">
+                    <div className="bg-strategic-blue h-2 rounded-full" style={{ width: '30%' }} />
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                  <Link 
+                    href={`/quests/${currentFocus.data.id}`}
+                    className="flex-1 bg-strategic-blue hover:bg-strategic-blue/90 text-white py-2.5 px-4 rounded-xl text-center text-sm font-medium transition-colors"
+                  >
+                    Продолжить квест →
+                  </Link>
+                  <button 
+                    onClick={() => setIsEvidenceModalOpen(true)}
+                    className="py-2.5 px-4 border border-ui-border-soft rounded-xl text-ash-light text-sm hover:bg-graphite-structure transition-colors text-center"
+                  >
+                    + Рефлексия
+                  </button>
+                </div>
               </div>
             ) : (
-              <div className="border-l-4 border-system-growth pl-4 py-2 bg-bg-secondary rounded">
-                <h3 className="font-semibold text-ui-text-main mb-1">Последняя ситуация</h3>
-                <p className="text-sm text-ui-text-muted mb-2 line-clamp-2">{weekFocus.data.text}</p>
+              <div className="bg-obsidian-core rounded-xl p-4">
+                <p className="text-sm text-ui-text-muted mb-1">Последняя ситуация</p>
+                <p className="text-ash-light line-clamp-2 mb-3">{currentFocus.data.text}</p>
                 <Link 
-                  href={`/entries/${weekFocus.data.id}`}
-                  className="text-sm text-system-focus hover:text-system-focus/80 hover:underline"
+                  href="/traces"
+                  className="inline-block bg-strategic-blue hover:bg-strategic-blue/90 text-white py-2 px-4 rounded-xl text-sm font-medium transition-colors"
                 >
-                  Открыть ситуацию →
+                  Открыть журнал →
                 </Link>
               </div>
-            )}
-          </section>
-        )}
-
-        {/* Последние изменения */}
-        {latestChanges.length > 0 && (
-          <section className="bg-bg-panel border border-ui-border-soft rounded-lg shadow-panel p-6 mb-8 bg-panel-gradient" aria-labelledby="changes-heading">
-            <h2 id="changes-heading" className="text-xl font-bold mb-4 text-ui-text-main flex items-center gap-2">
-              <span className="text-2xl">📊</span>
-              Последние изменения
-            </h2>
-            <div className="space-y-3">
-              {latestChanges.map((change, index) => (
-                <div 
-                  key={`${change.nodeId}-${index}`}
-                  className={`border-l-4 pl-4 py-2 bg-bg-secondary rounded ${
-                    change.changeType === 'available' ? 'border-system-warning' :
-                    change.changeType === 'integrated' ? 'border-system-growth' :
-                    'border-ui-border-soft'
-                  }`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-ui-text-main">
-                        {change.changeType === 'available' && '✅ Стало доступно: '}
-                        {change.changeType === 'integrated' && '🔗 Интегрируется: '}
-                        {change.changeType === 'lost_relevance' && '⚠️ Потеряло актуальность: '}
-                        <span className="font-semibold">{change.nodeName}</span>
-                      </p>
-                      <p className="text-xs text-ui-text-muted mt-1">
-                        {new Date(change.timestamp).toLocaleDateString('ru-RU', { 
-                          day: 'numeric', 
-                          month: 'long', 
-                          hour: '2-digit', 
-                          minute: '2-digit' 
-                        })}
-                      </p>
-                    </div>
-                    <Link 
-                      href={`/tree?node=${change.nodeId}`}
-                      className="text-xs text-system-focus hover:text-system-focus/80 hover:underline ml-4"
-                    >
-                      Открыть →
-                    </Link>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Статистика */}
-        <section aria-labelledby="stats-heading" className="mb-8">
-          <h2 id="stats-heading" className="sr-only">Статистика</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="bg-bg-panel border border-ui-border-soft rounded-lg shadow-panel p-6">
-            <h3 className="text-lg font-semibold mb-2 text-ui-text-main">Активные квесты</h3>
-            <p className="text-3xl font-bold text-system-focus">{activeQuests.length}</p>
-          </div>
-          <div className="bg-bg-panel border border-ui-border-soft rounded-lg shadow-panel p-6">
-            <h3 className="text-lg font-semibold mb-2 text-ui-text-main">Проанализировано</h3>
-            <p className="text-3xl font-bold text-system-growth">{sessions.length}</p>
-          </div>
-          <div className="bg-bg-panel border border-ui-border-soft rounded-lg shadow-panel p-6">
-            <h3 className="text-lg font-semibold mb-2 text-ui-text-main">Разблокировано узлов</h3>
-            <p className="text-3xl font-bold text-system-stable">{unlockedNodes} / {totalNodes}</p>
-          </div>
-          <div className="bg-bg-panel border border-ui-border-soft rounded-lg shadow-panel p-6">
-            <h3 className="text-lg font-semibold mb-2 text-ui-text-main">Активные билды</h3>
-            <p className="text-3xl font-bold text-system-warning">{activeBuilds.length}</p>
-            {activeBuilds.length > 0 && (
-              <Link href="/builds" className="text-xs text-system-focus hover:text-system-focus/80 hover:underline mt-2 block transition-colors">
-                Посмотреть →
-              </Link>
-            )}
-          </div>
-          </div>
-        </section>
-
-        {/* Активные билды */}
-        {activeBuilds.length > 0 && (
-          <section className="bg-bg-panel border border-ui-border-soft rounded-lg shadow-panel p-6 mb-8 bg-panel-gradient" aria-labelledby="builds-heading">
-            <div className="flex justify-between items-center mb-4">
-              <h2 id="builds-heading" className="text-2xl font-bold text-ui-text-main">Активные билды</h2>
-              <Link href="/builds" className="text-system-focus hover:text-system-focus/80 hover:underline">
-                Все билды →
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {activeBuilds.map((build: any) => (
-                <div
-                  key={build.build_id}
-                  className="border-l-4 p-4 rounded bg-bg-secondary border-ui-border-soft"
-                  style={{ borderLeftColor: build.color || '#3A6F8F' }}
-                >
-                  <div className="flex items-center mb-2">
-                    <span className="text-2xl mr-2">{build.icon}</span>
-                    <h3 className="font-semibold text-ui-text-main">{build.name}</h3>
-                  </div>
-                  <p className="text-sm text-ui-text-muted mb-2">{build.fantasy}</p>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-ui-text-muted">Активация: {build.activation_percentage}%</span>
-                    <div className="w-24 bg-bg-secondary rounded-full h-1.5 border border-ui-border-soft">
-                      <div
-                        className="h-1.5 rounded-full"
-                        style={{
-                          width: `${build.activation_percentage}%`,
-                          backgroundColor: build.color || '#3A6F8F',
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Активные квесты */}
-        {activeQuests.length > 0 && (
-          <section className="bg-bg-panel border border-ui-border-soft rounded-lg shadow-panel p-6 mb-8 bg-panel-gradient" aria-labelledby="quests-heading">
-            <div className="flex justify-between items-center mb-4">
-              <h2 id="quests-heading" className="text-2xl font-bold text-ui-text-main">Активные квесты</h2>
-              <Link href="/quests" className="text-system-focus hover:text-system-focus/80 hover:underline">
-                Все квесты →
-              </Link>
-            </div>
-            <div className="space-y-4">
-              {activeQuests.map((quest: any) => (
-                <Link
-                  key={quest.id}
-                  href={`/quests/${quest.id}`}
-                  className="block border-l-4 border-system-focus pl-4 py-2 bg-bg-secondary rounded hover:bg-bg-panel transition-colors"
-                >
-                  <h3 className="font-semibold text-ui-text-main">{quest.title}</h3>
-                  <p className="text-sm text-ui-text-muted">{quest.description}</p>
-                  <div className="mt-2 flex gap-2">
-                    <span className="text-xs bg-bg-panel border border-system-focus/30 text-system-focus px-2 py-1 rounded">
-                      {quest.type === 'micro' ? 'Микро' : 
-                       quest.type === 'weekly' ? 'Еженедельный' : 
-                       quest.type === 'story' ? 'История' : 
-                       quest.type === 'in-person' ? 'Очный' : quest.type}
-                    </span>
-                    {quest.linked_nodes?.length > 0 && (
-                      <span className="text-xs bg-bg-panel border border-system-stable/30 text-system-stable px-2 py-1 rounded">
-                        {quest.linked_nodes.length} способностей
-                      </span>
-                    )}
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Последние анализы */}
-        <section className="bg-bg-panel border border-ui-border-soft rounded-lg shadow-panel p-6 mb-8 bg-panel-gradient" aria-labelledby="sessions-heading">
-          <div className="flex justify-between items-center mb-4">
-            <h2 id="sessions-heading" className="text-2xl font-bold text-ui-text-main">Последние анализы</h2>
-            <Link href="/sessions" className="text-system-focus hover:text-system-focus/80 hover:underline">
-              Все анализы →
-            </Link>
-          </div>
-          {sessions.length === 0 ? (
-            <p className="text-ui-text-muted">Нет проанализированных ситуаций</p>
+            )
           ) : (
-            <div className="space-y-4">
-              {sessions.map((session) => (
-                <Link
-                  key={session.id}
-                  href={`/sessions/${session.id}`}
-                  className="block border-l-4 border-system-growth pl-4 py-2 hover:bg-bg-secondary rounded transition-colors"
-                >
-                  <h3 className="font-semibold text-ui-text-main">Анализ ситуации</h3>
-                  <p className="text-sm text-ui-text-muted line-clamp-2">{session.summary}</p>
-                  {session.themes.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {session.themes.slice(0, 3).map((theme, i) => (
-                        <span key={i} className="text-xs bg-bg-panel border border-system-growth/30 text-system-growth px-2 py-1 rounded">
-                          {theme}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </Link>
-              ))}
+            <div className="bg-obsidian-core rounded-xl p-6 text-center">
+              <p className="text-ui-text-muted mb-4">Нет активных квестов</p>
+              <Link 
+                href="/experiments"
+                className="inline-block bg-strategic-blue hover:bg-strategic-blue/90 text-white py-2 px-4 rounded-xl text-sm font-medium transition-colors"
+              >
+                Выбрать квест
+              </Link>
             </div>
           )}
         </section>
 
-        {/* Быстрый вход в ситуацию */}
-        <section className="bg-bg-panel border border-ui-border-soft rounded-lg shadow-panel p-6 bg-panel-gradient" aria-labelledby="quick-entry-heading">
-          <h2 id="quick-entry-heading" className="text-xl font-bold mb-4 text-ui-text-main flex items-center gap-2">
-            <span className="text-2xl">⚡</span>
-            Быстрый вход в ситуацию
-          </h2>
-          <button
-            onClick={() => setIsEntryModalOpen(true)}
-            className="w-full p-6 border-2 border-dashed border-ui-border-soft rounded-lg hover:border-system-focus hover:bg-bg-secondary text-center transition-colors group"
-          >
-            <span className="text-4xl mb-3 block group-hover:scale-110 transition-transform">➕</span>
-            <span className="font-semibold text-lg text-ui-text-main block mb-2">Добавить ситуацию</span>
-            <span className="text-sm text-ui-text-muted">Опишите ситуацию, которую хотите проанализировать</span>
-          </button>
+        {/* Прогресс - 3 метрики + серия */}
+        <section className="mb-6">
+          <h2 className="text-sm font-medium text-ui-text-muted mb-3">Твой прогресс</h2>
+          <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-3">
+            <div className="bg-graphite-structure border border-ui-border-soft rounded-xl p-3 sm:p-4 text-center">
+              <p className="text-xl sm:text-2xl font-bold text-strategic-blue">{activeQuests.length}</p>
+              <p className="text-[10px] sm:text-xs text-ui-text-muted leading-tight">активных<br className="sm:hidden"/> квестов</p>
+            </div>
+            <div className="bg-graphite-structure border border-ui-border-soft rounded-xl p-3 sm:p-4 text-center">
+              <p className="text-xl sm:text-2xl font-bold text-sage-green">{unlockedNodes}</p>
+              <p className="text-[10px] sm:text-xs text-ui-text-muted leading-tight">узлов<br className="sm:hidden"/> открыто</p>
+            </div>
+            <div className="bg-graphite-structure border border-ui-border-soft rounded-xl p-3 sm:p-4 text-center">
+              <p className="text-xl sm:text-2xl font-bold text-sage-green">{solvedCasesCount}</p>
+              <p className="text-[10px] sm:text-xs text-ui-text-muted leading-tight">кейсов<br className="sm:hidden"/> решено</p>
+            </div>
+          </div>
+          
+          {/* Серия - используем компонент StreakIndicator */}
+          {retention && retention.currentStreak > 0 && (
+            <StreakIndicator
+              streak={{
+                currentStreak: retention.currentStreak,
+                longestStreak: retention.longestStreak,
+                lastActivityDate: retention.lastActivityDate,
+                streakDays: (() => {
+                  // Генерируем массив дней на основе текущей серии
+                  // Показываем последние 7 дней, где активные дни = true
+                  const days: boolean[] = [];
+                  const today = new Date();
+                  for (let i = 6; i >= 0; i--) {
+                    const date = new Date(today);
+                    date.setDate(date.getDate() - i);
+                    // Если серия активна и это последние N дней, где N = currentStreak
+                    const isActive = retention.currentStreak > 0 && i >= (7 - Math.min(retention.currentStreak, 7));
+                    days.push(isActive);
+                  }
+                  return days;
+                })(),
+              }}
+            />
+          )}
         </section>
 
+        {/* Напоминания */}
+        {streakRisk?.shouldRemind && (
+          <section className="bg-catalyst-gold/10 border border-catalyst-gold rounded-xl p-4 mb-6">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-lg">🔔</span>
+              <h2 className="text-sm font-semibold text-ash-light">Напоминание</h2>
+            </div>
+            {streakRisk.daysWithoutActivity >= 3 ? (
+              <div className="space-y-2">
+                <p className="text-sm text-ash-light">
+                  Ты не заходил {streakRisk.daysWithoutActivity} {streakRisk.daysWithoutActivity === 1 ? 'день' : streakRisk.daysWithoutActivity < 5 ? 'дня' : 'дней'}.
+                </p>
+                {activeQuests.length > 0 && (
+                  <p className="text-sm text-ui-text-muted">
+                    Твой квест "{activeQuests[0]?.title}" ждёт.
+                  </p>
+                )}
+                <Link
+                  href={activeQuests.length > 0 ? `/quests/${activeQuests[0]?.id}` : '/experiments'}
+                  className="inline-block mt-2 text-sm text-strategic-blue hover:underline"
+                >
+                  Вернуться к квесту →
+                </Link>
+              </div>
+            ) : streakRisk.isAtRisk ? (
+              <div className="space-y-2">
+                <p className="text-sm text-ash-light">
+                  Серия прервётся через несколько часов!
+                </p>
+                <p className="text-sm text-ui-text-muted">
+                  Добавь ситуацию или пройди кейс, чтобы сохранить серию.
+                </p>
+                <div className="flex gap-2 mt-3">
+                  <button
+                    onClick={() => setIsEntryModalOpen(true)}
+                    className="px-3 py-1.5 bg-catalyst-gold hover:bg-catalyst-gold/90 text-white rounded text-sm transition-colors"
+                  >
+                    + Ситуация
+                  </button>
+                  <Link
+                    href="/experiments?tab=cases"
+                    className="px-3 py-1.5 bg-obsidian-core border border-ui-border-soft rounded text-sm text-ash-light hover:bg-graphite-structure transition-colors"
+                  >
+                    Кейс
+                  </Link>
+                </div>
+              </div>
+            ) : null}
+          </section>
+        )}
+
+        {/* Что нового */}
+        {latestChanges.length > 0 && (
+          <section className="bg-graphite-structure border border-ui-border-soft rounded-xl p-4 mb-6">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-lg">🔔</span>
+              <h2 className="text-sm font-semibold text-ash-light">Что нового</h2>
+            </div>
+            <div className="space-y-2">
+              {latestChanges.map((change, index) => (
+                <div 
+                  key={`${change.nodeId}-${index}`}
+                  className="flex items-center gap-2 text-sm"
+                >
+                  <span>
+                    {change.changeType === 'available' && '✅'}
+                    {change.changeType === 'integrated' && '🔗'}
+                  </span>
+                  <span className="text-ui-text-muted">
+                    {change.changeType === 'available' && 'Стала доступна: '}
+                    {change.changeType === 'integrated' && 'Интегрируется: '}
+                  </span>
+                  <Link 
+                    href={`/architecture?node=${change.nodeId}`}
+                    className="text-ash-light hover:text-strategic-blue transition-colors"
+                  >
+                    {change.nodeName}
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Быстрые действия */}
+        <section className="mb-6">
+          <h2 className="text-sm font-medium text-ui-text-muted mb-3">Быстрые действия</h2>
+          <div className="grid grid-cols-3 gap-3">
+            <button
+              onClick={() => setIsEntryModalOpen(true)}
+              className="bg-graphite-structure border border-ui-border-soft rounded-xl p-4 text-center hover:border-system-focus hover:bg-obsidian-core transition-colors group"
+            >
+              <span className="text-2xl mb-2 block group-hover:scale-110 transition-transform">📝</span>
+              <span className="text-sm text-ash-light">Новая ситуация</span>
+            </button>
+            <Link
+              href="/experiments?tab=cases"
+              className="bg-graphite-structure border border-ui-border-soft rounded-xl p-4 text-center hover:border-system-focus hover:bg-obsidian-core transition-colors group"
+            >
+              <span className="text-2xl mb-2 block group-hover:scale-110 transition-transform">📊</span>
+              <span className="text-sm text-ash-light">Кейс</span>
+            </Link>
+            <Link
+              href="/architecture"
+              className="bg-graphite-structure border border-ui-border-soft rounded-xl p-4 text-center hover:border-system-focus hover:bg-obsidian-core transition-colors group"
+            >
+              <span className="text-2xl mb-2 block group-hover:scale-110 transition-transform">🌳</span>
+              <span className="text-sm text-ash-light">Моё дерево</span>
+            </Link>
+          </div>
+        </section>
+
+        {/* Активные билды (если есть) */}
+        {activeBuilds.length > 0 && (
+          <section className="bg-graphite-structure border border-ui-border-soft rounded-xl p-4 mb-6">
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="text-sm font-semibold text-ash-light">Активные стили</h2>
+              <Link href="/architecture?tab=styles" className="text-xs text-strategic-blue hover:underline">
+                Все →
+              </Link>
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              {activeBuilds.slice(0, 3).map((build: any) => (
+                <div
+                  key={build.build_id}
+                  className="flex items-center gap-2 px-3 py-2 bg-obsidian-core rounded-xl"
+                  style={{ borderLeft: `3px solid ${build.color || '#3A6F8F'}` }}
+                >
+                  <span className="text-lg">{build.icon}</span>
+                  <span className="text-sm text-ash-light">{build.name}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Модальное окно добавления ситуации */}
-        <AddEntryModal isOpen={isEntryModalOpen} onClose={() => setIsEntryModalOpen(false)} />
+        <AddSituationModal
+          isOpen={isEntryModalOpen}
+          onClose={() => setIsEntryModalOpen(false)}
+          onSave={handleSaveSituation}
+          isLoading={isSaving}
+        />
+
+        {/* Модальное окно добавления рефлексии */}
+        <AddEvidenceModal
+          isOpen={isEvidenceModalOpen}
+          onClose={() => setIsEvidenceModalOpen(false)}
+          onSave={handleSaveEvidence}
+          isLoading={isSaving}
+          questId={currentFocus?.type === 'quest' ? currentFocus.data.id : undefined}
+          questTitle={currentFocus?.type === 'quest' ? currentFocus.data.title : undefined}
+        />
       </div>
+
+      {/* Попап достижений */}
+      <AchievementPopup
+        achievement={newAchievement}
+        onClose={() => setNewAchievement(null)}
+      />
     </main>
   );
 }
@@ -439,4 +592,3 @@ export default function DashboardPage() {
     </ProtectedRoute>
   );
 }
-

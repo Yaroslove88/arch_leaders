@@ -50,10 +50,16 @@ export interface QuestCriteria {
 
 /**
  * QuestReward - награда за выполнение квеста
+ * Новая система: Base XP + Reflection XP
  */
 export interface QuestReward {
+  // Старые поля для обратной совместимости (deprecated)
   xp?: number;
   skill_xp?: number;
+  // Новые поля
+  base_xp?: number;
+  reflection_xp?: number;
+  max?: number; // base_xp + reflection_xp
   artifact?: string;
 }
 

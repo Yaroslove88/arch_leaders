@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm typecheck:*)",
+      "Bash(npx tsc:*)",
+      "Bash(node scripts/convert-cases-yaml-to-json.js:*)",
+      "Bash(node -e:*)",
+      "Bash(git add:*)",
+      "Bash(node scripts/remove-generated-cases.js:*)",
+      "Bash(git commit:*)",
+      "Bash(git push)",
+      "Bash(pnpm exec tsc:*)"
+    ]
+  }
+}

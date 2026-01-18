@@ -1,5 +1,5 @@
 # ===== BUILD STAGE =====
-FROM node:24-slim AS builder
+FROM node:22-slim AS builder
 
 # Install system dependencies
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
@@ -33,7 +33,7 @@ RUN pnpm --filter @leadership-architect/shared build || true
 RUN pnpm --filter @leadership-architect/api build
 
 # ===== PRODUCTION STAGE =====
-FROM node:24-slim AS runner
+FROM node:22-slim AS runner
 
 # Install system dependencies (минимальные для runtime)
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && \

@@ -11,9 +11,11 @@ import {
   validateAbilitySignalsJson,
 } from '../common/mappers/session.mapper';
 import type { Insight, FocusPoint, AbilitySignal } from '../common/schemas/session.schema';
+import { Rationale, DecisionType } from '@leadership-architect/shared';
 
 /**
  * Результат анализа ситуации
+ * @see packages/shared/src/ontology.ts для типов Rationale
  */
 export interface ParsedAnalysis {
   summary: string;
@@ -23,6 +25,8 @@ export interface ParsedAnalysis {
   patterns: string[];
   tensions: string[];
   ability_signals: AbilitySignal[];
+  /** Объяснение результатов анализа */
+  rationale?: Rationale;
 }
 
 /**
@@ -142,9 +146,31 @@ export class AnalysisParserService {
 
       this.logger.log(`✅ Analysis completed for entry ${entryId}`);
 
+      // Сохраняем сырой артефакт анализа с метаданными промпта/модели
+      const promptMeta = (analysis as any).__meta;
+      await this.prisma.sessionArtifact.create({
+        data: {
+          session_id: session.id,
+          kind: 'raw_analysis',
+          version: 1,
+          prompt_id: promptMeta?.prompt_id,
+          prompt_version: promptMeta?.prompt_version,
+          model: promptMeta?.model,
+          payload: analysis,
+        },
+      });
+
       // Генерируем квесты на основе анализа через orchestration (асинхронно, не блокируем ответ)
       this.handleQuestGeneration(session.id).catch((error) => {
         this.logger.error(`Failed to generate quests for session ${session.id}:`, error);
+      });
+
+      // Создаём rationale для объяснимости
+      const rationale = this.createAnalysisRationale({
+        themes: analysis.themes,
+        patterns: analysis.patterns,
+        abilitySignals: analysis.ability_signals,
+        entryId,
       });
 
       return {
@@ -155,6 +181,7 @@ export class AnalysisParserService {
         patterns: analysis.patterns,
         tensions: analysis.tensions,
         ability_signals: analysis.ability_signals,
+        rationale,
       };
     } catch (error) {
       this.logger.error(`❌ Analysis failed for entry ${entryId}:`, error);
@@ -205,6 +232,53 @@ export class AnalysisParserService {
     } catch (error) {
       this.logger.error(`Failed to orchestrate quest generation:`, error);
     }
+  }
+
+  /**
+   * Создать rationale для результатов анализа
+   * Объясняет как система пришла к выводам
+   * 
+   * @see packages/shared/src/ontology.ts для структуры Rationale
+   */
+  private createAnalysisRationale(params: {
+    themes: string[];
+    patterns: string[];
+    abilitySignals: AbilitySignal[];
+    entryId: string;
+  }): Rationale {
+    const { themes, patterns, abilitySignals, entryId } = params;
+    
+    const reasons: string[] = [];
+    
+    // Описываем выявленные темы
+    if (themes.length > 0) {
+      reasons.push(`Выявлено ${themes.length} ключевых тем: ${themes.slice(0, 3).join(', ')}${themes.length > 3 ? '...' : ''}`);
+    }
+    
+    // Описываем паттерны
+    if (patterns.length > 0) {
+      reasons.push(`Обнаружено ${patterns.length} паттернов поведения`);
+    }
+    
+    // Описываем связь со способностями
+    if (abilitySignals.length > 0) {
+      const nodeIds = abilitySignals.map((s) => s.node_id);
+      reasons.push(`Связь с ${abilitySignals.length} способностями в дереве`);
+    }
+    
+    // Определяем уверенность на основе количества данных
+    const confidence = Math.min(
+      0.5 + (themes.length * 0.1) + (patterns.length * 0.05) + (abilitySignals.length * 0.1),
+      0.95,
+    );
+    
+    return {
+      summary: `Анализ ситуации выявил ${themes.length} тем, ${patterns.length} паттернов и ${abilitySignals.length} связей со способностями`,
+      reasons,
+      evidenceLinks: [entryId],
+      linkedNodes: abilitySignals.map((s) => s.node_id),
+      confidence,
+    };
   }
 }
 

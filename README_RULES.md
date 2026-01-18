@@ -1,7 +1,6 @@
-# Правила проекта - Краткая справка
+# Правила проекта — краткая справка
 
 ## Быстрая проверка перед коммитом
-
 ```bash
 # Проверить качество кода
 pnpm check:quality
@@ -14,52 +13,32 @@ pnpm precommit
 ```
 
 ## Два обязательных правила
-
-### 1. Swagger декораторы
-
-**Для каждого контроллера:**
-- ✅ `@ApiTags('name')` на класс
-- ✅ `@ApiParam` для каждого `@Param`
-- ✅ `@ApiQuery` для каждого `@Query`
-- ✅ `@ApiBody({ type: DtoClass })` для каждого `@Body`
-- ✅ `@ApiOperation` и `@ApiResponse` для каждого метода
-
-**Для DTO:**
-- ✅ Классы, НЕ интерфейсы
-- ✅ `@ApiProperty` на всех полях
-- ✅ Нет `any` типов
+### 1. Swagger
+- `@ApiTags` на контроллер, `@ApiParam`/`@ApiQuery`/`@ApiBody`/`@ApiOperation`/`@ApiResponse` на каждый endpoint.
+- DTO только классы с `@ApiProperty`, без `any`.
 
 ### 2. Обработка ошибок
+- Проверка инжекции в конструкторе.
+- `findUniqueOrThrow`/`assertExists` для Prisma/результатов.
+- Optional chaining (`?.`) и валидация входных параметров.
 
-**Обязательно:**
-- ✅ Проверка инжекции в конструкторе
-- ✅ Проверка результатов Prisma запросов
-- ✅ Использование `findUniqueOrThrow` из утилит
-- ✅ Optional chaining (`?.`) для вложенных свойств
-- ✅ Валидация входных параметров
+## Design System (кратко)
+- Tokens v2 (semantic colors/base/structure/state, типографика, spacing, радиусы, тени) из `@leadership-architect/ui`; без сторонних utility-цветов.
+- Контраст: текст `ash-light`/`ui-text-muted` на `graphite-structure`; избегать low-opacity текста.
+- Состояния: `locked/available/active/unlocked/integrated` → semantic colors (`system-disabled/warning/focus/growth`), ошибки → `system-critical`.
+- A11y: `aria-label/aria-disabled`, focus-ring токены, нет глобального `* { transition }`.
+- Компоненты: использовать `Surface/Card/Button/Badge/Progress/PillTabs` из UI пакета.
+- Детали и варфреймы: `../projects/leadership-architect-docs/01-design-system-audit.md`.
 
 ## Использование утилит
-
 ```typescript
-// Вместо ручных проверок
 import { findUniqueOrThrow } from '../common/utils/prisma-helpers';
 import { assertExists } from '../common/utils/assert-exists';
-
-const entity = await findUniqueOrThrow(
-  this.prisma.entity.findUnique({ where: { id } }),
-  `Entity ${id} not found`,
-);
 ```
 
-## Подробная документация
+## Подробно
+- `PROJECT_RULES.md` — полный набор правил.
+- `.cursorrules` — правила для Cursor AI.
+- `docs/SWAGGER_TROUBLESHOOTING.md`, `docs/ERROR_HANDLING_GUIDE.md` — справка по Swagger/ошибкам.
 
-- `PROJECT_RULES.md` - полные правила проекта
-- `.cursorrules` - правила для Cursor AI
-- `docs/SWAGGER_TROUBLESHOOTING.md` - решение проблем Swagger
-- `docs/ERROR_HANDLING_GUIDE.md` - обработка ошибок
-- `docs/SYSTEMATIC_ERROR_RESOLUTION.md` - системный подход
-
----
-
-**Следуйте правилам для поддержания качества кода!**
-
+Следуйте правилам для поддержания качества и консистентности UI.

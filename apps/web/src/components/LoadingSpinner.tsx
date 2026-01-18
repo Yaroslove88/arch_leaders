@@ -18,7 +18,7 @@ export default function LoadingSpinner({
   const spinner = (
     <div className="flex flex-col items-center justify-center">
       <div
-        className={`${sizeClasses[size]} border-4 border-ui-border-soft border-t-system-focus rounded-full animate-spin`}
+        className={`${sizeClasses[size]} border-4 border-ui-border-soft border-t-strategic-blue rounded-full animate-spin`}
       />
       {text && (
         <p className="mt-4 text-sm text-ui-text-muted">{text}</p>
@@ -28,7 +28,7 @@ export default function LoadingSpinner({
 
   if (fullScreen) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-bg-main">
+      <div className="min-h-screen flex items-center justify-center bg-obsidian-core">
         {spinner}
       </div>
     );

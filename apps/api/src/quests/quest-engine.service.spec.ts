@@ -149,15 +149,22 @@ describe('QuestEngine', () => {
       const result = engine.generateQuests(input);
 
       const microQuest = result.quests.find((q) => q.type === 'micro');
+      expect(microQuest?.reward?.base_xp).toBe(20);
+      expect(microQuest?.reward?.reflection_xp).toBe(80);
+      expect(microQuest?.reward?.max).toBe(100);
+      // Обратная совместимость (deprecated)
       expect(microQuest?.reward?.xp).toBe(100);
-      expect(microQuest?.reward?.skill_xp).toBe(50);
+      expect(microQuest?.reward?.skill_xp).toBe(80);
 
       const weeklyQuest = result.quests.find((q) => q.type === 'weekly');
-      expect(weeklyQuest?.reward?.xp).toBe(200);
-      expect(weeklyQuest?.reward?.skill_xp).toBe(100);
+      expect(weeklyQuest?.reward?.base_xp).toBe(40);
+      expect(weeklyQuest?.reward?.reflection_xp).toBe(160);
+      expect(weeklyQuest?.reward?.max).toBe(200);
 
       const storyQuest = result.quests.find((q) => q.type === 'story');
-      expect(storyQuest?.reward?.xp).toBe(300);
+      expect(storyQuest?.reward?.base_xp).toBe(60);
+      expect(storyQuest?.reward?.reflection_xp).toBe(240);
+      expect(storyQuest?.reward?.max).toBe(300);
     });
 
     it('should return empty quests when no input data', () => {
@@ -219,13 +226,26 @@ describe('QuestEngine', () => {
   });
 
   describe('calculateReward', () => {
-    it('should calculate rewards with level multipliers', () => {
-      const basicReward = engine.calculateReward('micro', 'basic');
-      const advancedReward = engine.calculateReward('micro', 'advanced');
-      const masterReward = engine.calculateReward('micro', 'master');
+    it('should calculate rewards for different quest types', () => {
+      const microReward = engine.calculateReward('micro');
+      expect(microReward.base_xp).toBe(20);
+      expect(microReward.reflection_xp).toBe(80);
+      expect(microReward.max).toBe(100);
 
-      expect(advancedReward.xp).toBeGreaterThan(basicReward.xp);
-      expect(masterReward.xp).toBeGreaterThan(advancedReward.xp);
+      const weeklyReward = engine.calculateReward('weekly');
+      expect(weeklyReward.base_xp).toBe(40);
+      expect(weeklyReward.reflection_xp).toBe(160);
+      expect(weeklyReward.max).toBe(200);
+
+      const storyReward = engine.calculateReward('story');
+      expect(storyReward.base_xp).toBe(60);
+      expect(storyReward.reflection_xp).toBe(240);
+      expect(storyReward.max).toBe(300);
+
+      const inPersonReward = engine.calculateReward('in-person');
+      expect(inPersonReward.base_xp).toBe(100);
+      expect(inPersonReward.reflection_xp).toBe(400);
+      expect(inPersonReward.max).toBe(500);
     });
   });
 });

@@ -49,7 +49,7 @@ export class CreateEntryDto {
     example: { meeting: 'Еженедельный стендап', decision: 'Принято решение X' },
   })
   @IsOptional()
-  context_json?: any;
+  context_json?: Record<string, unknown>;
 
   @ApiPropertyOptional({
     description: 'Ссылка на файл (S3 path или local file)',

@@ -1,220 +1,377 @@
-# Правила проекта Leadership Architect
+# Leadership Architect - Cursor Rules
 
-## Общие принципы
+## Project Overview
 
-1. **Всегда используйте TypeScript strict mode**
-2. **Проверяйте результаты БД запросов**
-3. **Используйте декораторы Swagger для всех API endpoints**
-4. **Обрабатывайте ошибки с понятными сообщениями**
-
----
-
-## Правило 1: Swagger декораторы (обязательно)
-
-### Для каждого контроллера:
-
-1. **Добавить `@ApiTags` на класс:**
-   ```typescript
-   @ApiTags('controller-name')
-   @Controller('controller-name')
-   export class ControllerName { }
-   ```
-
-2. **Для каждого метода с параметрами:**
-   - `@Param` → добавить `@ApiParam({ name: 'param', type: String })`
-   - `@Query` → добавить `@ApiQuery({ name: 'param', required: false, type: String })`
-   - `@Body` → добавить `@ApiBody({ type: DtoClass })` или `{ schema: { type: 'object' } }`
-
-3. **Для каждого метода:**
-   - Добавить `@ApiOperation({ summary: 'Описание' })`
-   - Добавить `@ApiResponse({ status: 200, description: 'Успешно' })`
-
-4. **DTO классы:**
-   - Всегда создавать классы, НЕ интерфейсы для DTO
-   - Все поля должны иметь `@ApiProperty` или `@ApiPropertyOptional`
-   - Не использовать `any` для типов параметров
-
-### Чеклист перед коммитом:
-- [ ] Все контроллеры имеют `@ApiTags`
-- [ ] Все `@Param` имеют `@ApiParam`
-- [ ] Все `@Query` имеют `@ApiQuery`
-- [ ] Все `@Body` имеют `@ApiBody` с типом DTO
-- [ ] Все методы имеют `@ApiOperation` и `@ApiResponse`
-- [ ] Нет использования `any` для параметров
+This is a **Leadership Development Platform** built as a monorepo with:
+- **Frontend**: Next.js 14 (`apps/web`)
+- **Backend**: NestJS (`apps/api`)
+- **Database**: PostgreSQL via Prisma ORM
+- **Shared Types**: Zod schemas (`packages/shared`)
 
 ---
 
-## Правило 2: Обработка ошибок "Cannot read properties of undefined"
+## 🔍 Source of Truth - Where to Find Things
 
-### Обязательные проверки:
+### Database Schema
+**ALWAYS check first**: `apps/api/prisma/schema.prisma`
+- All tables, relations, and indexes are defined here
+- User data isolation: most tables have `userId` field
 
-1. **Проверка инжекции зависимостей:**
-   ```typescript
-   constructor(
-     @Inject(Service) private readonly service: Service,
-   ) {
-     if (!this.service) {
-       throw new InternalServerErrorException('Service injection failed');
-     }
-   }
-   ```
+### API Endpoints
+**Check controllers**: `apps/api/src/*/[name].controller.ts`
+- Each module has its own controller
+- Look for `@Controller()` decorator for route prefix
+- Look for `@Get()`, `@Post()`, etc. for endpoints
 
-2. **Проверка результатов Prisma запросов:**
-   ```typescript
-   // ❌ НЕПРАВИЛЬНО
-   const entity = await this.prisma.entity.findUnique({ where: { id } });
-   return entity.data;
-   
-   // ✅ ПРАВИЛЬНО
-   const entity = await findUniqueOrThrow(
-     this.prisma.entity.findUnique({ where: { id } }),
-     `Entity ${id} not found`,
-   );
-   return entity.data;
-   ```
+### Business Logic
+**Check services**: `apps/api/src/*/[name].service.ts`
+- All database operations go through Prisma
+- User isolation: methods should accept `userId` parameter
 
-3. **Использование optional chaining:**
-   ```typescript
-   // ❌ НЕПРАВИЛЬНО
-   const value = obj.nested.deep.property;
-   
-   // ✅ ПРАВИЛЬНО
-   const value = obj?.nested?.deep?.property;
-   // или
-   if (obj?.nested?.deep?.property) {
-     const value = obj.nested.deep.property;
-   }
-   ```
+### Frontend API Calls
+**Check**: `apps/web/src/lib/api.ts`
+- All API functions that call backend
+- Authentication headers handling
 
-4. **Использование утилит:**
-   ```typescript
-   import { assertExists } from '../common/utils/assert-exists';
-   import { findUniqueOrThrow } from '../common/utils/prisma-helpers';
-   
-   // Вместо ручных проверок используйте утилиты
-   const entity = await findUniqueOrThrow(
-     this.prisma.entity.findUnique({ where: { id } }),
-     `Entity ${id} not found`,
-   );
-   ```
+### Static Data (Templates, Cases)
+**Check**: `data/` folder
+- `quest-templates.json` - Quest templates (source of truth)
+- `interactive-cases.json` - Interactive cases
+- `node-descriptions.json` - Ability tree node descriptions
+- `builds.json` - Career builds
 
-### Чеклист перед коммитом:
-- [ ] Все зависимости проверены в конструкторе
-- [ ] Все Prisma запросы проверяют результат
-- [ ] Используется optional chaining для вложенных свойств
-- [ ] Используются утилиты (assertExists, findUniqueOrThrow)
-- [ ] Нет прямого доступа к свойствам без проверки
+### Environment Variables
+**Check**: `apps/api/src/config/env.validation.ts`
+- All required and optional env vars
+- Production vs development requirements
 
 ---
 
-## Системный подход к решению ошибок
+## 📁 Project Structure
 
-⚠️ **ЖЕСТКИЕ ПРАВИЛА ОБРАБОТКИ ОШИБОК ИЗ КОНСОЛЕЙ**  
-Полные правила см. в `.cursorrules-error-handling`
-
-### ОБЯЗАТЕЛЬНАЯ ПОСЛЕДОВАТЕЛЬНОСТЬ:
 ```
-ОШИБКА → ПАРСИНГ → ДИАГНОСТИКА → СТРАТЕГИЯ → ОДНО ИЗМЕНЕНИЕ → ЛИНТЕР → ПРОВЕРКА
+leadership-architect/
+├── apps/
+│   ├── api/                    # NestJS Backend
+│   │   ├── prisma/
+│   │   │   └── schema.prisma   # ⭐ DATABASE SCHEMA
+│   │   └── src/
+│   │       ├── auth/           # Authentication (JWT)
+│   │       ├── entries/        # User entries (situations, reflections)
+│   │       ├── sessions/       # AI analysis sessions
+│   │       ├── quests/         # Development quests
+│   │       ├── evidence/       # Skill evidence
+│   │       ├── cases/          # Interactive cases
+│   │       ├── tree/           # Ability tree
+│   │       ├── admin/          # Admin panel
+│   │       └── common/         # Shared (DTOs, guards, filters)
+│   │
+│   └── web/                    # Next.js Frontend
+│       └── src/
+│           ├── app/            # Pages (App Router)
+│           ├── components/     # React components
+│           ├── lib/            # ⭐ API client, utils
+│           └── hooks/          # React hooks
+│
+├── packages/
+│   └── shared/                 # Shared types
+│       └── src/schemas/        # ⭐ Zod schemas
+│
+├── data/                       # ⭐ Static JSON data
+├── scripts/                    # Utility scripts
+└── docs/                       # Documentation
 ```
 
-### Шаг 1: Парсинг ошибки (2 минуты) - ОБЯЗАТЕЛЬНО
-1. Извлечь: тип, файл:строка, сообщение, контекст
-2. Определить категорию: JSX синтаксис / DI / Дублирование / Hydration / Webpack / Другое
-3. ЗАПРЕЩЕНО переходить дальше без этого шага
-
-### Шаг 2: Диагностика (3-5 минут) - ОБЯЗАТЕЛЬНО
-1. Прочитать файл целиком или проблемную область (±50 строк)
-2. Проверить специфичные вещи для категории (см. `.cursorrules-error-handling`)
-3. ЗАПРЕЩЕНО делать изменения без диагностики
-
-### Специальная заметка: ошибки парсинга JSX (SWC/TSX)
-При сообщениях вида:
-- `Unexpected token 'main'. Expected jsx identifier`
-- `Expression expected` на `<>`
-- `Expected ',', got 'className'`
-
-Действовать по чеклисту в `.cursorrules-error-handling` («Особый случай: JSX парсер отключён»):
-1) Проверить отсутствие/содержимое `.swcrc` (включён ли `tsx: true`),  
-2) Проверить `"jsx": "preserve" | "react-jsx"` в `tsconfig`,  
-3) Убедиться, что webpack/Next не подменяет обработку `.tsx`,  
-4) Подтвердить, что файл действительно `.tsx`,  
-5) Дымовой тест `<div>ok</div>`,  
-6) Если конфиги ок — искать незакрытые скобки/IIFE внутри JSX и валидировать корневой элемент/Fragment.
-
-### Шаг 3: Выбор стратегии - ОБЯЗАТЕЛЬНО
-- JSX синтаксис → Удалить лишние теги
-- Дублирование → Удалить дубликат
-- DI проблемы → Добавить импорт модуля
-- Hydration → Использовать useState/useEffect
-- Парсинг фрагментов → Один корневой элемент
-- Webpack кэш → Очистить .next
-- ЗАПРЕЩЕНО применять более 2 разных стратегий к одной проблеме
-
-### Шаг 4: Применение решения - ОБЯЗАТЕЛЬНО
-1. Сделать ОДНО изменение
-2. Проверить линтером
-3. ЗАПРЕЩЕНО делать множественные изменения одновременно
-
-### Шаг 5: Предотвращение (постоянно)
-1. Следование правилам
-2. Использование чеклистов
-3. Автоматические проверки
-
 ---
 
-## Запрещенные паттерны
+## 🔐 Authentication Pattern
 
-### ❌ НЕ используйте:
+### Backend
+- All user-specific endpoints MUST use `@UseGuards(JwtAuthGuard)`
+- Get user via `@CurrentUser() user: JwtPayload`
+- Access userId via `user.sub`
+
 ```typescript
-// Прямой доступ без проверки
-const value = obj.property;
-
-// any типы для параметров
-async method(@Body() body: any) { }
-
-// Интерфейсы для DTO
-export interface CreateDto { }
-
-// Отсутствие декораторов Swagger
-@Get(':id')
-async getById(@Param('id') id: string) { }
-```
-
-### ✅ Используйте:
-```typescript
-// Проверка перед доступом
-if (!obj) throw new NotFoundException('Not found');
-const value = obj.property;
-
-// DTO классы
-export class CreateDto {
-  @ApiProperty()
-  name: string;
+// ✅ Correct pattern
+@Get('my-data')
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
+async getMyData(@CurrentUser() user: JwtPayload) {
+  return this.service.getData(user.sub);
 }
 
-// Полные декораторы Swagger
-@Get(':id')
-@ApiOperation({ summary: 'Get by ID' })
-@ApiParam({ name: 'id', type: String })
-@ApiResponse({ status: 200 })
-async getById(@Param('id') id: string) { }
+// ❌ Wrong - no auth guard
+@Get('my-data')
+async getMyData() {
+  return this.service.getData(); // No userId!
+}
+```
+
+### Frontend
+- Token stored in localStorage as `auth_token`
+- API calls use `getAuthHeaders()` from `apps/web/src/lib/api.ts`
+
+```typescript
+// ✅ Correct
+const response = await fetch(url, {
+  headers: getAuthHeaders(),
+});
+
+// ❌ Wrong - missing auth
+const response = await fetch(url);
 ```
 
 ---
 
-## Документация
+## 🗄️ Database Patterns
 
-Подробные руководства:
-- `docs/SWAGGER_TROUBLESHOOTING.md` - решение проблем Swagger
-- `docs/ERROR_HANDLING_GUIDE.md` - обработка ошибок
-- `docs/SYSTEMATIC_ERROR_RESOLUTION.md` - системный подход
-- `docs/ERROR_PATTERNS_ANALYSIS.md` - анализ паттернов ошибок
+### User Isolation
+ALL user data must be filtered by userId:
 
-⚠️ **КРИТИЧЕСКИ ВАЖНО:**
-- `.cursorrules-error-handling` - **ЖЕСТКИЕ ПРАВИЛА** обработки ошибок из консолей
-- **ОБЯЗАТЕЛЬНО** применять эти правила при получении любой ошибки компиляции/выполнения
+```typescript
+// ✅ Correct
+await this.prisma.quest.findMany({
+  where: { userId: userId }
+});
+
+// ❌ WRONG - exposes all users' data
+await this.prisma.quest.findMany();
+```
+
+### Key Tables
+
+| Table | Purpose | Key Fields |
+|-------|---------|------------|
+| `users` | User accounts | `id`, `telegramUsername` |
+| `entries` | Raw user input | `userId`, `type`, `text` |
+| `sessions` | AI analysis | `userId`, `entry_id`, `status` |
+| `quests` | Development tasks | `userId`, `status`, `type` |
+| `user_ability_state` | Skill progress | `user_id`, `node_id`, `progress` |
+| `case_progress` | Case completion | `user_id`, `case_id` |
+| `evidence` | Skill evidence | `userId`, `type`, `text` |
+| `changelog` | Audit trail | `userId`, `action`, `entity_type` |
 
 ---
 
-**Следуйте этим правилам при написании кода!**
+## 🎯 Common Workflows
 
+### Adding a New API Endpoint
+
+1. Check if similar endpoint exists in controller
+2. Add method to service with `userId` parameter
+3. Add controller method with `@UseGuards(JwtAuthGuard)`
+4. Add `@ApiBearerAuth()` for Swagger
+5. Update frontend API client if needed
+6. Test with authentication
+
+### Modifying Database Schema
+
+1. Edit `apps/api/prisma/schema.prisma`
+2. Run `npx prisma migrate dev --name description`
+3. Update relevant DTOs in `apps/api/src/common/dto/`
+4. Update service methods
+5. Update shared types in `packages/shared` if needed
+
+### Adding New Static Data
+
+1. Add to appropriate file in `data/`
+2. Update service to load from file
+3. Never store user-specific data in JSON files
+4. User progress goes to database only
+
+### Debugging Data Issues
+
+1. Check Prisma Studio: `cd apps/api && npx prisma studio`
+2. Check API response in browser DevTools
+3. Check localStorage for auth token
+4. Verify userId is being passed to service methods
+
+---
+
+## ⚠️ Anti-Patterns to Avoid
+
+### DON'T store user data in:
+- ❌ localStorage (except auth token)
+- ❌ JSON files in `data/`
+- ❌ In-memory variables in services
+
+### DON'T expose endpoints without auth:
+- ❌ User-specific data without `JwtAuthGuard`
+- ❌ Forgetting to pass `userId` to service
+- ❌ Optional `userId` for user data
+
+### DON'T use `any` type:
+- ❌ `data: any` in DTOs
+- ❌ `where: any` in Prisma queries
+- ✅ Use specific types or `Record<string, unknown>`
+
+### DON'T forget error handling:
+- ❌ Silent failures
+- ✅ Use `NotFoundException`, `ForbiddenException`, etc.
+- ✅ Check ownership before update/delete
+
+---
+
+## 📝 Code Style
+
+### TypeScript
+- Use strict types, avoid `any`
+- Use Zod schemas for validation
+- Export interfaces from `packages/shared`
+
+### NestJS
+- One controller per resource
+- Business logic in services only
+- Use DTOs for request/response
+- Use Swagger decorators (`@ApiOperation`, `@ApiResponse`)
+
+### Next.js
+- Use App Router (`app/` directory)
+- Client components: `'use client'` directive
+- API calls through `lib/api.ts`
+- Use TypeScript for all components
+
+### Prisma
+- Always use `where` clause with `userId`
+- Use `include` to avoid N+1 queries
+- Handle `null` cases explicitly
+
+---
+
+## 🔧 Useful Commands
+
+```bash
+# Start development (all apps)
+pnpm dev
+
+# Run only backend
+pnpm dev --filter=api
+
+# Run only frontend
+pnpm dev --filter=web
+
+# Database operations
+cd apps/api
+npx prisma studio        # GUI for database
+npx prisma migrate dev   # Create migration
+npx prisma generate      # Regenerate client
+npx prisma db push       # Push schema (dev only)
+
+# Run scripts
+npx ts-node scripts/check-user-profile.ts
+npx ts-node scripts/create-admin-user.ts
+
+# Type checking
+pnpm typecheck
+```
+
+---
+
+## 📚 Key Documentation
+
+| File | Purpose |
+|------|---------|
+| `docs/SYSTEM_ARCHITECTURE_GUIDE_RU.md` | Full architecture (Russian) |
+| `docs/DEPLOYMENT_GUIDE_RU.md` | Deployment guide |
+| `docs/audit/PRODUCTION_CHECKLIST.md` | Production checklist |
+| `scripts/README.md` | Scripts documentation |
+| `data/README.md` | Data files documentation |
+
+---
+
+## 🎯 Before Making Changes - Checklist
+
+Ask yourself:
+
+1. **Does this endpoint need authentication?**
+   → Add `@UseGuards(JwtAuthGuard)` and `@ApiBearerAuth()`
+
+2. **Is this user-specific data?**
+   → Filter by `userId` in all queries
+
+3. **Am I using `any` type?**
+   → Replace with proper TypeScript type
+
+4. **Is this a breaking change?**
+   → Update all consumers (frontend, scripts)
+
+5. **Does this need a migration?**
+   → Run `npx prisma migrate dev`
+
+6. **Did I test with authentication?**
+   → Check both authorized and unauthorized access
+
+---
+
+## 🚨 Security Reminders
+
+- NEVER commit `.env` files
+- NEVER hardcode API keys
+- ALWAYS check user ownership before update/delete
+- ALWAYS use parameterized queries (Prisma handles this)
+- ALWAYS validate input with DTOs
+
+---
+
+## 📊 Data Flow
+
+```
+User Action (Frontend)
+        │
+        ▼
+   API Call with Auth Token
+   (lib/api.ts + getAuthHeaders)
+        │
+        ▼
+   NestJS Controller
+   (@UseGuards(JwtAuthGuard))
+        │
+        ▼
+   Service Method (userId)
+        │
+        ▼
+   Prisma Query (where: { userId })
+        │
+        ▼
+   PostgreSQL Database
+```
+
+---
+
+## 🔄 When Starting a New Task
+
+1. **Understand scope**: Is it frontend, backend, or both?
+2. **Check existing code**: Search for similar patterns
+3. **Check schema**: `prisma/schema.prisma` for data structure
+4. **Check types**: `packages/shared/src/schemas/`
+5. **Follow patterns**: Use existing code as reference
+6. **Test auth**: Verify `JwtAuthGuard` is applied
+7. **Test isolation**: Verify data is filtered by `userId`
+
+---
+
+## 📋 Plan Management
+
+### Auto-Save Plans
+
+**IMPORTANT**: When creating or updating a Plan in Cursor:
+
+1. **Always save plans to project directory**: `plans/*.plan.md`
+2. **Format**: Use pattern `{description}_{id}.plan.md` (e.g., `архитектурный_аудит_и_миграция_к_единому_источнику_истины_e5af5a72.plan.md`)
+3. **Git tracking**: Plans should be committed to git (not in .gitignore)
+4. **Location**: Save all plans in `plans/` directory at project root
+
+### When AI creates a Plan:
+
+- ✅ Prompt user: "Plan created. Saving to `plans/{name}_{id}.plan.md`"
+- ✅ Create file in `plans/` directory
+- ✅ Include plan ID in filename
+- ✅ Use markdown format with clear structure
+- ✅ Add creation date and status tracking
+
+### When AI updates a Plan:
+
+- ✅ Update the existing `.plan.md` file in `plans/` directory
+- ✅ Update "Last updated" timestamp
+- ✅ Track progress with checkboxes (✅, ⏳, 📋)
+- ✅ Commit changes to git with meaningful message

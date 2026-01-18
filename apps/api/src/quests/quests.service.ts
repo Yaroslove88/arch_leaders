@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException, BadRequestException, Inject, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Inject, InternalServerErrorException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { TreeService } from '../tree/tree.service';
+import { AbilityStateService } from '../ability/ability-state.service';
 import { Prisma } from '@prisma/client';
 import {
   parseStepsJson,
@@ -10,30 +11,11 @@ import {
   validateCriteriaJson,
   validateRewardJson,
 } from '../common/mappers/quest.mapper';
+import { CreateQuestDto, UpdateQuestDto } from '../common/dto';
 
-interface CreateQuestDto {
-  title: string;
-  description: string;
-  type: 'micro' | 'weekly' | 'story' | 'in-person';
-  status?: 'backlog' | 'active' | 'completed' | 'failed' | 'archived';
-  steps?: Array<{ id: string; description: string; completed?: boolean }>;
-  criteria: {
-    type: 'count' | 'evidence' | 'streak' | 'custom';
-    target?: number;
-    description: string;
-    theory_and_examples?: string;
-  };
-  reward?: {
-    xp?: number;
-    skill_xp?: number;
-    artifact?: string;
-  };
-  linked_nodes?: string[];
-  evidence_links?: any[];
-  due_hint?: string;
-  source?: string;
-  tags?: string[];
-  session_id?: string;
+interface EvidenceLink {
+  evidence_id: string;
+  type: string;
 }
 
 @Injectable()
@@ -41,6 +23,7 @@ export class QuestsService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(TreeService) private readonly treeService: TreeService,
+    @Inject(AbilityStateService) private readonly abilityStateService: AbilityStateService,
   ) {
     if (!this.prisma) {
       throw new InternalServerErrorException('PrismaService injection failed');
@@ -145,7 +128,7 @@ export class QuestsService {
         criteria_json: validateCriteriaJson(createDto.criteria),
         reward_json: validateRewardJson(createDto.reward) || Prisma.JsonNull,
         linked_nodes: linkedNodes,
-        evidence_links_json: createDto.evidence_links || [],
+        evidence_links_json: (createDto.evidence_links && createDto.evidence_links.length > 0) ? (createDto.evidence_links as unknown as Prisma.InputJsonValue) : Prisma.JsonNull,
         due_hint: createDto.due_hint || null,
         source: createDto.source || null,
         tags: createDto.tags || [],
@@ -162,7 +145,7 @@ export class QuestsService {
   /**
    * Обновить квест
    */
-  async update(id: string, updateDto: Partial<CreateQuestDto>) {
+  async update(id: string, updateDto: UpdateQuestDto) {
     const quest = await this.prisma.quest.findUnique({
       where: { id },
     });
@@ -234,7 +217,7 @@ export class QuestsService {
   /**
    * Активировать квест
    */
-  async activate(id: string) {
+  async activate(id: string, userId?: string) {
     const quest = await this.prisma.quest.findUnique({
       where: { id },
     });
@@ -243,9 +226,12 @@ export class QuestsService {
       throw new NotFoundException(`Quest ${id} not found`);
     }
 
-    // Проверяем лимит активных квестов (5)
+    // Проверяем лимит активных квестов (5) для конкретного пользователя
     const activeCount = await this.prisma.quest.count({
-      where: { status: 'active' },
+      where: {
+        status: 'active',
+        ...(userId ? { userId } : { userId: quest.userId }),
+      },
     });
 
     if (activeCount >= 5 && quest.status !== 'active') {
@@ -265,6 +251,7 @@ export class QuestsService {
 
   /**
    * Завершить квест
+   * Новая система: проверяет наличие рефлексии и начисляет Base XP + Reflection XP
    */
   async complete(id: string, evidenceId?: string) {
     const quest = await this.prisma.quest.findUnique({
@@ -287,21 +274,75 @@ export class QuestsService {
       },
     });
 
-    // Начисляем XP на связанные узлы
+    // Начисляем опыт на связанные узлы через новую систему опыта
     if (quest.linked_nodes && quest.linked_nodes.length > 0) {
-      const reward = parseRewardJson(quest.reward_json);
-      const xpPerNode = reward?.skill_xp || 50;
-
-      // Используем userId из квеста для обновления пользовательского дерева
       const userId = quest.userId;
+
+      // Проверяем наличие рефлексии (Evidence с типом 'reflection' для этого квеста)
+      // Минимальная длина: 300 символов согласно PRD
+      const MIN_REFLECTION_LENGTH = 300;
+
+      const reflectionEvidence = await this.prisma.evidence.findFirst({
+        where: {
+          quest_id: id,
+          userId: userId,
+          type: 'reflection',
+        },
+        orderBy: {
+          created_at: 'desc',
+        },
+      });
+
+      const hasReflection =
+        reflectionEvidence &&
+        reflectionEvidence.text &&
+        reflectionEvidence.text.trim().length >= MIN_REFLECTION_LENGTH;
+
+      // Определяем награды на основе типа квеста
+      const rewardMap: Record<string, { baseXp: number; reflectionXp: number }> = {
+        micro: { baseXp: 20, reflectionXp: 80 },
+        weekly: { baseXp: 40, reflectionXp: 160 },
+        story: { baseXp: 60, reflectionXp: 240 },
+        'in-person': { baseXp: 100, reflectionXp: 400 },
+      };
+
+      const questReward = rewardMap[quest.type] || { baseXp: 20, reflectionXp: 80 };
+
+      // Если рефлексии нет или слишком короткая → только Base XP
+      const baseXp = questReward.baseXp;
+      const reflectionXp = hasReflection ? questReward.reflectionXp : 0;
+
+      // Определяем сложность квеста на основе типа
+      // micro -> basic, weekly -> intermediate, story/in-person -> advanced
+      const questDifficultyMap: Record<string, 'basic' | 'intermediate' | 'advanced'> = {
+        micro: 'basic',
+        weekly: 'intermediate',
+        story: 'advanced',
+        'in-person': 'advanced',
+      };
+      const questDifficulty = questDifficultyMap[quest.type] || 'basic';
 
       for (const nodeId of quest.linked_nodes) {
         try {
-          await this.treeService.updateNodeProgress(nodeId, xpPerNode, userId);
+          // Применяем опыт через новую систему (Base XP + Reflection XP)
+          await this.abilityStateService.applyQuestExperience(
+            userId,
+            nodeId,
+            baseXp,
+            reflectionXp,
+            questDifficulty,
+          );
         } catch (error) {
           // Игнорируем ошибки, если узел не найден
-          console.warn(`Failed to update node ${nodeId} for user ${userId}:`, error);
+          console.warn(`Failed to apply experience to node ${nodeId} for user ${userId}:`, error);
         }
+      }
+
+      // Если рефлексии нет, логируем для информативности
+      if (!hasReflection) {
+        console.log(
+          `Quest ${id} completed without reflection. Only base XP (${baseXp}) awarded. Total possible: ${baseXp + questReward.reflectionXp}`,
+        );
       }
     }
 
@@ -311,7 +352,7 @@ export class QuestsService {
   /**
    * Обновить статус квеста
    */
-  async updateStatus(id: string, status: 'active' | 'backlog' | 'done' | 'archived') {
+  async updateStatus(id: string, status: 'active' | 'backlog' | 'done' | 'archived', userId?: string) {
     const quest = await this.prisma.quest.findUnique({
       where: { id },
     });
@@ -320,10 +361,13 @@ export class QuestsService {
       throw new NotFoundException(`Quest ${id} not found`);
     }
 
-    // Проверка лимита активных квестов
+    // Проверка лимита активных квестов для конкретного пользователя
     if (status === 'active') {
       const activeCount = await this.prisma.quest.count({
-        where: { status: 'active' },
+        where: {
+          status: 'active',
+          ...(userId ? { userId } : { userId: quest.userId }),
+        },
       });
 
       if (activeCount >= 5 && quest.status !== 'active') {
@@ -340,6 +384,45 @@ export class QuestsService {
     });
 
     return this.transformQuest(updated);
+  }
+
+  /**
+   * Получить завершенные квесты по узлу
+   */
+  async getCompletedByNode(nodeId: string, userId?: string): Promise<{ quests: any[]; count: number }> {
+    if (!this.prisma?.quest) {
+      throw new InternalServerErrorException('Prisma quest model is not available');
+    }
+
+    const where: any = {
+      status: 'done',
+      linked_nodes: {
+        has: nodeId,
+      },
+    };
+
+    if (userId) {
+      where.userId = userId;
+    }
+
+    const quests = await this.prisma.quest.findMany({
+      where,
+      include: {
+        session: {
+          select: {
+            id: true,
+            summary: true,
+            created_at: true,
+          },
+        },
+      },
+      orderBy: { completed_at: 'desc' },
+    });
+
+    return {
+      quests: quests.map((q) => this.transformQuest(q)),
+      count: quests.length,
+    };
   }
 
   /**
@@ -425,30 +508,38 @@ export class QuestsService {
       let quests: any[] = [];
 
       if (item.title) {
-        // Ищем по названию (частичное совпадение)
+        // Ищем по названию (частичное совпадение) только базовые квесты
         quests = await this.prisma.quest.findMany({
           where: {
             title: {
               contains: item.title,
               mode: 'insensitive',
             },
+            source: 'base_template', // ⚠️ ЗАЩИТА: Ищем только базовые квесты
           },
         });
       }
 
       if (quests.length === 0 && item.linkedNodes && item.linkedNodes.length > 0) {
-        // Ищем по связанным узлам
+        // Ищем по связанным узлам только базовые квесты
         quests = await this.prisma.quest.findMany({
           where: {
             linked_nodes: {
               hasSome: item.linkedNodes,
             },
+            source: 'base_template', // ⚠️ ЗАЩИТА: Ищем только базовые квесты
           },
         });
       }
 
       if (quests.length > 0) {
         for (const quest of quests) {
+          // Дополнительная проверка (на случай, если фильтр не сработал)
+          if (quest.source && quest.source !== 'base_template') {
+            // Пропускаем пользовательские квесты
+            continue;
+          }
+
           const criteria = parseCriteriaJson(quest.criteria_json);
           criteria.theory_and_examples = item.theory;
 
@@ -470,6 +561,7 @@ export class QuestsService {
 
   /**
    * Синхронизировать квест из шаблона (обновить description, steps, criteria)
+   * ⚠️ ЗАЩИТА: Обновляет только квесты с source='base_template'
    */
   async syncQuestFromTemplate(questId: string, template: {
     description?: string;
@@ -478,10 +570,22 @@ export class QuestsService {
   }): Promise<{ success: boolean; message: string }> {
     const quest = await this.prisma.quest.findUnique({
       where: { id: questId },
+      select: {
+        id: true,
+        source: true,
+      },
     });
 
     if (!quest) {
       throw new NotFoundException(`Quest ${questId} not found`);
+    }
+
+    // Защита: обновляем только базовые квесты (source='base_template')
+    if (quest.source !== 'base_template') {
+      throw new ForbiddenException(
+        `Cannot sync quest ${questId}: only base quests (source='base_template') can be synced from templates. ` +
+        `This quest has source='${quest.source || 'null'}'.`,
+      );
     }
 
     const updateData: any = {};
@@ -544,15 +648,20 @@ export class QuestsService {
       return null;
     }
 
+    // Парсим JSON поля через мапперы для правильной структуры данных
+    const steps = parseStepsJson(quest?.steps_json);
+    const criteria = parseCriteriaJson(quest?.criteria_json);
+    const reward = parseRewardJson(quest?.reward_json);
+
     return {
       id: quest?.id,
       title: quest?.title,
       description: quest?.description,
       type: quest?.type,
       status: quest?.status,
-      steps: quest?.steps_json,
-      criteria: quest?.criteria_json,
-      reward: quest?.reward_json,
+      steps: steps,
+      criteria: criteria,
+      reward: reward,
       linked_nodes: quest?.linked_nodes,
       evidence_links: quest?.evidence_links_json,
       due_hint: quest?.due_hint,

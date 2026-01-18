@@ -51,14 +51,14 @@ export class ApplyTreeChangeDto {
   })
   @IsOptional()
   @IsObject()
-  before?: any;
+  before?: Record<string, unknown>;
 
   @ApiPropertyOptional({
     description: 'Состояние после изменения в формате JSON',
   })
   @IsOptional()
   @IsObject()
-  after?: any;
+  after?: Record<string, unknown>;
 
   @ApiProperty({
     description: 'Операции изменения',
@@ -66,7 +66,7 @@ export class ApplyTreeChangeDto {
   })
   @IsArray()
   @IsNotEmpty()
-  ops!: any[];
+  ops!: Array<{ op: string; path: string; value?: unknown }>;
 
   @ApiProperty({
     description: 'Актор изменения',
@@ -82,6 +82,6 @@ export class ApplyTreeChangeDto {
   })
   @IsOptional()
   @IsObject()
-  links?: any;
+  links?: { entry_ids?: string[]; evidence_ids?: string[]; session_id?: string };
 }
 

@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import { Navigation } from './Navigation';
-import { AdminToggle } from './AdminToggle';
+import { AdminStatusBar } from './AdminStatusBar';
 
 interface ConditionalNavigationProps {
   showAdminToggle?: boolean;
@@ -11,15 +11,23 @@ interface ConditionalNavigationProps {
 export function ConditionalNavigation({ showAdminToggle }: ConditionalNavigationProps) {
   const pathname = usePathname();
   const isLoginPage = pathname === '/login';
+  const isAdminPage = pathname?.startsWith('/admin') || pathname === '/debug';
 
   if (isLoginPage) {
     return null;
   }
 
+  // Убрали AdminToggle - теперь всё управляется через AdminStatusBar
   if (showAdminToggle) {
-    return <AdminToggle />;
+    return null;
   }
 
-  return <Navigation />;
+  return (
+    <>
+      <Navigation />
+      {/* Admin status bar - показывается на всех страницах кроме админки */}
+      {!isAdminPage && <AdminStatusBar />}
+    </>
+  );
 }
 

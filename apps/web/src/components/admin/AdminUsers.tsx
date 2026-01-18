@@ -52,7 +52,8 @@ export function AdminUsers() {
     try {
       await updateUser(userId, { status: newStatus }, reason);
       await loadUsers();
-      if (selectedUser?.user.id === userId) {
+      const currentUserId = selectedUser?.user?.id;
+      if (currentUserId === userId) {
         await handleViewUser(userId);
       }
     } catch (error) {
@@ -62,88 +63,98 @@ export function AdminUsers() {
   }
 
   if (selectedUser) {
+    // Defensive check: if user property doesn't exist, the API returned user directly
+    const displayUser = selectedUser.user || selectedUser;
+    // Handle stats - API may return _count or stats
+    const stats = selectedUser.stats || {
+      entries_count: (selectedUser as any)._count?.entries || 0,
+      sessions_count: (selectedUser as any)._count?.sessions || 0,
+      quests_active: 0,
+      quests_completed: 0,
+      abilities_unlocked: 0,
+    };
     return (
       <div>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-ui-text-main">User 360: @{selectedUser.user.telegramUsername}</h2>
+          <h2 className="text-2xl font-bold text-ash-light">User 360: @{displayUser.telegramUsername}</h2>
           <button
             onClick={() => setSelectedUser(null)}
-            className="px-4 py-2 bg-bg-secondary border border-ui-border-soft rounded-lg hover:border-ui-border-strong transition-colors"
+            className="px-4 py-2 bg-obsidian-core border border-ui-border-soft rounded-lg hover:border-ui-border-strong transition-colors"
           >
             ← Назад к списку
           </button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div className="bg-bg-panel border border-ui-border-soft rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-ui-text-main mb-4">Информация</h3>
+          <div className="bg-graphite-structure border border-ui-border-soft rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-ash-light mb-4">Информация</h3>
             <div className="space-y-2 text-sm">
               <div>
                 <span className="text-ui-text-muted">ID:</span>
-                <span className="ml-2 font-mono text-ui-text-main">{selectedUser.user.id}</span>
+                <span className="ml-2 font-mono text-ash-light">{displayUser.id}</span>
               </div>
               <div>
                 <span className="text-ui-text-muted">Username:</span>
-                <span className="ml-2 text-ui-text-main">@{selectedUser.user.telegramUsername}</span>
+                <span className="ml-2 text-ash-light">@{displayUser.telegramUsername}</span>
               </div>
               <div>
                 <span className="text-ui-text-muted">Email:</span>
-                <span className="ml-2 text-ui-text-main">{selectedUser.user.email || '-'}</span>
+                <span className="ml-2 text-ash-light">{displayUser.email || '-'}</span>
               </div>
               <div>
                 <span className="text-ui-text-muted">Статус:</span>
                 <span className={`ml-2 px-2 py-1 rounded text-xs ${
-                  selectedUser.user.status === 'active' ? 'bg-system-growth/20 text-system-growth' :
-                  selectedUser.user.status === 'blocked' ? 'bg-system-critical/20 text-system-critical' :
+                  displayUser.status === 'active' ? 'bg-sage-green/20 text-sage-green' :
+                  displayUser.status === 'blocked' ? 'bg-tension-red/20 text-tension-red' :
                   'bg-ui-border-soft text-ui-text-muted'
                 }`}>
-                  {selectedUser.user.status}
+                  {displayUser.status}
                 </span>
               </div>
               <div>
                 <span className="text-ui-text-muted">Создан:</span>
-                <span className="ml-2 text-ui-text-main">
-                  {new Date(selectedUser.user.created_at).toLocaleDateString('ru-RU')}
+                <span className="ml-2 text-ash-light">
+                  {new Date(displayUser.created_at).toLocaleDateString('ru-RU')}
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="bg-bg-panel border border-ui-border-soft rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-ui-text-main mb-4">Статистика</h3>
+          <div className="bg-graphite-structure border border-ui-border-soft rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-ash-light mb-4">Статистика</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <div className="text-2xl font-bold text-system-focus">{selectedUser.stats.entries_count}</div>
+                <div className="text-2xl font-bold text-strategic-blue">{stats.entries_count}</div>
                 <div className="text-sm text-ui-text-muted">Записей</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-system-growth">{selectedUser.stats.sessions_count}</div>
+                <div className="text-2xl font-bold text-sage-green">{stats.sessions_count}</div>
                 <div className="text-sm text-ui-text-muted">Сессий</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-system-stable">{selectedUser.stats.quests_active}</div>
+                <div className="text-2xl font-bold text-sage-green">{stats.quests_active}</div>
                 <div className="text-sm text-ui-text-muted">Активных квестов</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-system-warning">{selectedUser.stats.quests_completed}</div>
+                <div className="text-2xl font-bold text-system-warning">{stats.quests_completed}</div>
                 <div className="text-sm text-ui-text-muted">Завершено квестов</div>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="bg-bg-panel border border-ui-border-soft rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-ui-text-main mb-4">Действия</h3>
+        <div className="bg-graphite-structure border border-ui-border-soft rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-ash-light mb-4">Действия</h3>
           <div className="flex gap-4">
             <button
-              onClick={() => handleUpdateStatus(selectedUser.user.id, 'active')}
-              className="px-4 py-2 bg-system-growth/20 text-system-growth rounded-lg hover:bg-system-growth/30 transition-colors"
+              onClick={() => handleUpdateStatus(displayUser.id, 'active')}
+              className="px-4 py-2 bg-sage-green/20 text-sage-green rounded-lg hover:bg-sage-green/30 transition-colors"
             >
               Активировать
             </button>
             <button
-              onClick={() => handleUpdateStatus(selectedUser.user.id, 'blocked')}
-              className="px-4 py-2 bg-system-critical/20 text-system-critical rounded-lg hover:bg-system-critical/30 transition-colors"
+              onClick={() => handleUpdateStatus(displayUser.id, 'blocked')}
+              className="px-4 py-2 bg-tension-red/20 text-tension-red rounded-lg hover:bg-tension-red/30 transition-colors"
             >
               Заблокировать
             </button>
@@ -156,11 +167,11 @@ export function AdminUsers() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-ui-text-main">Пользователи</h2>
+        <h2 className="text-2xl font-bold text-ash-light">Пользователи</h2>
         <div className="text-sm text-ui-text-muted">Всего: {total}</div>
       </div>
 
-      <div className="bg-bg-panel border border-ui-border-soft rounded-lg p-4 mb-6">
+      <div className="bg-graphite-structure border border-ui-border-soft rounded-lg p-4 mb-6">
         <div className="flex gap-4">
           <input
             type="text"
@@ -170,7 +181,7 @@ export function AdminUsers() {
               setSearch(e.target.value);
               setPage(1);
             }}
-            className="flex-1 px-4 py-2 bg-bg-secondary border border-ui-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-system-focus"
+            className="flex-1 px-4 py-2 bg-obsidian-core border border-ui-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-system-focus"
           />
           <select
             value={statusFilter}
@@ -178,7 +189,7 @@ export function AdminUsers() {
               setStatusFilter(e.target.value);
               setPage(1);
             }}
-            className="px-4 py-2 bg-bg-secondary border border-ui-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-system-focus"
+            className="px-4 py-2 bg-obsidian-core border border-ui-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-system-focus"
           >
             <option value="all">Все статусы</option>
             <option value="active">Активные</option>
@@ -192,9 +203,9 @@ export function AdminUsers() {
         <LoadingSpinner text="Загрузка пользователей..." />
       ) : (
         <>
-          <div className="bg-bg-panel border border-ui-border-soft rounded-lg overflow-hidden">
+          <div className="bg-graphite-structure border border-ui-border-soft rounded-lg overflow-hidden">
             <table className="w-full">
-              <thead className="bg-bg-secondary">
+              <thead className="bg-obsidian-core">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-ui-text-muted uppercase">Username</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-ui-text-muted uppercase">Email</th>
@@ -205,16 +216,16 @@ export function AdminUsers() {
               </thead>
               <tbody className="divide-y divide-ui-border-soft">
                 {users.map((user) => (
-                  <tr key={user.id} className="hover:bg-bg-secondary">
+                  <tr key={user.id} className="hover:bg-obsidian-core">
                     <td className="px-6 py-4">
-                      <div className="font-medium text-ui-text-main">@{user.telegramUsername}</div>
+                      <div className="font-medium text-ash-light">@{user.telegramUsername}</div>
                       <div className="text-xs text-ui-text-dim font-mono">{user.id.slice(0, 8)}...</div>
                     </td>
                     <td className="px-6 py-4 text-sm text-ui-text-muted">{user.email || '-'}</td>
                     <td className="px-6 py-4">
                       <span className={`px-2 py-1 rounded text-xs ${
-                        user.status === 'active' ? 'bg-system-growth/20 text-system-growth' :
-                        user.status === 'blocked' ? 'bg-system-critical/20 text-system-critical' :
+                        user.status === 'active' ? 'bg-sage-green/20 text-sage-green' :
+                        user.status === 'blocked' ? 'bg-tension-red/20 text-tension-red' :
                         'bg-ui-border-soft text-ui-text-muted'
                       }`}>
                         {user.status}
@@ -226,7 +237,7 @@ export function AdminUsers() {
                     <td className="px-6 py-4">
                       <button
                         onClick={() => handleViewUser(user.id)}
-                        className="text-system-focus hover:text-system-focus/80 text-sm"
+                        className="text-strategic-blue hover:text-strategic-blue/80 text-sm"
                       >
                         Просмотр
                       </button>
@@ -246,14 +257,14 @@ export function AdminUsers() {
                 <button
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="px-4 py-2 bg-bg-secondary border border-ui-border-soft rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:border-ui-border-strong transition-colors"
+                  className="px-4 py-2 bg-obsidian-core border border-ui-border-soft rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:border-ui-border-strong transition-colors"
                 >
                   Назад
                 </button>
                 <button
                   onClick={() => setPage(p => p + 1)}
                   disabled={page * limit >= total}
-                  className="px-4 py-2 bg-bg-secondary border border-ui-border-soft rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:border-ui-border-strong transition-colors"
+                  className="px-4 py-2 bg-obsidian-core border border-ui-border-soft rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:border-ui-border-strong transition-colors"
                 >
                   Вперед
                 </button>

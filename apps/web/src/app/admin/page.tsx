@@ -45,9 +45,9 @@ export default function AdminPage() {
     <div className="min-h-screen bg-bg-canvas">
       <div className="flex">
         {/* Sidebar */}
-        <aside className="w-64 bg-bg-panel border-r border-ui-border-soft min-h-screen">
+        <aside className="w-64 bg-graphite-structure border-r border-ui-border-soft min-h-screen">
           <div className="p-6 border-b border-ui-border-soft">
-            <h1 className="text-xl font-bold text-ui-text-main">Админ-панель</h1>
+            <h1 className="text-xl font-bold text-ash-light">Админ-панель</h1>
             <p className="text-sm text-ui-text-muted mt-1">Leadership Architect</p>
           </div>
           <nav className="p-4">
@@ -57,8 +57,8 @@ export default function AdminPage() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg mb-2 transition-colors ${
                   activeTab === tab.id
-                    ? 'bg-bg-secondary border border-system-focus text-system-focus'
-                    : 'text-ui-text-muted hover:bg-bg-secondary hover:text-ui-text-main'
+                    ? 'bg-obsidian-core border border-strategic-blue text-strategic-blue'
+                    : 'text-ui-text-muted hover:bg-obsidian-core hover:text-ash-light'
                 }`}
               >
                 <span className="text-xl">{tab.icon}</span>

@@ -26,6 +26,13 @@
    - ✅ EvidenceController - REST API
    - ✅ EvidenceModule
 
+6. **Retention Module** (`src/retention/`)
+   - ✅ RetentionService - отслеживание активности пользователей
+   - ✅ RetentionController - REST API
+   - ✅ RetentionModule
+   - ✅ PostgreSQL storage (миграция с in-memory)
+   - ✅ UserRetention model в Prisma
+
 ## 📋 API Endpoints
 
 Все endpoints готовы и зарегистрированы в AppModule.
@@ -52,6 +59,11 @@
 - `PATCH /evidence/:id` - обновить
 - `DELETE /evidence/:id` - удалить
 
+### Retention
+- `POST /retention/activity` - записать активность пользователя
+- `GET /retention/:userId` - получить данные о retention
+- `GET /retention/:userId/risk` - проверить риск потери серии
+
 ## 🚀 Запуск
 
 ```bash
@@ -73,4 +85,18 @@ API должен запуститься на http://localhost:3001
 - API использует валидацию окружения
 - DATABASE_URL должен быть в .env файле
 - Все модули используют PrismaService через DI
+
+## 🐛 Исправленные проблемы
+
+### 2026-01-09: Retention Foreign Key Constraint
+- **Проблема**: Foreign key constraint violation при создании retention записи для userId='default'
+- **Причина**: Dashboard использовал фиктивный userId из localStorage вместо реального из auth системы
+- **Решение**: 
+  - Dashboard теперь использует `useAuth()` hook для получения реального userId
+  - RetentionService перенесен с in-memory storage на PostgreSQL (таблица `user_retention`)
+  - Добавлена миграция Prisma для создания таблицы
+- **Изменения**:
+  - `apps/web/src/app/dashboard/page.tsx`: замена `localStorage.getItem('userId')` на `useAuth().user?.id`
+  - `apps/api/src/retention/retention.service.ts`: миграция на Prisma
+  - `apps/api/prisma/schema.prisma`: добавлена модель `UserRetention`
 

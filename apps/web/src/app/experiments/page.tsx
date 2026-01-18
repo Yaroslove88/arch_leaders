@@ -2,118 +2,25 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useQuests } from '../../hooks/useQuests';
-import { getCases, InteractiveCase, activateQuest, getSemanticTree, SemanticTree } from '../../lib/api';
+import { getCases, InteractiveCase, activateQuest, getSemanticTree, SemanticTree, getCaseProgress, CaseProgress, getQuests, Quest } from '../../lib/api';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getNodeDescriptions } from '../../lib/api';
+import { getNodeName } from '../../lib/node-translations';
+import { getNodeLevel as getNodeLevelUtil, getQuestComplexity as getQuestComplexityUtil, sortQuestsByComplexity } from '../../lib/quest-utils';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useToast } from '../../components/ToastProvider';
+import CaseLockedModal from '../../components/CaseLockedModal';
+import { CaseCard as NewCaseCard, QuestCard as NewQuestCard, type CaseDifficulty, type QuestType, type QuestStatus } from '@/components/cards';
+import { PillTabs } from '@leadership-architect/ui';
 
 type ExperimentTab = 'active' | 'live-quests' | 'base-quests' | 'cases' | 'completed';
 
 // Маппинг nodeId на русские названия с переводами
-const nodeNameMap: Record<string, string> = {
-  'node_grounding_point': 'Точка опоры',
-  'node_self_regulation': 'Саморегуляция',
-  'node_role_differentiation': 'Различение ролей',
-  'node_scenario_analysis': 'Разбор сценария',
-  'node_subject_in_system': 'Субъект в системе',
-  'node_decision_authorship': 'Авторство решений',
-  'node_architecture_coupling': 'Архитектура сцепки',
-  'node_field_of_differences': 'Поле различий',
-  'node_system_thinking': 'Системное мышление',
-  'node_scenario_thinking': 'Сценарное мышление',
-  'node_form_assembly': 'Сборка форм',
-  'node_containment': 'Контейнирование',
-  'node_thinking_through_form': 'Мышление через форму',
-  'node_personal_resilience': 'Личная устойчивость',
-  'node_weak_zone_diagnosis': 'Диагностика слабых зон',
-  'node_recovery_skills': 'Навыки восстановления',
-  'node_emotional_work': 'Работа с эмоциями',
-  'node_cognitive_maturity': 'Когнитивная зрелость',
-  'node_role_energy': 'Энергия роли',
-  'node_stress_tolerance': 'Толерантность к стрессу',
-  'node_recovery': 'Восстановление',
-  'node_responsibility_as_form': 'Ответственность как форма',
-  'node_responsibility_sag_diagnosis': 'Диагностика провисания ответственности',
-  'node_delegation_as_coupling': 'Делегирование как сцепка',
-  'node_upper_field_work': 'Работа с верхним полем',
-  'node_leader_liberation': 'Освобождение лидера',
-  'node_shared_leadership': 'Распределённое лидерство',
-  'node_psychological_ownership': 'Психологическая собственность',
-  'node_collective_efficacy': 'Коллективная эффективность',
-  'node_ownership': 'Владение',
-  'node_accountability': 'Подотчетность',
-  'node_feedback_types': 'Типы обратной связи',
-  'node_language_of_differences': 'Язык различий',
-  'node_feedback_through_vulnerability': 'Приём обратной связи через уязвимость',
-  'node_feedforward': 'Обратная связь в будущее',
-  'node_rede_model': 'REDE Модель',
-  'node_mirror_holder': 'Смотрящий в окно vs Держащий зеркало',
-  'node_giving_feedback': 'Дача обратной связи',
-  'node_receiving_feedback': 'Принятие обратной связи',
-  'node_maturity_environment': 'Среда зрелости',
-  'node_subjectivity_transfer': 'Передача субъектности',
-  'node_scene_holding': 'Удержание сцены',
-  'node_institutionalization': 'Институционализация',
-  'node_vertical_development': 'Вертикальное развитие',
-  'node_ddo': 'Организация как тренажёр',
-  'node_mature_parting': 'Зрелое расставание',
-  'node_team_development': 'Развитие команды',
-  'node_organizational_culture': 'Организационная культура',
-  'node_grounding': 'Заземление',
-  'node_design_thinking': 'Дизайн-мышление',
-};
 
-// Функция перевода названий узлов
-function translateNodeName(name: string): string {
-  // REDE Model -> REDE Модель
-  if (name === 'REDE Model') return 'REDE Модель';
-  if (name.includes('REDE Model')) return name.replace('REDE Model', 'REDE Модель');
-  
-  // Deliberately Developmental Organization -> Организация как тренажёр
-  if (name === 'Deliberately Developmental Organization' || name === 'DDO') {
-    return 'Организация как тренажёр';
-  }
-  if (name.includes('Deliberately Developmental Organization')) {
-    return name.replace('Deliberately Developmental Organization', 'Организация как тренажёр');
-  }
-  
-  // Vertical Development -> Вертикальное развитие
-  if (name === 'Vertical Development') return 'Вертикальное развитие';
-  if (name.includes('Vertical Development')) return name.replace('Vertical Development', 'Вертикальное развитие');
-  
-  // Shared Leadership -> Распределённое лидерство
-  if (name === 'Shared Leadership') return 'Распределённое лидерство';
-  if (name.includes('Shared Leadership')) return name.replace('Shared Leadership', 'Распределённое лидерство');
-  
-  // Feedforward -> Обратная связь в будущее
-  if (name === 'Feedforward') return 'Обратная связь в будущее';
-  if (name.includes('Feedforward')) return name.replace('Feedforward', 'Обратная связь в будущее');
-  
-  // Window Gazer vs Mirror Holder -> Смотрящий в окно vs Держащий зеркало
-  if (name === 'Window Gazer vs Mirror Holder') return 'Смотрящий в окно vs Держащий зеркало';
-  if (name.includes('Window Gazer vs Mirror Holder')) {
-    return name.replace('Window Gazer vs Mirror Holder', 'Смотрящий в окно vs Держащий зеркало');
-  }
-  
-  return name;
-}
-
-function getNodeName(nodeId: string, nodeDescriptions?: Record<string, { name: string }>): string {
-  // Сначала пробуем получить из загруженных описаний
-  if (nodeDescriptions?.[nodeId]?.name) {
-    return translateNodeName(nodeDescriptions[nodeId].name);
-  }
-  // Затем из статического маппинга
-  if (nodeNameMap[nodeId]) {
-    return nodeNameMap[nodeId];
-  }
-  // Fallback: человеческий вид из id
-  const fallbackName = nodeId.replace(/^node_/, '').replace(/_/g, ' ');
-  return translateNodeName(fallbackName);
-}
+// Сохранение позиции скролла
+const SCROLL_KEY = 'experiments_scroll_position';
 
 export default function ExperimentsPage() {
   const searchParams = useSearchParams();
@@ -123,6 +30,23 @@ export default function ExperimentsPage() {
   const queryClient = useQueryClient();
   const toast = useToast();
   const { data: questsData, isLoading: questsLoading, error: questsError, isFetching: questsFetching } = useQuests();
+  
+  // Восстанавливаем позицию скролла после загрузки
+  useEffect(() => {
+    const savedPosition = sessionStorage.getItem(SCROLL_KEY);
+    if (savedPosition) {
+      // Небольшая задержка чтобы контент успел отрисоваться
+      setTimeout(() => {
+        window.scrollTo(0, parseInt(savedPosition, 10));
+        sessionStorage.removeItem(SCROLL_KEY);
+      }, 100);
+    }
+  }, []);
+  
+  // Сохраняем позицию скролла перед переходом
+  const saveScrollPosition = () => {
+    sessionStorage.setItem(SCROLL_KEY, String(window.scrollY));
+  };
 
   // Читаем вкладку из URL параметров при загрузке
   useEffect(() => {
@@ -154,19 +78,17 @@ export default function ExperimentsPage() {
     queryFn: getCases,
     retry: 2,
     retryDelay: 1000,
-    onError: (error) => {
-      console.error('Failed to load cases:', error);
-    },
   });
   const { data: nodeDescriptionsData, error: nodeDescriptionsError } = useQuery({
     queryKey: ['nodeDescriptions'],
     queryFn: getNodeDescriptions,
     retry: 2,
     retryDelay: 1000,
-    onError: (error) => {
-      console.error('Failed to load node descriptions:', error);
-    },
   });
+  
+  // Log errors if present
+  if (casesError) console.error('Failed to load cases:', casesError);
+  if (nodeDescriptionsError) console.error('Failed to load node descriptions:', nodeDescriptionsError);
 
   // Проверяем, есть ли токен авторизации для квестов
   const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
@@ -177,9 +99,14 @@ export default function ExperimentsPage() {
   const cases = casesData?.cases || [];
   const nodeDescriptions = nodeDescriptionsData?.descriptions || {};
 
-  // Живые квесты - это квесты со статусом 'in-person' (квесты из анализов)
+  // Живые квесты - это квесты типа 'in-person' (квесты из анализов), но не завершённые и не активные
+  // (активные в "Мои активные", завершённые в "Завершённые")
   const liveQuests = useMemo(() => 
-    quests.filter((q: any) => q.type === 'in-person'),
+    quests.filter((q: any) => 
+      q.type === 'in-person' && 
+      q.status !== 'done' && 
+      q.status !== 'active'
+    ),
     [quests]
   );
 
@@ -214,21 +141,21 @@ export default function ExperimentsPage() {
   const hasErrors = questsError || casesError || nodeDescriptionsError;
 
   return (
-    <main className="min-h-screen bg-bg-main p-8">
+    <main className="min-h-screen bg-obsidian-core p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Заголовок */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2 text-ui-text-main" id="page-title">
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold mb-2 text-ash-light" id="page-title">
             Эксперименты
           </h1>
-          <p className="text-ui-text-muted">
+          <p className="text-sm md:text-base text-ui-text-muted">
             Всё, где ты пробуешь другой способ действия
           </p>
         </div>
 
         {/* Отображение предупреждений и ошибок */}
         {(hasErrors || isQuestsDisabled) && (
-          <div className="mb-6 bg-bg-panel border border-system-warning rounded-lg p-4">
+          <div className="mb-6 bg-graphite-structure border border-catalyst-gold rounded-lg p-4">
             <p className="text-sm text-system-warning font-medium mb-2">
               {isQuestsDisabled && !hasErrors 
                 ? 'Для просмотра квестов необходимо авторизоваться' 
@@ -268,7 +195,7 @@ export default function ExperimentsPage() {
                   )}
                 </ul>
                 {(casesError || questsError || nodeDescriptionsError)?.message?.includes('ERR_CONNECTION_REFUSED') || (casesError || questsError || nodeDescriptionsError)?.message?.includes('Failed to fetch') && (
-                  <div className="mt-3 p-3 bg-bg-secondary border border-ui-border-soft rounded text-xs text-ui-text-muted">
+                  <div className="mt-3 p-3 bg-obsidian-core border border-ui-border-soft rounded text-xs text-ui-text-muted">
                     <p className="font-medium mb-1">Как запустить API сервер:</p>
                     <code className="block bg-bg-canvas p-2 rounded mt-1">
                       cd leadership-architect<br />
@@ -287,59 +214,20 @@ export default function ExperimentsPage() {
         )}
 
         {/* Вкладки */}
-        <div className="mb-6 border-b border-ui-border-soft">
-          <nav className="flex gap-4" aria-label="Типы экспериментов">
-            <button
-              onClick={() => setActiveTab('active')}
-              className={`px-4 py-2 border-b-2 transition-colors ${
-                activeTab === 'active'
-                  ? 'border-system-focus text-system-focus'
-                  : 'border-transparent text-ui-text-muted hover:text-ui-text-main'
-              }`}
-            >
-              Мои активные эксперименты ({activeQuests.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('live-quests')}
-              className={`px-4 py-2 border-b-2 transition-colors ${
-                activeTab === 'live-quests'
-                  ? 'border-system-focus text-system-focus'
-                  : 'border-transparent text-ui-text-muted hover:text-ui-text-main'
-              }`}
-            >
-              Живые квесты ({liveQuests.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('base-quests')}
-              className={`px-4 py-2 border-b-2 transition-colors ${
-                activeTab === 'base-quests'
-                  ? 'border-system-focus text-system-focus'
-                  : 'border-transparent text-ui-text-muted hover:text-ui-text-main'
-              }`}
-            >
-              Базовые квесты ({baseQuests.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('cases')}
-              className={`px-4 py-2 border-b-2 transition-colors ${
-                activeTab === 'cases'
-                  ? 'border-system-focus text-system-focus'
-                  : 'border-transparent text-ui-text-muted hover:text-ui-text-main'
-              }`}
-            >
-              Учебные кейсы ({cases.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('completed')}
-              className={`px-4 py-2 border-b-2 transition-colors ${
-                activeTab === 'completed'
-                  ? 'border-system-focus text-system-focus'
-                  : 'border-transparent text-ui-text-muted hover:text-ui-text-main'
-              }`}
-            >
-              Завершённые ({completedQuests.length})
-            </button>
-          </nav>
+        <div className="mb-8">
+          <PillTabs
+            tabs={[
+              { id: 'active', label: 'Мои активные', count: activeQuests.length },
+              { id: 'live-quests', label: 'Живые', count: liveQuests.length },
+              { id: 'base-quests', label: 'Базовые', count: baseQuests.length },
+              { id: 'cases', label: 'Кейсы', count: cases.length },
+              { id: 'completed', label: 'Готовые', count: completedQuests.length },
+            ]}
+            activeId={activeTab}
+            onSelect={(id) => setActiveTab(id as ExperimentTab)}
+            scrollable
+            ariaLabel="Типы экспериментов"
+          />
         </div>
 
         {/* Контент вкладок */}
@@ -350,7 +238,7 @@ export default function ExperimentsPage() {
               nodeDescriptions={nodeDescriptions}
               onQuestUpdate={() => queryClient.invalidateQueries({ queryKey: ['quests'] })}
               toast={toast}
-              tree={tree}
+              tree={tree ?? null}
             />
           )}
           {activeTab === 'live-quests' && (
@@ -361,7 +249,7 @@ export default function ExperimentsPage() {
               nodeDescriptions={nodeDescriptions}
               onQuestUpdate={() => queryClient.invalidateQueries({ queryKey: ['quests'] })}
               toast={toast}
-              tree={tree}
+              tree={tree ?? null}
             />
           )}
           {activeTab === 'base-quests' && (
@@ -374,7 +262,7 @@ export default function ExperimentsPage() {
               setTypeFilter={setBaseQuestTypeFilter}
               labelFilter={baseQuestLabelFilter}
               setLabelFilter={setBaseQuestLabelFilter}
-              tree={tree}
+              tree={tree ?? null}
             />
           )}
           {activeTab === 'completed' && (
@@ -388,7 +276,7 @@ export default function ExperimentsPage() {
             />
           )}
           {activeTab === 'cases' && (
-            <CasesSection cases={cases} />
+            <CasesSection cases={cases} nodeDescriptions={nodeDescriptions} tree={tree ?? null} />
           )}
         </div>
       </div>
@@ -398,6 +286,7 @@ export default function ExperimentsPage() {
 
 // Компонент для активных экспериментов
 function ActiveExperimentsSection({ quests, nodeDescriptions, onQuestUpdate, toast, tree }: { quests: any[], nodeDescriptions: any, onQuestUpdate: () => void, toast: any, tree?: SemanticTree | null }) {
+  const router = useRouter();
   // Функция для определения уровня узла
   const getNodeLevel = (nodeId: string, tree: SemanticTree | null, nodeDescriptions?: any): { level: number; maxLevel: number } => {
     if (!tree || !tree.nodes) return { level: 0, maxLevel: 0 };
@@ -484,11 +373,11 @@ function ActiveExperimentsSection({ quests, nodeDescriptions, onQuestUpdate, toa
   };
   if (quests.length === 0) {
     return (
-      <div className="bg-bg-panel border border-ui-border-soft rounded-lg shadow-panel p-12 text-center">
+      <div className="bg-graphite-structure border border-ui-border-soft rounded-lg shadow-panel p-12 text-center">
         <p className="text-ui-text-muted mb-4">У вас пока нет активных экспериментов</p>
         <Link
-          href="/entries"
-          className="inline-block px-6 py-3 bg-system-focus text-ui-text-main rounded-lg hover:bg-system-focus/90 transition-colors font-medium"
+          href="/traces"
+          className="inline-block px-6 py-3 bg-system-focus text-ash-light rounded-lg hover:bg-system-focus/90 transition-colors font-medium"
         >
           Создать ситуацию
         </Link>
@@ -499,13 +388,49 @@ function ActiveExperimentsSection({ quests, nodeDescriptions, onQuestUpdate, toa
   return (
     <div>
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-ui-text-main mb-2">Мои активные эксперименты</h2>
+        <h2 className="text-2xl font-bold text-ash-light mb-2">Мои активные эксперименты</h2>
         <p className="text-ui-text-muted">Эксперименты, над которыми вы работаете прямо сейчас</p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {quests.map((quest) => (
-          <QuestCard key={quest.id} quest={quest} nodeDescriptions={nodeDescriptions} onQuestUpdate={onQuestUpdate} toast={toast} />
-        ))}
+        {quests.map((quest) => {
+          const steps = quest.steps || [];
+          const completedSteps = steps.filter((step: any) => step.completed || step.status === 'completed').length;
+          
+          // Гипотеза квеста (берём из hypothesis, criteria или description)
+          const hypothesis = (quest as any)?.hypothesis || 
+                            (quest.criteria as any)?.hypothesis ||
+                            (quest.description && quest.description.length > 20 ? quest.description.slice(0, 150) : undefined);
+          
+          // XP награда
+          const xpReward = quest.reward?.xp || 0;
+          
+          // Влияние на дерево (массив узлов) - показываем все связанные узлы
+          const treeImpact = quest.linked_nodes?.map((nodeId: string) => ({
+            nodeName: getNodeName(nodeId, nodeDescriptions),
+            percentage: quest.reward?.nodes?.[nodeId] || 5, // дефолт 5% если не указано
+          })) || [];
+          
+          const questTypeMap: Record<string, QuestType> = { 'micro': 'micro', 'weekly': 'weekly', 'story': 'story', 'in-person': 'default' };
+          const questStatusMap: Record<string, QuestStatus> = { 'active': 'in_progress', 'done': 'completed', 'backlog': 'available', 'archived': 'locked' };
+          
+          return (
+            <NewQuestCard
+              key={quest.id}
+              questId={quest.id}
+              title={quest.title}
+              hypothesis={hypothesis}
+              questType={questTypeMap[quest.type] || 'default'}
+              difficulty="intermediate"
+              status={questStatusMap[quest.status] || 'available'}
+              completedSteps={completedSteps}
+              totalSteps={steps.length}
+              xpReward={xpReward}
+              treeImpact={treeImpact}
+              estimatedMinutes={quest.type === 'micro' ? 5 : quest.type === 'weekly' ? 30 : 60}
+              onClick={() => router.push(`/quests/${quest.id}`)}
+            />
+          );
+        })}
       </div>
     </div>
   );
@@ -533,6 +458,7 @@ function BaseQuestsSection({
   setLabelFilter: (filter: string) => void,
   tree: SemanticTree | null
 }) {
+  const router = useRouter();
   // Фильтруем квесты по типу (верхнеуровневый фильтр)
   const filteredByType = useMemo(() => {
     if (typeFilter === 'all') return quests;
@@ -672,7 +598,7 @@ function BaseQuestsSection({
 
   if (quests.length === 0) {
     return (
-      <div className="bg-bg-panel border border-ui-border-soft rounded-lg shadow-panel p-12 text-center">
+      <div className="bg-graphite-structure border border-ui-border-soft rounded-lg shadow-panel p-12 text-center">
         <p className="text-ui-text-muted">Нет квестов в этой категории</p>
       </div>
     );
@@ -681,40 +607,42 @@ function BaseQuestsSection({
   return (
     <div>
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-ui-text-main mb-2">Базовые квесты</h2>
-        <p className="text-ui-text-muted">Все квесты из базы (micro, weekly, story)</p>
+        <h2 className="text-2xl font-bold text-ash-light mb-2">Базовые квесты</h2>
+        <p className="text-ui-text-muted">Все квесты из базы (микро-квест, недельный, сюжетный)</p>
       </div>
 
       {/* Фильтры */}
       <div className="mb-6 space-y-4">
         {/* Фильтр по типу */}
-        <div>
-          <p className="text-sm text-ui-text-muted mb-2">Тип квеста:</p>
-          <div className="flex gap-2 flex-wrap">
+        <fieldset>
+          <legend className="text-sm text-ui-text-muted mb-2">Тип квеста:</legend>
+          <div className="flex gap-2 flex-wrap" role="group" aria-label="Фильтр по типу квеста">
             {(['all', 'micro', 'weekly', 'story'] as const).map((type) => (
               <button
                 key={type}
                 onClick={() => setTypeFilter(type)}
-                className={`px-4 py-2 rounded border transition-colors text-sm ${
+                aria-pressed={typeFilter === type}
+                className={`px-4 py-2 min-h-[44px] rounded-lg border transition-colors text-sm ${
                   typeFilter === type
-                    ? 'bg-bg-secondary border-system-focus text-system-focus'
-                    : 'bg-bg-panel border-ui-border-soft text-ui-text-muted hover:border-ui-border-strong hover:text-ui-text-main'
+                    ? 'bg-obsidian-core border-strategic-blue text-strategic-blue'
+                    : 'bg-graphite-structure border-ui-border-soft text-ui-text-muted hover:border-ui-border-strong hover:text-ash-light'
                 }`}
               >
-                {type === 'all' ? 'Все' : type === 'micro' ? 'Micro' : type === 'weekly' ? 'Weekly' : 'Story'}
+                {type === 'all' ? 'Все' : type === 'micro' ? 'Микро-квест' : type === 'weekly' ? 'Недельный' : 'Сюжетный'}
               </button>
             ))}
           </div>
-        </div>
+        </fieldset>
 
         {/* Фильтр по лейблам (выпадающий список) - показывает только способности из отфильтрованных квестов */}
         {availableLabels.length > 0 && (
-          <div>
-            <p className="text-sm text-ui-text-muted mb-2">Проверяет способность:</p>
+          <fieldset>
+            <legend className="text-sm text-ui-text-muted mb-2">Проверяет способность:</legend>
             <select
               value={labelFilter}
               onChange={(e) => setLabelFilter(e.target.value)}
-              className="px-4 py-2 bg-bg-panel border border-ui-border-soft rounded text-ui-text-main hover:border-ui-border-strong transition-colors text-sm min-w-[200px]"
+              aria-label="Фильтр по способности"
+              className="px-4 py-2 min-h-[44px] bg-graphite-structure border border-ui-border-soft rounded-lg text-ash-light hover:border-ui-border-strong focus:border-strategic-blue focus:outline-none focus:ring-2 focus:ring-strategic-blue/30 transition-colors text-sm min-w-[200px]"
             >
               <option value="all">Все способности</option>
               {availableLabels.map((nodeId) => (
@@ -723,28 +651,53 @@ function BaseQuestsSection({
                 </option>
               ))}
             </select>
-          </div>
+          </fieldset>
         )}
       </div>
 
       {/* Список квестов */}
       {filteredQuests.length === 0 ? (
-        <div className="bg-bg-panel border border-ui-border-soft rounded-lg shadow-panel p-12 text-center">
+        <div className="bg-graphite-structure border border-ui-border-soft rounded-lg shadow-panel p-12 text-center">
           <p className="text-ui-text-muted">Нет квестов, соответствующих выбранным фильтрам</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredQuests.map((quest) => {
-            const complexity = getQuestComplexity(quest, tree, nodeDescriptions);
+            const steps = quest.steps || [];
+            const completedSteps = steps.filter((step: any) => step.completed || step.status === 'completed').length;
+            
+            // Гипотеза квеста (берём из hypothesis, criteria или description)
+            const hypothesis = (quest as any)?.hypothesis || 
+                              (quest.criteria as any)?.hypothesis ||
+                              (quest.description && quest.description.length > 20 ? quest.description.slice(0, 150) : undefined);
+            
+            // XP награда
+            const xpReward = quest.reward?.xp || 0;
+            
+            // Влияние на дерево (массив узлов) - показываем все связанные узлы
+            const treeImpact = quest.linked_nodes?.map((nodeId: string) => ({
+              nodeName: getNodeName(nodeId, nodeDescriptions),
+              percentage: quest.reward?.nodes?.[nodeId] || 5, // дефолт 5% если не указано
+            })) || [];
+            
+            const questTypeMap: Record<string, QuestType> = { 'micro': 'micro', 'weekly': 'weekly', 'story': 'story', 'in-person': 'default' };
+            const questStatusMap: Record<string, QuestStatus> = { 'active': 'in_progress', 'done': 'completed', 'backlog': 'available', 'archived': 'locked' };
+            
             return (
-              <QuestCard 
-                key={quest.id} 
-                quest={quest} 
-                nodeDescriptions={nodeDescriptions} 
-                onQuestUpdate={onQuestUpdate} 
-                toast={toast}
-                complexity={complexity}
-                tree={tree}
+              <NewQuestCard
+                key={quest.id}
+                questId={quest.id}
+                title={quest.title}
+                hypothesis={hypothesis}
+                questType={questTypeMap[quest.type] || 'default'}
+                difficulty="intermediate"
+                status={questStatusMap[quest.status] || 'available'}
+                completedSteps={completedSteps}
+                totalSteps={steps.length}
+                xpReward={xpReward}
+                treeImpact={treeImpact}
+                estimatedMinutes={quest.type === 'micro' ? 5 : quest.type === 'weekly' ? 30 : 60}
+                onClick={() => router.push(`/quests/${quest.id}`)}
               />
             );
           })}
@@ -764,6 +717,7 @@ function QuestsSection({ quests, title, subtitle, nodeDescriptions, onQuestUpdat
   toast: any,
   tree?: SemanticTree | null
 }) {
+  const router = useRouter();
   // Функция для определения уровня узла
   const getNodeLevel = (nodeId: string, tree: SemanticTree | null, nodeDescriptions?: any): { level: number; maxLevel: number } => {
     if (!tree || !tree.nodes) return { level: 0, maxLevel: 0 };
@@ -850,7 +804,7 @@ function QuestsSection({ quests, title, subtitle, nodeDescriptions, onQuestUpdat
   };
   if (quests.length === 0) {
     return (
-      <div className="bg-bg-panel border border-ui-border-soft rounded-lg shadow-panel p-12 text-center">
+      <div className="bg-graphite-structure border border-ui-border-soft rounded-lg shadow-panel p-12 text-center">
         <p className="text-ui-text-muted">Нет квестов в этой категории</p>
       </div>
     );
@@ -859,21 +813,46 @@ function QuestsSection({ quests, title, subtitle, nodeDescriptions, onQuestUpdat
   return (
     <div>
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-ui-text-main mb-2">{title}</h2>
+        <h2 className="text-2xl font-bold text-ash-light mb-2">{title}</h2>
         <p className="text-ui-text-muted">{subtitle}</p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {quests.map((quest) => {
-          const complexity = getQuestComplexity(quest, tree || null, nodeDescriptions);
+          const steps = quest.steps || [];
+          const completedSteps = steps.filter((step: any) => step.completed || step.status === 'completed').length;
+          
+          // Гипотеза квеста (берём из hypothesis, criteria или description)
+          const hypothesis = (quest as any)?.hypothesis || 
+                            (quest.criteria as any)?.hypothesis ||
+                            (quest.description && quest.description.length > 20 ? quest.description.slice(0, 150) : undefined);
+          
+          // XP награда
+          const xpReward = quest.reward?.xp || 0;
+          
+          // Влияние на дерево (массив узлов) - показываем все связанные узлы
+          const treeImpact = quest.linked_nodes?.map((nodeId: string) => ({
+            nodeName: getNodeName(nodeId, nodeDescriptions),
+            percentage: quest.reward?.nodes?.[nodeId] || 5, // дефолт 5% если не указано
+          })) || [];
+          
+          const questTypeMap: Record<string, QuestType> = { 'micro': 'micro', 'weekly': 'weekly', 'story': 'story', 'in-person': 'default' };
+          const questStatusMap: Record<string, QuestStatus> = { 'active': 'in_progress', 'done': 'completed', 'backlog': 'available', 'archived': 'locked' };
+          
           return (
-            <QuestCard 
-              key={quest.id} 
-              quest={quest} 
-              nodeDescriptions={nodeDescriptions} 
-              onQuestUpdate={onQuestUpdate} 
-              toast={toast}
-              complexity={complexity}
-              tree={tree || null}
+            <NewQuestCard
+              key={quest.id}
+              questId={quest.id}
+              title={quest.title}
+              hypothesis={hypothesis}
+              questType={questTypeMap[quest.type] || 'default'}
+              difficulty="intermediate"
+              status={questStatusMap[quest.status] || 'available'}
+              completedSteps={completedSteps}
+              totalSteps={steps.length}
+              xpReward={xpReward}
+              treeImpact={treeImpact}
+              estimatedMinutes={quest.type === 'micro' ? 5 : quest.type === 'weekly' ? 30 : 60}
+              onClick={() => router.push(`/quests/${quest.id}`)}
             />
           );
         })}
@@ -883,241 +862,365 @@ function QuestsSection({ quests, title, subtitle, nodeDescriptions, onQuestUpdat
 }
 
 // Компонент для секции кейсов
-function CasesSection({ cases }: { cases: InteractiveCase[] }) {
+function CasesSection({ cases, nodeDescriptions, tree }: { cases: InteractiveCase[], nodeDescriptions: any, tree?: SemanticTree | null }) {
+  const router = useRouter();
+  const [caseProgress, setCaseProgress] = useState<CaseProgress>({ solvedCases: [], nodeProgress: {} });
+  const [showLockedModal, setShowLockedModal] = useState<{ show: boolean; message: string; nodeId?: string }>({ show: false, message: '' });
+  
+  // Загружаем квесты для проверки завершенных квестов на узлах
+  const { data: questsData } = useQuery({
+    queryKey: ['quests'],
+    queryFn: () => getQuests(),
+    staleTime: 1000 * 60 * 5, // 5 минут
+  });
+  const quests = questsData?.quests || [];
+
+  // Загружаем прогресс при монтировании и при возврате на страницу
+  useEffect(() => {
+    loadProgress();
+    
+    // Обновляем прогресс при фокусе на окне (когда пользователь возвращается)
+    const handleFocus = () => {
+      loadProgress();
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
+
+  async function loadProgress() {
+    try {
+      // Load progress from API (single source of truth - database)
+      const apiProgress = await getCaseProgress();
+      setCaseProgress(apiProgress);
+    } catch (error) {
+      console.error('Failed to load case progress:', error);
+    }
+  }
+
+  // Функция для определения уровня узла
+  const getNodeLevel = (nodeId: string | undefined, tree: SemanticTree | null | undefined, nodeDescriptions?: any): { level: number; maxLevel: number } => {
+    if (!nodeId || !tree || !tree.nodes) return { level: 1, maxLevel: 1 };
+    
+    // Ищем узел по node_id (точное совпадение)
+    let node = tree.nodes.find((n: any) => n.node_id === nodeId);
+    
+    // Если не нашли по node_id, пытаемся найти по названию из nodeDescriptions
+    if (!node && nodeDescriptions) {
+      const nodeName = getNodeName(nodeId, nodeDescriptions);
+      if (nodeName && nodeName !== nodeId) {
+        // Пытаемся найти узел по названию (частичное совпадение)
+        node = tree.nodes.find((n: any) => {
+          const nodeNameLower = nodeName.toLowerCase();
+          const treeNodeNameLower = (n.name || '').toLowerCase();
+          return treeNodeNameLower.includes(nodeNameLower) || nodeNameLower.includes(treeNodeNameLower);
+        });
+      }
+    }
+    
+    // Если всё ещё не нашли, пробуем найти по частичному совпадению node_id
+    if (!node) {
+      node = tree.nodes.find((n: any) => {
+        if (!n.node_id) return false;
+        return n.node_id.includes(nodeId) || nodeId.includes(n.node_id);
+      });
+    }
+    
+    if (!node) {
+      // Если узел не найден, возвращаем уровень 1 (fallback)
+      console.warn(`Node not found in tree: ${nodeId}`);
+      return { level: 1, maxLevel: 1 };
+    }
+    
+    // Если у узла нет branch_id, считаем его узлом уровня 1
+    if (!node.branch_id) {
+      return { level: 1, maxLevel: 1 };
+    }
+    
+    // Получаем все узлы этой ветки
+    const branchNodes = tree.nodes.filter((n: any) => n.branch_id === node.branch_id);
+    
+    if (branchNodes.length === 0) {
+      return { level: 1, maxLevel: 1 };
+    }
+    
+    // Сортируем узлы ветки по xp_required для определения уровня
+    const sortedNodes = [...branchNodes].sort((a, b) => 
+      (a.xp_required || 0) - (b.xp_required || 0)
+    );
+    
+    const index = sortedNodes.findIndex((n: any) => n.node_id === node.node_id);
+    const level = index >= 0 ? index + 1 : 1; // Минимум уровень 1, если узел найден
+    const maxLevel = branchNodes.length;
+    
+    return { level, maxLevel };
+  };
+
+  // Функция для подсчета завершенных квестов на узле
+  const getCompletedQuestsOnNode = (nodeId: string): number => {
+    if (!quests || quests.length === 0) return 0;
+    return quests.filter(
+      (q: Quest) => q.status === 'done' && q.linked_nodes?.includes(nodeId)
+    ).length;
+  };
+
+  // Функция для проверки доступности кейса
+  // ИЗМЕНЕНО: Убрана зависимость от node.state (который часто некорректен)
+  // Главный критерий - наличие завершённых квестов на узле
+  const isCaseAvailable = (case_: InteractiveCase): boolean => {
+    // 1. Базовые проверки - кейсы должны иметь node_id
+    if (!case_.node_id) {
+      console.error(`Case ${case_.id} has no node_id - needs manual assignment`);
+      return false; // Кейс без node_id недоступен до ручной привязки
+    }
+    
+    if (!tree || !tree.nodes) return false;
+    
+    // 2. Найти узел кейса в дереве
+    const node = tree.nodes.find((n: any) => n.node_id === case_.node_id);
+    if (!node) {
+      console.warn(`Node ${case_.node_id} not found in tree for case ${case_.id}`);
+      return false;
+    }
+    
+    // 3. ГЛАВНЫЙ КРИТЕРИЙ: Проверить наличие завершенных квестов на узле
+    // Для открытия ЛЮБЫХ кейсов требуется хотя бы 1 завершенный квест на узле
+    const completedQuestsOnNode = getCompletedQuestsOnNode(case_.node_id);
+    if (completedQuestsOnNode === 0) {
+      return false; // Нет завершенных квестов - кейс недоступен
+    }
+    
+    // 4. Проверить сложность кейса
+    const nodeProgress = caseProgress.nodeProgress[case_.node_id] || { progress: 0, solved: [] };
+    const solvedCount = nodeProgress.solved.length;
+    
+    // Найти решенные кейсы этого узла для проверки наличия intermediate
+    const solvedCasesForNode = nodeProgress.solved || [];
+    const hasIntermediate = solvedCasesForNode.some((caseId: string) => {
+      const solvedCase = cases.find((c: InteractiveCase) => c.id === caseId);
+      return solvedCase?.difficulty === 'intermediate';
+    });
+    
+    // Basic кейсы - доступны сразу после первого квеста
+    if (case_.difficulty === 'basic') {
+      return true; // Квест уже есть (проверено выше)
+    }
+    
+    // Intermediate кейсы - нужен прогресс ≥30% ИЛИ решен ≥1 basic кейс
+    if (case_.difficulty === 'intermediate') {
+      return nodeProgress.progress >= 30 || solvedCount >= 1;
+    }
+    
+    // Advanced кейсы - прогресс ≥60% ИЛИ решено ≥2 кейса (включая ≥1 intermediate)
+    if (case_.difficulty === 'advanced') {
+      return nodeProgress.progress >= 60 || (solvedCount >= 2 && hasIntermediate);
+    }
+    
+    return false;
+  };
+
+  // Функция ранжирования кейсов
+  const rankCases = (casesToRank: InteractiveCase[]): InteractiveCase[] => {
+    const difficultyOrder = { basic: 1, intermediate: 2, advanced: 3 };
+    
+    return [...casesToRank].sort((a, b) => {
+      const aSolved = caseProgress.solvedCases.includes(a.id);
+      const bSolved = caseProgress.solvedCases.includes(b.id);
+      const aAvailable = isCaseAvailable(a);
+      const bAvailable = isCaseAvailable(b);
+      
+      // 1. Приоритет: доступные → недоступные → завершённые
+      // Доступные и не решённые = приоритет 0
+      // Недоступные и не решённые = приоритет 1
+      // Решённые = приоритет 2
+      const getPriority = (solved: boolean, available: boolean): number => {
+        if (solved) return 2;
+        if (!available) return 1;
+        return 0;
+      };
+      
+      const aPriority = getPriority(aSolved, aAvailable);
+      const bPriority = getPriority(bSolved, bAvailable);
+      
+      if (aPriority !== bPriority) {
+        return aPriority - bPriority;
+      }
+      
+      // 2. По уровню узла (1 → 2)
+      const aLevelInfo = getNodeLevel(a.node_id, tree || null, nodeDescriptions);
+      const bLevelInfo = getNodeLevel(b.node_id, tree || null, nodeDescriptions);
+      
+      if (aLevelInfo.level !== bLevelInfo.level) {
+        return aLevelInfo.level - bLevelInfo.level;
+      }
+      
+      // 3. Если уровень одинаковый, сортируем по node_id для группировки по узлам
+      if (a.node_id !== b.node_id) {
+        return (a.node_id || '').localeCompare(b.node_id || '');
+      }
+      
+      // 4. По сложности внутри узла (basic → intermediate → advanced)
+      return difficultyOrder[a.difficulty] - difficultyOrder[b.difficulty];
+    });
+  };
+
+  // Ранжируем кейсы
+  const rankedCases = useMemo(() => rankCases(cases), [cases, caseProgress, tree, nodeDescriptions]);
+
+  // Функция для получения причины недоступности кейса
+  const getCaseUnavailableReason = (case_: InteractiveCase): { message: string; nodeId?: string } => {
+    if (!case_.node_id || !tree || !tree.nodes) {
+      return { message: 'Кейс не может быть открыт. Обратитесь к администратору.' };
+    }
+    
+    const node = tree.nodes.find((n: any) => n.node_id === case_.node_id);
+    if (!node) {
+      return { message: 'Узел для этого кейса не найден. Обратитесь к администратору.' };
+    }
+    
+    const nodeProgress = caseProgress.nodeProgress[case_.node_id] || { progress: 0, solved: [] };
+    const solvedCount = nodeProgress.solved.length;
+    const nodeName = getNodeName(case_.node_id, nodeDescriptions);
+    
+    // ГЛАВНЫЙ КРИТЕРИЙ: Проверка наличия завершенных квестов на узле
+    // Убрана зависимость от nodeState, так как статусы узлов не синхронизированы
+    const completedQuestsOnNode = getCompletedQuestsOnNode(case_.node_id);
+    if (completedQuestsOnNode === 0) {
+      return { 
+        message: `Для доступа к кейсам сначала выполните хотя бы один квест на узле «${nodeName}». Квесты дают практику в реальности, а кейсы — закрепление.`,
+        nodeId: case_.node_id
+      };
+    }
+    
+    // Проверка сложности (упрощённая логика без зависимости от nodeState)
+    if (case_.difficulty === 'intermediate') {
+      if (nodeProgress.progress < 30 && solvedCount < 1) {
+        return { 
+          message: `Сначала решите базовые кейсы узла «${nodeName}» или продолжайте выполнять квесты до 30% прогресса.`,
+          nodeId: case_.node_id
+        };
+      }
+    }
+    
+    if (case_.difficulty === 'advanced') {
+      
+      const solvedCasesForNode = nodeProgress.solved || [];
+      const hasIntermediate = solvedCasesForNode.some((caseId: string) => {
+        const solvedCase = cases.find((c: InteractiveCase) => c.id === caseId);
+        return solvedCase?.difficulty === 'intermediate';
+      });
+      
+      if (nodeProgress.progress < 60 && !(solvedCount >= 2 && hasIntermediate)) {
+        const solvedBasic = solvedCasesForNode.filter((id: string) => {
+          const solvedCase = cases.find((c: InteractiveCase) => c.id === id);
+          return solvedCase?.difficulty === 'basic';
+        }).length;
+        const solvedIntermediate = solvedCasesForNode.filter((id: string) => {
+          const solvedCase = cases.find((c: InteractiveCase) => c.id === id);
+          return solvedCase?.difficulty === 'intermediate';
+        }).length;
+        
+        if (solvedCount < 2) {
+          return { 
+            message: `Для доступа к сложному кейсу нужно решить минимум 2 кейса этого узла (включая хотя бы 1 intermediate) или развить способность до 60% прогресса. Решено: ${solvedCount} из 2 (basic: ${solvedBasic}, intermediate: ${solvedIntermediate}).`,
+            nodeId: case_.node_id
+          };
+        } else if (!hasIntermediate) {
+          return { 
+            message: `Для доступа к сложному кейсу нужно решить хотя бы 1 intermediate кейс этого узла или развить способность до 60% прогресса. Решено: ${solvedCount} кейсов, но нет intermediate.`,
+            nodeId: case_.node_id
+          };
+        }
+        
+        return { 
+          message: `Для доступа к этому кейсу нужно развить способность до 60% прогресса или решить больше кейсов. Прогресс: ${nodeProgress.progress}%`,
+          nodeId: case_.node_id
+        };
+      }
+    }
+    
+    return { 
+      message: 'Развитие — это процесс. Продолжайте выполнять квесты и решать кейсы предыдущего уровня.',
+      nodeId: case_.node_id
+    };
+  };
+
+  const handleCaseClick = (e: React.MouseEvent, case_: InteractiveCase) => {
+    if (!isCaseAvailable(case_)) {
+      e.preventDefault();
+      const { message, nodeId } = getCaseUnavailableReason(case_);
+      setShowLockedModal({ show: true, message, nodeId });
+      // Автозакрытие через 6 секунд (увеличено для более длинных сообщений и показа кнопки)
+      setTimeout(() => {
+        setShowLockedModal({ show: false, message: '' });
+      }, 6000);
+    }
+  };
+
+  // Сохраняем позицию скролла перед переходом к кейсу
+  const handleCaseLinkClick = () => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem(SCROLL_KEY, String(window.scrollY));
+    }
+  };
+
   if (cases.length === 0) {
     return (
-      <div className="bg-bg-panel border border-ui-border-soft rounded-lg shadow-panel p-12 text-center">
+      <div className="bg-graphite-structure border border-ui-border-soft rounded-lg shadow-panel p-12 text-center">
         <p className="text-ui-text-muted">Нет доступных кейсов</p>
       </div>
     );
   }
 
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'basic':
-        return 'bg-bg-secondary border-system-growth/30 text-system-growth';
-      case 'intermediate':
-        return 'bg-bg-secondary border-system-warning/30 text-system-warning';
-      case 'advanced':
-        return 'bg-bg-secondary border-system-critical/30 text-system-critical';
-      default:
-        return 'bg-bg-secondary border-ui-border-soft text-ui-text-muted';
-    }
-  };
-
   return (
     <div>
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-ui-text-main mb-2">Учебные кейсы</h2>
+        <h2 className="text-2xl font-bold text-ash-light mb-2">Учебные кейсы</h2>
         <p className="text-ui-text-muted">Практикуйтесь в принятии решений в безопасной среде</p>
       </div>
+      
+      {/* Модальное окно для недоступных кейсов */}
+      <CaseLockedModal
+        show={showLockedModal.show}
+        message={showLockedModal.message}
+        nodeId={showLockedModal.nodeId}
+        onClose={() => setShowLockedModal({ show: false, message: '' })}
+      />
+      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {cases.map((case_) => (
-          <Link
-            key={case_.id}
-            href={`/cases/${case_.id}`}
-            className="bg-bg-panel border border-ui-border-soft rounded-lg shadow-panel p-6 border-l-4 border-system-stable hover:shadow-active transition-shadow bg-panel-gradient block"
-          >
-            <div className="flex justify-between items-start mb-2">
-              <h3 className="font-semibold text-lg text-ui-text-main">{case_.title}</h3>
-              <span className={`text-xs px-2 py-1 rounded border ${getDifficultyColor(case_.difficulty)}`}>
-                {case_.difficulty === 'basic' ? 'Базовый' : 
-                 case_.difficulty === 'intermediate' ? 'Средний' : 
-                 case_.difficulty === 'advanced' ? 'Продвинутый' : case_.difficulty}
-              </span>
-            </div>
-            <p className="text-sm text-ui-text-muted mb-4 line-clamp-3">{case_.context}</p>
-            <div className="text-sm text-system-focus hover:text-system-focus/80 hover:underline">
-              Пройти кейс →
-            </div>
-          </Link>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// Карточка квеста с гипотезой и способностью
-function QuestCard({ 
-  quest, 
-  nodeDescriptions, 
-  onQuestUpdate, 
-  toast,
-  complexity,
-  tree
-}: { 
-  quest: any, 
-  nodeDescriptions: any, 
-  onQuestUpdate: () => void, 
-  toast: any,
-  complexity?: { minLevel: number; maxLevel: number; avgLevel: number },
-  tree?: SemanticTree | null
-}) {
-  const steps = quest.steps || [];
-  const completedSteps = steps.filter((step: any) => step.completed || step.status === 'completed').length;
-  const progressPercent = steps.length > 0 ? (completedSteps / steps.length) * 100 : 0;
-
-  // Извлекаем гипотезу - проверяем разные возможные места
-  // Для weekly квестов нужно извлекать только гипотезу, а не весь description с "Действия на неделю"
-  let hypothesis = (quest as any).hypothesis || 
-                   (quest.criteria as any)?.hypothesis || 
-                   (quest.criteria as any)?.theory_and_examples?.hypothesis;
-  
-  // Если гипотезы нет в специальных полях, извлекаем из description
-  if (!hypothesis && quest.description) {
-    const desc = quest.description;
-    // Для weekly квестов description может содержать "Действия на неделю" - обрезаем до этого места
-    const actionsIndex = desc.indexOf('Действия на неделю:');
-    if (actionsIndex !== -1) {
-      hypothesis = desc.substring(0, actionsIndex).trim();
-    } else {
-      // Ищем другие маркеры конца гипотезы
-      const markers = [
-        'Действия на неделю',
-        'Шаги выполнения:',
-        'Этап 1:',
-        'День 1:',
-        'Критерии успеха:',
-        'Награда:'
-      ];
-      let minIndex = desc.length;
-      for (const marker of markers) {
-        const index = desc.indexOf(marker);
-        if (index !== -1 && index < minIndex) {
-          minIndex = index;
-        }
-      }
-      if (minIndex < desc.length) {
-        hypothesis = desc.substring(0, minIndex).trim();
-      } else {
-        hypothesis = desc;
-      }
-    }
-  }
-
-  // Получаем способности, которые проверяет квест
-  const abilityNodes = quest.linked_nodes || [];
-
-  return (
-    <div className="bg-bg-panel border border-ui-border-soft rounded-lg shadow-panel p-6 border-l-4 border-system-focus bg-panel-gradient">
-      <div className="flex justify-between items-start mb-3">
-        <div className="flex-1">
-          <h3 className="font-semibold text-lg text-ui-text-main mb-2">{quest.title}</h3>
-          <div className="flex gap-2 flex-wrap items-center">
-            <span className="px-2 py-1 bg-bg-secondary border border-system-focus text-system-focus rounded text-xs">
-              {quest.type === 'micro' ? 'Micro' : 
-               quest.type === 'weekly' ? 'Weekly' : 
-               quest.type === 'story' ? 'Story' : 
-               quest.type === 'in-person' ? 'In-person' : quest.type}
-            </span>
-            <span
-              className={`text-xs px-2 py-1 rounded border ${
-                quest.status === 'active'
-                  ? 'bg-bg-secondary border-system-growth/30 text-system-growth'
-                  : quest.status === 'done'
-                  ? 'bg-bg-secondary border-ui-border-soft text-ui-text-muted'
-                  : 'bg-bg-secondary border-system-warning/30 text-system-warning'
-              }`}
-            >
-              {quest.status === 'active' ? 'Активный' : 
-               quest.status === 'done' ? 'Завершён' : 
-               quest.status === 'backlog' ? 'Отложен' : quest.status}
-            </span>
-            {/* Индикатор сложности квеста (кружочки) */}
-            {complexity && complexity.minLevel > 0 && (
-              <div className="flex items-center gap-1.5" title={`Уровень сложности: ${complexity.minLevel}/${complexity.maxLevel || 6}`}>
-                <div className="flex gap-0.5">
-                  {Array.from({ length: 6 }).map((_, i) => {
-                    // Вычисляем визуальный индикатор уровня на основе минимального уровня квеста
-                    // Если maxLevel известен, используем его, иначе предполагаем 6
-                    const maxLevelForCalc = complexity.maxLevel > 0 ? complexity.maxLevel : 6;
-                    const levelIndicator = Math.ceil((complexity.minLevel / maxLevelForCalc) * 6);
-                    return (
-                      <div
-                        key={i}
-                        className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                          i < levelIndicator
-                            ? 'bg-system-focus'
-                            : 'bg-ui-border-soft'
-                        }`}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Гипотеза */}
-      <div className="mb-4">
-        <p className="text-xs font-medium text-ui-text-muted mb-1">Гипотеза:</p>
-        <p className="text-sm text-ui-text-main">{hypothesis}</p>
-      </div>
-
-      {/* Способность, которую проверяет */}
-      {abilityNodes.length > 0 && (
-        <div className="mb-4">
-          <p className="text-xs font-medium text-ui-text-muted mb-2">Проверяет способность:</p>
-          <div className="flex flex-wrap gap-1">
-            {abilityNodes.map((nodeId: string) => (
-              <span
-                key={nodeId}
-                className="px-2 py-1 bg-bg-secondary border border-system-stable text-system-stable rounded text-xs"
-              >
-                {getNodeName(nodeId, nodeDescriptions)}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Прогресс выполнения */}
-      {steps.length > 0 && quest.status === 'active' && (
-        <div className="mb-4">
-          <div className="flex justify-between items-center mb-1">
-            <span className="text-xs text-ui-text-muted font-medium">Прогресс:</span>
-            <span className="text-xs text-ui-text-main">{completedSteps} из {steps.length} шагов</span>
-          </div>
-          <div className="w-full bg-bg-canvas rounded-full h-1 border border-ui-border-soft">
-            <div 
-              className="bg-system-growth rounded-full transition-all"
-              style={{ 
-                width: `${progressPercent}%`,
-                height: '100%'
+        {rankedCases.map((case_) => {
+          const isAvailable = isCaseAvailable(case_);
+          const isSolved = caseProgress.solvedCases.includes(case_.id);
+          
+          return (
+            <div
+              key={case_.id}
+              onClick={(e) => {
+                if (!isAvailable && !isSolved) {
+                  handleCaseClick(e, case_);
+                } else {
+                  handleCaseLinkClick();
+                  router.push(`/cases/${case_.id}`);
+                }
               }}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Действия */}
-      <div className="mt-4 space-y-2">
-        <Link
-          href={`/quests/${quest.id}`}
-          className="block w-full px-4 py-2 bg-bg-secondary border border-system-focus text-system-focus rounded hover:border-system-focus/70 hover:bg-bg-panel transition-colors text-center"
-        >
-          Открыть →
-        </Link>
-        {quest.status === 'backlog' && (
-          <button
-            onClick={async () => {
-              try {
-                await activateQuest(quest.id);
-                toast.showToast('Квест активирован', 'success');
-                onQuestUpdate();
-              } catch (error) {
-                toast.showToast('Ошибка при активации квеста', 'error');
-              }
-            }}
-            className="w-full px-4 py-2 bg-system-focus text-ui-text-main rounded hover:bg-system-focus/80 transition-colors text-center"
-          >
-            Активировать
-          </button>
-        )}
+              className={!isAvailable && !isSolved ? 'cursor-not-allowed' : 'cursor-pointer'}
+            >
+              <NewCaseCard
+                caseId={case_.id}
+                title={case_.title}
+                event={case_.event?.summary || case_.context?.split('\n')[0]?.slice(0, 150)}
+                difficulty={case_.difficulty as CaseDifficulty}
+                status={isSolved ? 'completed' : isAvailable ? 'available' : 'locked'}
+                selectedOption={isSolved ? 'A' : undefined}
+                treeImpact={case_.node_id ? [{
+                  nodeName: getNodeName(case_.node_id, nodeDescriptions),
+                  percentage: case_.difficulty === 'basic' ? 5 : case_.difficulty === 'intermediate' ? 10 : 15
+                }] : undefined}
+              />
+            </div>
+          );
+        })}
       </div>
     </div>
   );
 }
-

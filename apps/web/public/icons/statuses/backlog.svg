@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none" aria-hidden="true">
+  <!-- Transparent background (intended for dark UI) -->
+  <g stroke-linecap="round" stroke-linejoin="round">
+    <!-- Accent ring -->
+    <circle cx="256" cy="256" r="176" stroke="currentColor" stroke-width="20"/>
+
+    <!-- Inner "pending" clock -->
+    <circle cx="256" cy="256" r="86" stroke="currentColor" stroke-width="16"/>
+    <path d="M256 154v18" stroke="currentColor" stroke-width="16"/>
+
+    <!-- Pause symbol inside (waiting) -->
+    <path d="M238 220v72" stroke="currentColor" stroke-width="16"/>
+    <path d="M274 220v72" stroke="currentColor" stroke-width="16"/>
+  </g>
+</svg>

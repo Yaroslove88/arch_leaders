@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none" aria-hidden="true">
+  <!-- transparent background -->
+  <g stroke="currentColor" stroke-width="14" stroke-linecap="round" stroke-linejoin="round">
+    <!-- outer circle container -->
+    <circle cx="256" cy="256" r="180"/>
+
+    <!-- flask / test tube hybrid (structural, geometric) -->
+    <path d="M228 156h56"/>
+    <path d="M244 156v96l-72 124a34 34 0 0 0 30 52h108a34 34 0 0 0 30-52l-72-124v-96"/>
+
+    <!-- liquid level (experiment in progress) -->
+    <path d="M208 330h96" opacity="0.65"/>
+
+    <!-- inner geometric structure (testing / system) -->
+    <circle cx="236" cy="304" r="10"/>
+    <circle cx="276" cy="288" r="10" opacity="0.85"/>
+    <path d="M236 304l40-16" opacity="0.8"/>
+  </g>
+</svg>

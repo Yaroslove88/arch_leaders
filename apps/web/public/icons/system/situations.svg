@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none" aria-hidden="true">
+  <!-- transparent background -->
+  <g stroke="currentColor" stroke-width="14" stroke-linecap="round" stroke-linejoin="round">
+    <!-- outer container circle -->
+    <circle cx="256" cy="256" r="180"/>
+
+    <!-- document -->
+    <path d="M210 156h120l52 52v148a24 24 0 0 1-24 24H210a24 24 0 0 1-24-24V180a24 24 0 0 1 24-24z"/>
+    <path d="M330 156v52h52"/>
+
+    <!-- subtle text/structure lines -->
+    <path d="M224 244h144" opacity="0.8"/>
+    <path d="M224 284h132" opacity="0.7"/>
+    <path d="M224 324h108" opacity="0.6"/>
+
+    <!-- small structural marker (entry bullet) -->
+    <circle cx="224" cy="214" r="6"/>
+  </g>
+</svg>
