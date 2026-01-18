@@ -5,6 +5,7 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { TelegramAuthDto } from './dto/telegram-auth.dto';
+import { TelegramWebAppDto } from './dto/telegram-webapp.dto';
 import { Public } from './decorators/public.decorator';
 import { Roles } from './decorators/roles.decorator';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -238,6 +239,42 @@ export class AuthController {
     }
     
     return this.authService.loginWithTelegram(telegramAuthDto);
+  }
+
+  @Post('telegram-webapp')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Аутентификация через Telegram Mini App (WebApp)' })
+  @ApiBody({ type: TelegramWebAppDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Успешная аутентификация через Telegram Mini App',
+    schema: {
+      type: 'object',
+      properties: {
+        access_token: {
+          type: 'string',
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+        },
+        user: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            telegramUsername: { type: 'string' },
+            role: { type: 'string' },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Неверные данные запроса' })
+  @ApiResponse({ status: 401, description: 'Неверная подпись initData' })
+  async loginWithTelegramWebApp(@Body() webAppDto: TelegramWebAppDto) {
+    if (!webAppDto || !webAppDto.initData) {
+      throw new BadRequestException('initData is required');
+    }
+    
+    return this.authService.loginWithTelegramWebApp(webAppDto);
   }
 }
 

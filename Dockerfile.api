@@ -1,0 +1,62 @@
+# ===== BUILD STAGE =====
+FROM node:20-alpine AS builder
+
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@10.26.2 --activate
+
+WORKDIR /app
+
+# Copy workspace configuration
+COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
+COPY turbo.json tsconfig.json ./
+
+# Copy packages (shared libs)
+COPY packages/ ./packages/
+
+# Copy API app
+COPY apps/api/ ./apps/api/
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# Build shared packages first
+RUN pnpm --filter @leadership-architect/shared build || true
+
+# Generate Prisma client
+RUN cd apps/api && npx prisma generate
+
+# Build API
+RUN pnpm --filter @leadership-architect/api build
+
+# ===== PRODUCTION STAGE =====
+FROM node:20-alpine AS runner
+
+RUN corepack enable && corepack prepare pnpm@10.26.2 --activate
+
+WORKDIR /app
+
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nestjs
+
+# Copy built application
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/apps/api/dist ./dist
+COPY --from=builder /app/apps/api/node_modules ./apps/api/node_modules
+COPY --from=builder /app/apps/api/prisma ./prisma
+COPY --from=builder /app/packages ./packages
+
+# Copy entrypoint script
+COPY apps/api/docker-entrypoint.sh ./docker-entrypoint.sh
+RUN chmod +x ./docker-entrypoint.sh
+
+USER nestjs
+
+EXPOSE 3001
+
+ENV NODE_ENV=production
+ENV PORT=3001
+
+# Entrypoint runs migrations and seeds admin
+ENTRYPOINT ["./docker-entrypoint.sh"]
+CMD ["node", "dist/main.js"]
