@@ -67,6 +67,8 @@ export interface Quest {
   reward?: any;
   linked_nodes: string[];
   tags?: string[];
+  source?: string;
+  session_id?: string;
   created_at: string;
   updated_at: string;
   completed_at?: string;
