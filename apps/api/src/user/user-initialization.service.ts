@@ -74,15 +74,21 @@ export class UserInitializationService {
    * Создает базовые квесты из шаблонов
    */
   private async createBaseQuests(userId: string): Promise<void> {
-    const questTemplatesPath = path.join(
+    const questTemplatesPathAbs = '/app/data/quest-templates.json';
+    const questTemplatesPathRel = path.join(
       __dirname,
       '../../../data/quest-templates.json',
     );
+    const questTemplatesAbsExists = fs.existsSync(questTemplatesPathAbs);
+    const questTemplatesRelExists = fs.existsSync(questTemplatesPathRel);
+    const questTemplatesPath = questTemplatesAbsExists
+      ? questTemplatesPathAbs
+      : questTemplatesPathRel;
 
     const questTemplatesExists = fs.existsSync(questTemplatesPath);
     // #region agent log
     this.logger.warn(
-      `DIAG quest templates: path=${questTemplatesPath} exists=${questTemplatesExists}`,
+      `DIAG quest templates: abs=${questTemplatesPathAbs} absExists=${questTemplatesAbsExists} rel=${questTemplatesPathRel} relExists=${questTemplatesRelExists} chosen=${questTemplatesPath} chosenExists=${questTemplatesExists}`,
     );
     // #endregion
 
@@ -154,14 +160,25 @@ export class UserInitializationService {
    */
   private async unlockBaseNodes(userId: string): Promise<void> {
     // Получаем дерево для определения базовых узлов
-    const seedPath = path.join(
+    const seedPathAbs = '/app/packages/shared/src/seed/initial-ability-tree.json';
+    const seedPathCwd = path.join(
+      process.cwd(),
+      '../../packages/shared/src/seed/initial-ability-tree.json',
+    );
+    const seedPathRel = path.join(
       __dirname,
       '../../../packages/shared/src/seed/initial-ability-tree.json',
     );
+    const seedAbsExists = fs.existsSync(seedPathAbs);
+    const seedCwdExists = fs.existsSync(seedPathCwd);
+    const seedRelExists = fs.existsSync(seedPathRel);
+    const seedPath = seedAbsExists ? seedPathAbs : (seedCwdExists ? seedPathCwd : seedPathRel);
 
     const seedExists = fs.existsSync(seedPath);
     // #region agent log
-    this.logger.warn(`DIAG seed: path=${seedPath} exists=${seedExists}`);
+    this.logger.warn(
+      `DIAG seed: abs=${seedPathAbs} absExists=${seedAbsExists} cwd=${seedPathCwd} cwdExists=${seedCwdExists} rel=${seedPathRel} relExists=${seedRelExists} chosen=${seedPath} chosenExists=${seedExists}`,
+    );
     // #endregion
 
     if (!seedExists) {

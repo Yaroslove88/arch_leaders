@@ -3,6 +3,20 @@ set -e
 
 echo "🚀 Starting Leadership Architect API..."
 echo "DIAG entrypoint: ts=$(date -Iseconds) node=$(node -v 2>/dev/null || echo 'unknown')"
+echo "DIAG entrypoint: pwd=$(pwd) ls_app=$(ls -la /app 2>/dev/null | wc -l | tr -d ' ')"
+if [ -d "/app/data" ]; then
+  echo "DIAG entrypoint: /app/data exists"
+  ls -la /app/data || true
+else
+  echo "DIAG entrypoint: /app/data MISSING"
+fi
+for f in /app/data/builds.json /app/data/interactive-cases.json /app/data/node-descriptions.json /app/data/quest-templates.json; do
+  if [ -f "$f" ]; then
+    echo "DIAG entrypoint: file exists $f size=$(wc -c < \"$f\" 2>/dev/null || echo '?')"
+  else
+    echo "DIAG entrypoint: file MISSING $f"
+  fi
+done
 if [ -n "${DATABASE_URL}" ]; then
   # Не логируем сам DATABASE_URL (секрет), только факт наличия и префикс.
   echo "DIAG entrypoint: DATABASE_URL is set (prefix=$(printf '%s' "$DATABASE_URL" | cut -c1-12))"
