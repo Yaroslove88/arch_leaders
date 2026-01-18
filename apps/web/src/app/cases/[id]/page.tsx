@@ -423,7 +423,7 @@ export default function CasePage() {
                       {showHistory && (
                         <div className="mt-3">
                           <div className="bg-obsidian-core rounded-lg p-3 text-sm text-ui-text-main italic leading-relaxed">
-                            <p>"{story}"</p>
+                            <p>&ldquo;{story}&rdquo;</p>
                           </div>
                         </div>
                       )}
@@ -574,7 +574,7 @@ export default function CasePage() {
                         <p className="text-xs text-ui-text-muted uppercase font-semibold tracking-wide">Ключевой инсайт</p>
                         {case_.reflection.after_choice_insights.map((insight, i) => (
                           <p key={i} className="text-sm text-ui-text-main font-medium italic">
-                            "{insight}"
+                            &ldquo;{insight}&rdquo;
                           </p>
                         ))}
                       </div>

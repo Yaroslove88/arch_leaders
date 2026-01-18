@@ -359,8 +359,6 @@ export default function QuestsPage() {
                       <p className="text-xs text-ui-text-muted mb-2 font-medium">Связанные способности:</p>
                       <div className="flex flex-wrap gap-1">
                         {/* Импортируем названия способностей из контентной базы узлов */}
-                        {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-                        {/* @ts-ignore - JSON импорт */}
                         {quest.linked_nodes.slice(0, 3).map((nodeId: string) => (
                           <span
                             key={nodeId}

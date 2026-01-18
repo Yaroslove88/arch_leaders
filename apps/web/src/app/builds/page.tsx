@@ -272,7 +272,7 @@ export default function BuildsPage() {
                     )}
                   </div>
 
-                  <p className="text-sm text-ui-text-muted mb-2 italic">"{build.fantasy}"</p>
+                  <p className="text-sm text-ui-text-muted mb-2 italic">&ldquo;{build.fantasy}&rdquo;</p>
                   <p className="text-sm text-ui-text-main mb-4">{build.description}</p>
 
                   {status && (
