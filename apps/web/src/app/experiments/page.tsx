@@ -350,7 +350,7 @@ export default function ExperimentsPage() {
               nodeDescriptions={nodeDescriptions}
               onQuestUpdate={() => queryClient.invalidateQueries({ queryKey: ['quests'] })}
               toast={toast}
-              tree={tree}
+              tree={tree ?? null}
             />
           )}
           {activeTab === 'live-quests' && (
@@ -361,7 +361,7 @@ export default function ExperimentsPage() {
               nodeDescriptions={nodeDescriptions}
               onQuestUpdate={() => queryClient.invalidateQueries({ queryKey: ['quests'] })}
               toast={toast}
-              tree={tree}
+              tree={tree ?? null}
             />
           )}
           {activeTab === 'base-quests' && (
@@ -374,7 +374,7 @@ export default function ExperimentsPage() {
               setTypeFilter={setBaseQuestTypeFilter}
               labelFilter={baseQuestLabelFilter}
               setLabelFilter={setBaseQuestLabelFilter}
-              tree={tree}
+              tree={tree ?? null}
             />
           )}
           {activeTab === 'completed' && (
@@ -744,7 +744,7 @@ function BaseQuestsSection({
                 onQuestUpdate={onQuestUpdate} 
                 toast={toast}
                 complexity={complexity}
-                tree={tree}
+                tree={tree ?? null}
               />
             );
           })}

@@ -226,14 +226,14 @@ export default function ArchitecturePage() {
               activeBuilds={activeBuilds}
               dominantBranches={dominantBranches}
               imbalances={imbalances}
-              tree={tree}
+              tree={tree ?? null}
               setActiveTab={setActiveTab}
               setSelectedBranch={setSelectedBranch}
             />
           )}
           {activeTab === 'tree' && (
             <TreeView 
-              tree={tree}
+              tree={tree ?? null}
               selectedBranch={selectedBranch}
               setSelectedBranch={setSelectedBranch}
               selectedNode={selectedNode}
@@ -246,7 +246,7 @@ export default function ArchitecturePage() {
             <BuildsView 
               currentBuilds={currentBuilds}
               builds={buildsData?.builds || []}
-              tree={tree}
+              tree={tree ?? null}
             />
           )}
           {activeTab === 'history' && (

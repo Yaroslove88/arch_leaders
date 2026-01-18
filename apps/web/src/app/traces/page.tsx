@@ -387,7 +387,7 @@ export default function TracesPage() {
               setGroupBy={setGroupBy}
               mostUsedAbilities={mostUsedAbilities}
               missingEvidence={missingEvidence}
-              tree={tree}
+              tree={tree ?? null}
             />
           )}
           {activeView === 'connections' && (
@@ -397,11 +397,11 @@ export default function TracesPage() {
               entries={entries}
               sessions={sessionsData?.sessions || []}
               activeBuilds={activeBuilds}
-              tree={tree}
+              tree={tree ?? null}
             />
           )}
           {activeView === 'journal' && (
-            <JournalView evidences={evidences} tree={tree} />
+            <JournalView evidences={evidences} tree={tree ?? null} />
           )}
         </div>
       </div>
