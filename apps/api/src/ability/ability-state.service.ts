@@ -227,5 +227,84 @@ export class AbilityStateService {
 
     return changeLog.id;
   }
+
+  /**
+   * Применить опыт от выполнения квеста/кейса к узлу способностей
+   * @param userId - ID пользователя
+   * @param nodeId - ID узла способностей
+   * @param baseXp - базовый опыт
+   * @param reflectionXp - опыт за рефлексию
+   * @param difficulty - сложность квеста/кейса
+   */
+  async applyQuestExperience(
+    userId: string,
+    nodeId: string,
+    baseXp: number,
+    reflectionXp: number,
+    difficulty: 'basic' | 'intermediate' | 'advanced',
+  ): Promise<void> {
+    const totalXp = baseXp + reflectionXp;
+    
+    // Рассчитываем прирост прогресса на основе XP и сложности
+    // Базовый множитель: 1 XP = 0.001 progress (0.1%)
+    // Модификатор сложности: basic=1, intermediate=1.2, advanced=1.5
+    const difficultyMultiplier = 
+      difficulty === 'basic' ? 1 : 
+      difficulty === 'intermediate' ? 1.2 : 1.5;
+    
+    const progressIncrement = (totalXp * 0.001 * difficultyMultiplier);
+
+    this.logger.log(
+      `Applying ${totalXp} XP (${baseXp} base + ${reflectionXp} reflection) to node ${nodeId} for user ${userId}`,
+    );
+
+    // Получаем или создаем запись состояния
+    const existing = await this.prisma.userAbilityState.findUnique({
+      where: {
+        user_id_node_id: {
+          user_id: userId,
+          node_id: nodeId,
+        },
+      },
+    });
+
+    if (existing) {
+      // Обновляем прогресс
+      const newProgress = Math.min(Number(existing.progress) + progressIncrement, 1);
+      const newRelevance = Math.min(Number(existing.relevance) + 0.1, 1);
+      
+      await this.prisma.userAbilityState.update({
+        where: {
+          user_id_node_id: {
+            user_id: userId,
+            node_id: nodeId,
+          },
+        },
+        data: {
+          progress: newProgress,
+          relevance: newRelevance,
+          last_updated_at: new Date(),
+        },
+      });
+      
+      this.logger.log(
+        `Updated node ${nodeId} progress: ${Number(existing.progress).toFixed(3)} -> ${newProgress.toFixed(3)}`,
+      );
+    } else {
+      // Создаем новую запись
+      await this.prisma.userAbilityState.create({
+        data: {
+          user_id: userId,
+          node_id: nodeId,
+          state: 'available',
+          progress: progressIncrement,
+          relevance: 0.1,
+          last_updated_at: new Date(),
+        },
+      });
+      
+      this.logger.log(`Created new ability state for node ${nodeId} with progress ${progressIncrement.toFixed(3)}`);
+    }
+  }
 }
 

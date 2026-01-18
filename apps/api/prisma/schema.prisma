@@ -504,4 +504,20 @@ model UserStatsRollup {
   @@map("user_stats_rollup")
 }
 
+// Case Progress - прогресс пользователя по кейсам
+model CaseProgress {
+  id              String   @id @default(uuid())
+  user_id         String
+  case_id         String
+  node_id         String
+  selected_option String
+  xp_earned       Int      @default(0)
+  completed_at    DateTime @default(now())
+  
+  @@unique([user_id, case_id])
+  @@index([user_id, completed_at(sort: Desc)])
+  @@index([node_id, completed_at(sort: Desc)])
+  @@map("case_progress")
+}
+
 
