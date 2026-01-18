@@ -866,6 +866,8 @@ export interface BuildStatus {
   build_id: string;
   name: string;
   icon: string;
+  fantasy: string;
+  color: string;
   is_active: boolean;
   activation_percentage: number;
   matched_conditions: string[];
