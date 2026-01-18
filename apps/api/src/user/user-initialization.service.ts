@@ -33,7 +33,13 @@ export class UserInitializationService {
     });
 
     // Если нет состояний узлов или нет базовых квестов, нужна инициализация
-    return stateCount === 0 || questCount === 0;
+    const needsInit = stateCount === 0 || questCount === 0;
+    // #region agent log
+    this.logger.warn(
+      `DIAG needsInitialization: userId=${userId} stateCount=${stateCount} questCount=${questCount} needsInit=${needsInit}`,
+    );
+    // #endregion
+    return needsInit;
   }
 
   /**

@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, ConflictException, BadRequestException, Inject, InternalServerErrorException, forwardRef } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, BadRequestException, Inject, InternalServerErrorException, forwardRef, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
@@ -19,6 +19,8 @@ export interface JwtPayload {
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     @Inject(JwtService)
     private readonly jwtService: JwtService,
@@ -116,6 +118,11 @@ export class AuthService {
    * Аутентификация пользователя
    */
   async login(loginDto: LoginDto): Promise<{ access_token: string; user: { id: string; telegramUsername: string; role: string } }> {
+    // #region agent log
+    this.logger.warn(
+      `DIAG auth.login called: hasUsername=${!!loginDto?.telegramUsername} hasPassword=${!!loginDto?.password} hasApiKey=${!!loginDto?.apiKey}`,
+    );
+    // #endregion
     // Legacy поддержка API ключа
     if (loginDto.apiKey) {
       const isValid = await this.validateApiKey(loginDto.apiKey);
@@ -163,6 +170,11 @@ export class AuthService {
     if (this.userInitializationService) {
       try {
         const needsInit = await this.userInitializationService.needsInitialization(user.id);
+        // #region agent log
+        this.logger.warn(
+          `DIAG auth.login init decision: needsInit=${needsInit} userId=${user.id}`,
+        );
+        // #endregion
         if (needsInit) {
           // Инициализируем пользователя синхронно (блокируем ответ до завершения)
           await this.userInitializationService.initializeUser(user.id);
@@ -381,6 +393,11 @@ export class AuthService {
    * Аутентификация через Telegram Mini App (WebApp)
    */
   async loginWithTelegramWebApp(webAppDto: TelegramWebAppDto): Promise<{ access_token: string; user: { id: string; telegramUsername: string; role: string } }> {
+    // #region agent log
+    this.logger.warn(
+      `DIAG auth.loginWithTelegramWebApp called: initDataPresent=${!!webAppDto?.initData}`,
+    );
+    // #endregion
     const { isValid, user: tgUser } = this.verifyTelegramWebAppData(webAppDto.initData);
     
     if (!isValid) {
@@ -438,6 +455,11 @@ export class AuthService {
    * Аутентификация через Telegram OAuth
    */
   async loginWithTelegram(telegramAuthDto: TelegramAuthDto): Promise<{ access_token: string; user: { id: string; telegramUsername: string; role: string } }> {
+    // #region agent log
+    this.logger.warn(
+      `DIAG auth.loginWithTelegram called: hasId=${!!telegramAuthDto?.id} hasHash=${!!telegramAuthDto?.hash}`,
+    );
+    // #endregion
     // Верифицируем hash (опционально, если настроен TELEGRAM_BOT_TOKEN)
     const isValid = this.verifyTelegramHash(telegramAuthDto);
     if (!isValid) {
@@ -486,7 +508,14 @@ export class AuthService {
     // Инициализируем нового пользователя или проверяем инициализацию существующего
     if (this.userInitializationService) {
       try {
-        if (isNewUser || await this.userInitializationService.needsInitialization(user.id)) {
+        const needsInit =
+          isNewUser || (await this.userInitializationService.needsInitialization(user.id));
+        // #region agent log
+        this.logger.warn(
+          `DIAG auth.loginWithTelegram init decision: isNewUser=${isNewUser} needsInit=${needsInit} userId=${user.id}`,
+        );
+        // #endregion
+        if (needsInit) {
           // Инициализируем пользователя синхронно (блокируем ответ до завершения)
           await this.userInitializationService.initializeUser(user.id);
         }
