@@ -41,6 +41,14 @@ export class UserInitializationService {
    */
   async initializeUser(userId: string): Promise<void> {
     this.logger.log(`🚀 Initializing user ${userId}...`);
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/d62f3774-e975-44dd-84db-681709a5074c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H-U1',location:'apps/api/src/user/user-initialization.service.ts:initializeUser',message:'initializeUser called',data:{cwd:process.cwd(),dirname:__dirname,userIdPresent:!!userId},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
+    // #region agent log
+    this.logger.warn(
+      `DIAG initializeUser context: cwd=${process.cwd()} __dirname=${__dirname}`,
+    );
+    // #endregion
 
     try {
       // 1. Создаем базовые квесты
@@ -65,8 +73,18 @@ export class UserInitializationService {
       '../../../data/quest-templates.json',
     );
 
-    if (!fs.existsSync(questTemplatesPath)) {
+    const questTemplatesExists = fs.existsSync(questTemplatesPath);
+    // #region agent log
+    this.logger.warn(
+      `DIAG quest templates: path=${questTemplatesPath} exists=${questTemplatesExists}`,
+    );
+    // #endregion
+
+    if (!questTemplatesExists) {
       this.logger.warn(`Quest templates file not found: ${questTemplatesPath}`);
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/d62f3774-e975-44dd-84db-681709a5074c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H-U2',location:'apps/api/src/user/user-initialization.service.ts:createBaseQuests',message:'quest templates missing',data:{questTemplatesPath,cwd:process.cwd(),dirname:__dirname},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       return;
     }
 
@@ -76,6 +94,9 @@ export class UserInitializationService {
     const templates = templatesData.quest_templates || [];
 
     this.logger.log(`📋 Creating ${templates.length} base quests for user ${userId}`);
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/d62f3774-e975-44dd-84db-681709a5074c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H-U2',location:'apps/api/src/user/user-initialization.service.ts:createBaseQuests',message:'quest templates loaded',data:{questTemplatesPath,templatesCount:Array.isArray(templates)?templates.length:-1},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
 
     let created = 0;
     let skipped = 0;
@@ -132,8 +153,16 @@ export class UserInitializationService {
       '../../../packages/shared/src/seed/initial-ability-tree.json',
     );
 
-    if (!fs.existsSync(seedPath)) {
+    const seedExists = fs.existsSync(seedPath);
+    // #region agent log
+    this.logger.warn(`DIAG seed: path=${seedPath} exists=${seedExists}`);
+    // #endregion
+
+    if (!seedExists) {
       this.logger.warn(`Seed file not found: ${seedPath}`);
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/d62f3774-e975-44dd-84db-681709a5074c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H-U3',location:'apps/api/src/user/user-initialization.service.ts:unlockBaseNodes',message:'seed file missing',data:{seedPath,cwd:process.cwd(),dirname:__dirname},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       return;
     }
 
@@ -146,6 +175,9 @@ export class UserInitializationService {
     this.logger.log(
       `🔓 Unlocking ${baseNodes.length} tier-1 (basic) nodes for user ${userId}`,
     );
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/d62f3774-e975-44dd-84db-681709a5074c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H-U3',location:'apps/api/src/user/user-initialization.service.ts:unlockBaseNodes',message:'seed loaded',data:{seedPath,baseNodesCount:Array.isArray(baseNodes)?baseNodes.length:-1},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
 
     for (const node of baseNodes) {
       try {
