@@ -203,7 +203,7 @@ export function AddEvidenceModal({
               {questTitle && (
                 <p className="text-sm text-ui-text-muted mt-2 flex items-center gap-2">
                   <span>⚔️</span>
-                  <span>Квест: "{questTitle}"</span>
+                  <span>Квест: «{questTitle}»</span>
                 </p>
               )}
               {(situationTitle || nodeName) && !questTitle && (
@@ -250,7 +250,7 @@ export function AddEvidenceModal({
               )}
               {!formData.text && (
                 <p className="text-xs text-ui-text-muted mt-2 italic">
-                  Пример: "{exampleText}"
+                  Пример: «{exampleText}»
                 </p>
               )}
             </div>

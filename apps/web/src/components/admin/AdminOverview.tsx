@@ -137,7 +137,7 @@ export function AdminOverview() {
                     {stats.failedJobs} задач завершились с ошибкой
                   </p>
                   <p className="text-sm text-tension-red/80">
-                    Требуется внимание: проверьте вкладку "Задачи"
+                    Требуется внимание: проверьте вкладку «Задачи»
                   </p>
                 </div>
               </div>

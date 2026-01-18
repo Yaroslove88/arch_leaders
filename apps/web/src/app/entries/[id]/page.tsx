@@ -194,7 +194,7 @@ export default function EntryPage() {
             <section className="bg-graphite-structure border border-ui-border-soft rounded-lg p-5">
               <div className="bg-obsidian-core rounded-lg p-4 border-l-4 border-strategic-blue">
                 <p className="text-ash-light leading-relaxed whitespace-pre-wrap">
-                  "{entry.text}"
+                  «{entry.text}»
                 </p>
               </div>
             </section>

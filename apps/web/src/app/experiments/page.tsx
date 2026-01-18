@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useQuests } from '../../hooks/useQuests';
@@ -22,7 +22,7 @@ type ExperimentTab = 'active' | 'live-quests' | 'base-quests' | 'cases' | 'compl
 // Сохранение позиции скролла
 const SCROLL_KEY = 'experiments_scroll_position';
 
-export default function ExperimentsPage() {
+function ExperimentsPageInner() {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<ExperimentTab>('active');
   const [baseQuestTypeFilter, setBaseQuestTypeFilter] = useState<'all' | 'micro' | 'weekly' | 'story'>('all');
@@ -224,7 +224,7 @@ export default function ExperimentsPage() {
               { id: 'completed', label: 'Готовые', count: completedQuests.length },
             ]}
             activeId={activeTab}
-            onSelect={(id) => setActiveTab(id as ExperimentTab)}
+            onSelect={(id: string) => setActiveTab(id as ExperimentTab)}
             scrollable
             ariaLabel="Типы экспериментов"
           />
@@ -281,6 +281,14 @@ export default function ExperimentsPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function ExperimentsPage() {
+  return (
+    <Suspense fallback={<LoadingSpinner fullScreen text="Загрузка экспериментов..." />}>
+      <ExperimentsPageInner />
+    </Suspense>
   );
 }
 

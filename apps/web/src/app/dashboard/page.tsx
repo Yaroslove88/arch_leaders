@@ -435,7 +435,7 @@ function DashboardContent() {
                 </p>
                 {activeQuests.length > 0 && (
                   <p className="text-sm text-ui-text-muted">
-                    Твой квест "{activeQuests[0]?.title}" ждёт.
+                    Твой квест «{activeQuests[0]?.title}» ждёт.
                   </p>
                 )}
                 <Link

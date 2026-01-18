@@ -297,7 +297,7 @@ export function JournalEntryCard({ record, tree, quests = [], sessions = [] }: J
             {(record.session?.insights_json?.[0] || record.session?.summary) && (
               <div className="p-2.5 bg-obsidian-core/50 rounded-lg border-l-2 border-sage-green/40">
                 <p className="text-[11px] text-ui-text-muted italic line-clamp-1">
-                  "{(record.session.insights_json?.[0]?.description || record.session.insights_json?.[0]?.text || record.session.summary).substring(0, 100)}..."
+                  «{(record.session.insights_json?.[0]?.description || record.session.insights_json?.[0]?.text || record.session.summary).substring(0, 100)}...»
                 </p>
               </div>
             )}
@@ -421,7 +421,7 @@ export function JournalEntryCard({ record, tree, quests = [], sessions = [] }: J
                   isSituation ? "bg-strategic-blue" : "bg-sage-green"
                 )} />
                 <p className="text-ash-light text-lg italic leading-relaxed font-medium pl-2">
-                  "{record.text}"
+                  «{record.text}»
                 </p>
               </div>
             </section>
@@ -611,7 +611,7 @@ export function JournalEntryCard({ record, tree, quests = [], sessions = [] }: J
                                     </span>
                                   </div>
                                   <p className="text-xs text-ui-text-muted leading-relaxed italic pr-2">
-                                    "{signal.signal}"
+                                    «{signal.signal}»
                                   </p>
                                 </div>
                               </div>

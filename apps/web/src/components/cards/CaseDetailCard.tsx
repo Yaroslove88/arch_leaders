@@ -296,7 +296,7 @@ export function CaseDetailCard({
               <p className="text-sm font-medium text-ash-light mb-2">💡 КЛЮЧЕВОЙ ИНСАЙТ</p>
               <div className="p-3 bg-strategic-blue/10 rounded border-l-2 border-strategic-blue">
                 <p className="text-sm text-ash-light italic leading-relaxed">
-                  "{keyInsight}"
+                  «{keyInsight}»
                 </p>
               </div>
             </div>

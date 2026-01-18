@@ -300,7 +300,7 @@ export default function DebugPage() {
             ))}
             {checks.length === 0 && !loading && (
               <p className="text-ui-text-muted text-center py-4">
-                Нажмите "Перезапустить" для запуска диагностики
+                Нажмите «Перезапустить» для запуска диагностики
               </p>
             )}
           </div>

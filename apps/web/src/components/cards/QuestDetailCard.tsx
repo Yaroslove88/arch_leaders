@@ -228,7 +228,7 @@ export function QuestDetailCard({
             <div className="flex-1">
               <p className="text-xs font-semibold text-ui-text-muted uppercase tracking-wide mb-2">Гипотеза</p>
               <p className="text-sm text-ash-light italic leading-relaxed">
-                "{hypothesis}"
+                «{hypothesis}»
               </p>
             </div>
           </div>
