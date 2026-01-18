@@ -37,8 +37,7 @@ docs/
 reports/
 plans/
 
-# Data files (should be in DB)
-data/
+# Data files (runtime JSON assets are required in container)
 backups/
 
 # Local configs
