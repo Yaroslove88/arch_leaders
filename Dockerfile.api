@@ -16,6 +16,9 @@ COPY packages/ ./packages/
 # Copy API app
 COPY apps/api/ ./apps/api/
 
+# Copy runtime data files (cases/builds/templates/etc.)
+COPY data/ ./data/
+
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
@@ -45,6 +48,7 @@ COPY --from=builder /app/apps/api/dist ./dist
 COPY --from=builder /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=builder /app/apps/api/prisma ./prisma
 COPY --from=builder /app/packages ./packages
+COPY --from=builder /app/data ./data
 
 # Copy entrypoint script
 COPY apps/api/docker-entrypoint.sh ./docker-entrypoint.sh
@@ -59,4 +63,4 @@ ENV PORT=3001
 
 # Entrypoint runs migrations and seeds admin
 ENTRYPOINT ["./docker-entrypoint.sh"]
-CMD ["node", "dist/main.js"]
+CMD ["node", "dist/apps/api/src/main.js"]

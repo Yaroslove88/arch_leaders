@@ -22,6 +22,9 @@ COPY packages/ ./packages/
 # Copy API app
 COPY apps/api/ ./apps/api/
 
+# Copy runtime data files (cases/builds/templates/etc.)
+COPY data/ ./data/
+
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
@@ -56,6 +59,7 @@ COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=builder /app/apps/api/prisma ./apps/api/prisma
 COPY --from=builder /app/packages ./packages
+COPY --from=builder /app/data ./data
 
 # Copy package.json for runtime
 COPY --from=builder /app/apps/api/package.json ./apps/api/
@@ -67,9 +71,11 @@ ENV PORT=3000
 
 WORKDIR /app/apps/api
 
-# Create entrypoint script that runs migrations then starts the app
-RUN echo '#!/bin/sh\necho "Running database migrations..."\nnpx prisma migrate deploy\necho "Starting application..."\nexec node dist/main.js' > /app/entrypoint.sh && chmod +x /app/entrypoint.sh
+# Use repo-managed entrypoint (runs migrations + seeds admin + exec)
+COPY --from=builder /app/apps/api/docker-entrypoint.sh ./docker-entrypoint.sh
+RUN chmod +x ./docker-entrypoint.sh
 
 USER nestjs
 
-CMD ["/bin/sh", "/app/entrypoint.sh"]
+ENTRYPOINT ["./docker-entrypoint.sh"]
+CMD ["node", "dist/apps/api/src/main.js"]
