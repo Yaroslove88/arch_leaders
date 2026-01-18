@@ -38,7 +38,7 @@ else
   echo "DIAG entrypoint: migrate deploy DONE ts=$(date -Iseconds)"
 fi
 
-# Hotfix: ensure required columns exist even if migrations are blocked (P3009).
+# Hotfix: ensure required columns and tables exist even if migrations are blocked (P3009).
 # This is idempotent and matches prisma migrations.
 echo "DIAG entrypoint: db hotfix START ts=$(date -Iseconds)"
 set +e
@@ -60,6 +60,85 @@ ADD COLUMN IF NOT EXISTS "is_verified" BOOLEAN NOT NULL DEFAULT false;
 
 -- Index for subscription queries
 CREATE INDEX IF NOT EXISTS "users_subscription_plan_idx" ON "users"("subscription_plan");
+
+-- Achievements table (from 20250115000000)
+CREATE TABLE IF NOT EXISTS "achievements" (
+    "id" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "scope" TEXT NOT NULL,
+    "node_id" TEXT,
+    "title" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
+    "threshold" DECIMAL(10,4) NOT NULL,
+    "icon" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "achievements_pkey" PRIMARY KEY ("id")
+);
+CREATE INDEX IF NOT EXISTS "achievements_scope_node_id_idx" ON "achievements"("scope", "node_id");
+CREATE INDEX IF NOT EXISTS "achievements_type_idx" ON "achievements"("type");
+
+-- User Achievements table (from 20250115000000)
+CREATE TABLE IF NOT EXISTS "user_achievements" (
+    "user_id" TEXT NOT NULL,
+    "achievement_id" TEXT NOT NULL,
+    "node_id" TEXT,
+    "unlocked_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "user_achievements_pkey" PRIMARY KEY ("user_id", "achievement_id")
+);
+CREATE INDEX IF NOT EXISTS "user_achievements_user_id_unlocked_at_idx" ON "user_achievements"("user_id", "unlocked_at" DESC);
+CREATE INDEX IF NOT EXISTS "user_achievements_achievement_id_idx" ON "user_achievements"("achievement_id");
+CREATE INDEX IF NOT EXISTS "user_achievements_node_id_idx" ON "user_achievements"("node_id");
+
+-- User Retention table
+CREATE TABLE IF NOT EXISTS "user_retention" (
+    "user_id" TEXT NOT NULL,
+    "current_streak" INTEGER NOT NULL DEFAULT 0,
+    "longest_streak" INTEGER NOT NULL DEFAULT 0,
+    "last_activity_at" TIMESTAMP(3),
+    "activity_dates" TEXT[] DEFAULT ARRAY[]::TEXT[],
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "user_retention_pkey" PRIMARY KEY ("user_id")
+);
+CREATE INDEX IF NOT EXISTS "user_retention_user_id_last_activity_at_idx" ON "user_retention"("user_id", "last_activity_at" DESC);
+CREATE INDEX IF NOT EXISTS "user_retention_last_activity_at_idx" ON "user_retention"("last_activity_at" DESC);
+
+-- Case Progress table  
+CREATE TABLE IF NOT EXISTS "case_progress" (
+    "id" TEXT NOT NULL DEFAULT gen_random_uuid(),
+    "user_id" TEXT NOT NULL,
+    "case_id" TEXT NOT NULL,
+    "node_id" TEXT NOT NULL,
+    "selected_option" TEXT NOT NULL,
+    "xp_earned" INTEGER NOT NULL DEFAULT 0,
+    "completed_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "case_progress_pkey" PRIMARY KEY ("id"),
+    CONSTRAINT "case_progress_user_id_case_id_key" UNIQUE ("user_id", "case_id")
+);
+CREATE INDEX IF NOT EXISTS "case_progress_user_id_completed_at_idx" ON "case_progress"("user_id", "completed_at" DESC);
+CREATE INDEX IF NOT EXISTS "case_progress_user_id_node_id_idx" ON "case_progress"("user_id", "node_id");
+CREATE INDEX IF NOT EXISTS "case_progress_node_id_idx" ON "case_progress"("node_id");
+
+-- Add foreign keys for new tables (ignore if already exist)
+DO $$ BEGIN
+  ALTER TABLE "user_achievements" ADD CONSTRAINT "user_achievements_user_id_fkey" 
+    FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "user_achievements" ADD CONSTRAINT "user_achievements_achievement_id_fkey" 
+    FOREIGN KEY ("achievement_id") REFERENCES "achievements"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "user_retention" ADD CONSTRAINT "user_retention_user_id_fkey" 
+    FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "case_progress" ADD CONSTRAINT "case_progress_user_id_fkey" 
+    FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 SQL
 HOTFIX_EXIT=$?
 set -e
