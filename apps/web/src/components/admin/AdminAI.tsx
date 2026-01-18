@@ -347,7 +347,7 @@ export function AdminAI() {
       <div className="mt-6 bg-graphite-structure border border-ui-border-soft rounded-lg p-6">
         <h3 className="text-lg font-semibold text-ash-light mb-4">Принципы работы</h3>
         <ul className="space-y-2 text-sm text-ui-text-muted">
-          <li>• Все промпты и конфиги версионируются - никаких "затираний"</li>
+          <li>• Все промпты и конфиги версионируются - никаких «затираний»</li>
           <li>• Активация новой версии требует указания причины</li>
           <li>• Все действия логируются в audit_log</li>
           <li>• LLM runs трассируются для отладки и оптимизации</li>

@@ -150,7 +150,7 @@ export function QuestCard({
         {hypothesis && hypothesis.trim().length > 10 && (
           <div className="p-3 bg-strategic-blue/10 rounded-lg border-l-2 border-strategic-blue/50">
             <p className="text-[11px] text-ash-light leading-relaxed italic">
-              "{hypothesis}"
+              «{hypothesis}»
             </p>
           </div>
         )}

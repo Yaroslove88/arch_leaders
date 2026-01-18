@@ -179,7 +179,7 @@ export function ReflectionModal({
                     <span>
                       {context.type === 'case' ? 'Кейс' : 
                        context.type === 'quest' ? 'Квест' : 
-                       context.type === 'situation' ? 'Ситуация' : 'Узел'}: "{context.title}"
+                       context.type === 'situation' ? 'Ситуация' : 'Узел'}: «{context.title}»
                     </span>
                   </p>
                   {context.type === 'case' && context.selectedOption && (
@@ -201,7 +201,7 @@ export function ReflectionModal({
                 <span>Вопрос для размышления</span>
               </label>
               <p className="text-sm text-ash-light mb-3 italic">
-                "{displayQuestion}"
+                «{displayQuestion}»
               </p>
             </div>
 
@@ -224,7 +224,7 @@ export function ReflectionModal({
               )}
               {!formData.text && (
                 <p className="text-xs text-ui-text-muted mt-2 italic">
-                  Пример: "{exampleText}"
+                  Пример: «{exampleText}»
                 </p>
               )}
             </div>

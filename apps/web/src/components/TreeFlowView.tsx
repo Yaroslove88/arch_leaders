@@ -142,9 +142,9 @@ export function TreeFlowView({
     highlighted.add(selectedNode);
 
     const findAncestors = (nodeId: string) => {
-      const node = tree.nodes.find(n => n.node_id === nodeId);
+      const node = tree.nodes.find((n: any) => n.node_id === nodeId);
       if (node?.prerequisites) {
-        node.prerequisites.forEach(prereqId => {
+        node.prerequisites.forEach((prereqId: string) => {
           if (!highlighted.has(prereqId)) {
             highlighted.add(prereqId);
             findAncestors(prereqId);
@@ -154,7 +154,7 @@ export function TreeFlowView({
     };
 
     const findDescendants = (nodeId: string) => {
-      tree.nodes.forEach(node => {
+      tree.nodes.forEach((node: any) => {
         if (node.prerequisites?.includes(nodeId)) {
           if (!highlighted.has(node.node_id)) {
             highlighted.add(node.node_id);

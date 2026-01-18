@@ -6,33 +6,6 @@ import Link from 'next/link';
 import { useAuth } from '../../hooks/useAuth';
 import { LoginDto, RegisterDto, register as registerUser } from '../../lib/api';
 
-declare global {
-  interface Window {
-    Telegram?: {
-      Login: {
-        auth: (options: {
-          bot_id: string;
-          request_access?: boolean;
-          lang?: string;
-          callback?: (user: any) => void;
-        }) => void;
-      };
-      WebApp?: {
-        initData?: string;
-        initDataUnsafe?: {
-          user?: {
-            id: number;
-            first_name: string;
-            last_name?: string;
-            username?: string;
-            photo_url?: string;
-          };
-        };
-      };
-    };
-  }
-}
-
 export default function LoginPage() {
   const router = useRouter();
   const { login, isAuthenticated, isLoading } = useAuth();

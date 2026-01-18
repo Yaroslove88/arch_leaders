@@ -126,7 +126,7 @@ export function BranchCard({
               )}
               {currentFocus && !recommendation && (
                 <span className="text-[11px] text-ash-light">
-                  ⚡ Фокус: <span className="font-medium text-catalyst-gold">"{currentFocus}"</span>
+                  ⚡ Фокус: <span className="font-medium text-catalyst-gold">«{currentFocus}»</span>
                 </span>
               )}
             </div>

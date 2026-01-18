@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { getSemanticTree, getCurrentBuild, getNodeDescription, getNodeDescriptions, getBuilds, SemanticTree, BuildStatus, NodeDescription, getQuests, getCases, getCaseProgress, Quest, InteractiveCase } from '../../lib/api';
 import { translateNodeName, getNodeName } from '../../lib/node-translations';
@@ -16,7 +16,7 @@ import { cn } from '@/lib/utils';
 
 type ArchitectureTab = 'path' | 'tree' | 'builds';
 
-export default function ArchitecturePage() {
+function ArchitecturePageInner() {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<ArchitectureTab>('path');
   const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
@@ -154,7 +154,7 @@ export default function ArchitecturePage() {
               { id: 'builds', label: 'Стили' },
             ]}
             activeId={activeTab}
-            onSelect={(id) => setActiveTab(id as ArchitectureTab)}
+            onSelect={(id: string) => setActiveTab(id as ArchitectureTab)}
             scrollable
           />
         </div>
@@ -192,6 +192,14 @@ export default function ArchitecturePage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function ArchitecturePage() {
+  return (
+    <Suspense fallback={<LoadingSpinner fullScreen text="Загрузка архитектуры..." />}>
+      <ArchitecturePageInner />
+    </Suspense>
   );
 }
 
@@ -700,10 +708,8 @@ function TreeView({
       });
   }, []);
 
-  if (!tree) return null;
-
-  const branches = tree.branches || [];
-  const nodes = tree.nodes || [];
+  const branches = tree?.branches || [];
+  const nodes = tree?.nodes || [];
   const filteredNodes = selectedBranch
     ? nodes.filter((n: any) => n.branch_id === selectedBranch)
     : nodes;
@@ -745,6 +751,8 @@ function TreeView({
       setNodeDescription(null);
     }
   }
+
+  if (!tree) return null;
 
   return (
     <div className="space-y-4">

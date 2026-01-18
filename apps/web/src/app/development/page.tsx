@@ -263,7 +263,7 @@ export default function DevelopmentPage() {
               { id: 'abilities', label: 'По способностям' },
             ]}
             activeId={activeTab}
-            onSelect={(id) => setActiveTab(id as DevelopmentTab)}
+            onSelect={(id: string) => setActiveTab(id as DevelopmentTab)}
             ariaLabel="Разделы развития"
           />
         </div>

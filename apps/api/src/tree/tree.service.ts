@@ -148,7 +148,12 @@ export class TreeService implements OnModuleInit {
    * Заполняет таблицу ability_nodes из seed если она пустая
    */
   async onModuleInit(): Promise<void> {
-    await this.ensureAbilityNodesSeeded();
+    // Не блокируем старт API (в Timeweb healthcheck короткий).
+    // Seed можно догнать после старта; ошибки seed не должны валить приложение.
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/d62f3774-e975-44dd-84db-681709a5074c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H-D',location:'apps/api/src/tree/tree.service.ts:onModuleInit',message:'TreeService onModuleInit: starting seed in background',data:{},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
+    void this.ensureAbilityNodesSeeded();
   }
 
   /**

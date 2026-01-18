@@ -120,7 +120,7 @@ export function NodeExperienceIndicators({
           <div className="flex items-center gap-2">
             <span className="text-catalyst-gold">📊</span>
             <span className="text-ui-text-muted text-xs">
-              Для перехода в "Активен" нужна актуальность ≥ 30% (сейчас: {(relevance * 100).toFixed(0)}%)
+              Для перехода в «Активен» нужна актуальность ≥ 30% (сейчас: {(relevance * 100).toFixed(0)}%)
             </span>
           </div>
         </div>
