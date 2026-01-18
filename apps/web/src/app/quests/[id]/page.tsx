@@ -602,8 +602,16 @@ export default function QuestDetailPage() {
             if (quest.criteria.items && Array.isArray(quest.criteria.items)) {
               // Фильтруем мусор: только строки длиннее 3 символов
               criteriaItems = quest.criteria.items
-                .filter((item: any) => typeof item === 'string' && item.trim().length > 3 && !/^[A-Z]$/.test(item.trim()))
-                .map((item: string) => item.trim());
+                .map((item) => {
+                  if (typeof item === 'string') {
+                    return item.trim();
+                  }
+                  if (item && typeof item === 'object' && typeof item.text === 'string') {
+                    return item.text.trim();
+                  }
+                  return '';
+                })
+                .filter((text) => text.length > 3 && !/^[A-Z]$/.test(text));
             }
             if (quest.criteria.description && typeof quest.criteria.description === 'string') {
               const trimmed = quest.criteria.description.trim();

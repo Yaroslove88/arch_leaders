@@ -65,7 +65,7 @@ export interface QuestStep {
 }
 
 export interface QuestCriteria {
-  items?: { text: string; completed?: boolean }[];
+  items?: Array<{ text: string; completed?: boolean } | string>;
   description?: string;
   theory_and_examples?: string;
   [key: string]: any; // Allow additional properties
