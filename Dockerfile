@@ -69,4 +69,4 @@ ENV PORT=3000
 
 WORKDIR /app/apps/api
 
-CMD ["node", "dist/apps/api/src/main.js"]
+CMD ["node", "dist/main.js"]
