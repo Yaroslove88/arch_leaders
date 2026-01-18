@@ -924,7 +924,7 @@ function BuildsView({
                           Необходимо минимум {build.entry_conditions.min_skills_count || build.entry_conditions.required_skills.length} из {build.entry_conditions.required_skills.length} навыков:
                         </p>
                         <div className="space-y-1">
-                          {build.entry_conditions.required_skills.map((skillId) => {
+                          {build.entry_conditions.required_skills.map((skillId: string) => {
                             const nodeName = getNodeName(skillId);
                             const branchName = getNodeBranch(skillId);
                             const isActive = tree?.nodes?.find((n: any) => n.node_id === skillId)?.state === 'active' || 
@@ -969,8 +969,8 @@ function BuildsView({
                         </p>
                         <div className="space-y-1">
                           {build.related_nodes
-                            .filter(nodeId => !build.entry_conditions.required_skills?.includes(nodeId))
-                            .map((nodeId) => {
+                            .filter((nodeId: string) => !build.entry_conditions.required_skills?.includes(nodeId))
+                            .map((nodeId: string) => {
                               const nodeName = getNodeName(nodeId);
                               const branchName = getNodeBranch(nodeId);
                               const isActive = tree?.nodes?.find((n: any) => n.node_id === nodeId)?.state === 'active' || 
