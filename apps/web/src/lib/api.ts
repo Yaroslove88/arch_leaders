@@ -855,7 +855,10 @@ export interface Build {
     optional_nodes?: string[];
     behavioral_patterns?: Record<string, any>;
     min_required_count?: number;
+    required_skills?: string[];
+    min_skills_count?: number;
   };
+  related_nodes?: string[];
   bonuses: Record<string, any>;
   hidden_costs: Record<string, any>;
   exit_conditions: Record<string, any>;
