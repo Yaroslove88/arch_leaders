@@ -388,7 +388,7 @@ export default function QuestsPage() {
                         )}
                         {quest.reward.nodes && Object.keys(quest.reward.nodes).length > 0 && (
                           <span className="text-xs text-ui-text-muted">
-                            +{Object.values(quest.reward.nodes)[0]} к способности
+                            +{String(Object.values(quest.reward.nodes)[0])} к способности
                           </span>
                         )}
                       </div>

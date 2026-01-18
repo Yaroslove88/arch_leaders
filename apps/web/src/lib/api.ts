@@ -56,15 +56,37 @@ export interface Session {
   updated_at: string;
 }
 
+export interface QuestStep {
+  id?: string;
+  text?: string;
+  description?: string;
+  completed?: boolean;
+  order?: number;
+}
+
+export interface QuestCriteria {
+  items?: { text: string; completed?: boolean }[];
+  description?: string;
+  theory_and_examples?: string;
+  [key: string]: any; // Allow additional properties
+}
+
+export interface QuestReward {
+  xp?: number;
+  nodes?: Record<string, number>;
+  skill_xp?: number;
+  [key: string]: any; // Allow additional properties
+}
+
 export interface Quest {
   id: string;
   title: string;
   description: string;
   type: 'micro' | 'weekly' | 'story' | 'in-person';
   status: 'active' | 'backlog' | 'done' | 'archived';
-  steps: any[];
-  criteria: any;
-  reward?: any;
+  steps: QuestStep[];
+  criteria: QuestCriteria | string;
+  reward?: QuestReward;
   linked_nodes: string[];
   tags?: string[];
   source?: string;
