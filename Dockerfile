@@ -1,6 +1,9 @@
 # ===== BUILD STAGE =====
 FROM node:22-slim AS builder
 
+# Install OpenSSL and other dependencies required by Prisma
+RUN apt-get update -y && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@10.26.2 --activate
 
@@ -33,6 +36,9 @@ RUN pnpm --filter @leadership-architect/api build
 
 # ===== PRODUCTION STAGE =====
 FROM node:22-slim AS runner
+
+# Install OpenSSL for Prisma runtime
+RUN apt-get update -y && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 
 RUN corepack enable && corepack prepare pnpm@10.26.2 --activate
 
