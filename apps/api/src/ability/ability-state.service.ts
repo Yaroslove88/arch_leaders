@@ -105,10 +105,11 @@ export class AbilityStateService {
       if (progress >= 1.0) return 'integrated';
       if (progress >= 0.7) return 'unlocked';
       if (progress >= 0.3 && relevance >= 0.3) return 'active';
-      if (current === 'available' || current === 'active' || current === 'unlocked') {
+      if (current === 'available' || current === 'active' || current === 'unlocked' || current === 'integrated') {
         return current;
       }
-      return 'available';
+      // FIX: возвращаем locked, а не available!
+      return 'locked';
     };
 
     const map = new Map<string, AbilityStateSnapshot>();
