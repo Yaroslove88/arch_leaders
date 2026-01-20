@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const path = require('path');
+const { withPayload } = require('@payloadcms/next/withPayload');
 
 const nextConfig = {
   reactStrictMode: true,
@@ -9,6 +10,10 @@ const nextConfig = {
   env: {
     // API всегда на порту 3001, Next.js на 3000
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
+  },
+  // Payload requires experimental features
+  experimental: {
+    reactCompiler: false,
   },
   webpack: (config, { dev }) => {
     if (dev) {
@@ -37,4 +42,4 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+module.exports = withPayload(nextConfig);

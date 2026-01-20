@@ -11,6 +11,7 @@ import { getSemanticTree, getCurrentBuild, getToken, getCaseProgress, CaseProgre
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { ProtectedRoute } from '../../components/ProtectedRoute';
+import { tokens } from '@leadership-architect/ui';
 import { AddSituationModal, AddEvidenceModal, type SituationFormData, type EvidenceFormData } from '../../components/modals';
 import { createEvidence } from '../../lib/api';
 import { useToast } from '../../components/ToastProvider';
@@ -547,7 +548,7 @@ function DashboardContent() {
                 <div
                   key={build.build_id}
                   className="flex items-center gap-2 px-3 py-2 bg-obsidian-core rounded-xl"
-                  style={{ borderLeft: `3px solid ${build.color || '#3A6F8F'}` }}
+                  style={{ borderLeft: `3px solid ${build.color || tokens.colors.nodeStates.available.border}` }}
                 >
                   <span className="text-lg">{build.icon}</span>
                   <span className="text-sm text-ash-light">{build.name}</span>
