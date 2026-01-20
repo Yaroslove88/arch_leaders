@@ -66,7 +66,7 @@ export function AdminStatusBar() {
 
           {/* Quick Links */}
           <button
-            onClick={() => router.push('/admin')}
+            onClick={() => router.push('/admin-legacy')}
             className="px-2 py-1 bg-graphite-structure border border-ui-border-soft rounded hover:border-ui-border-strong transition-colors"
           >
             Админка

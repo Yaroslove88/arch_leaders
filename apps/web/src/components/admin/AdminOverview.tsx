@@ -142,7 +142,7 @@ export function AdminOverview() {
                 </div>
               </div>
               <button
-                onClick={() => router.push('/admin?tab=jobs')}
+                onClick={() => router.push('/admin-legacy?tab=jobs')}
                 className="px-4 py-2 bg-tension-red/20 text-tension-red rounded hover:bg-tension-red/30 transition-colors"
               >
                 Посмотреть

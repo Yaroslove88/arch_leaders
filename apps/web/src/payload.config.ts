@@ -15,6 +15,10 @@ import { ChangeLogs } from '@/collections/ChangeLogs'
 
 const dirname = __dirname
 
+// #region agent log
+fetch('http://127.0.0.1:7243/ingest/c0326067-9caf-4823-b221-37edfa52cbb2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'payload.config.ts:18',message:'PAYLOAD_CONFIG_LOADING',data:{collectionsCount:8,dbUrl:process.env.DATABASE_URL?.substring(0,20)+'...'},timestamp:Date.now(),sessionId:'debug-session',runId:'init-check',hypothesisId:'B'})}).catch(()=>{});
+// #endregion
+
 export default buildConfig({
   // Базовый URL админки
   serverURL: process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000',
