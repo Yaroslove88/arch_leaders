@@ -103,7 +103,7 @@ export default function DebugPage() {
       });
     }
 
-    // Check auth endpoint
+    // Check auth endpoint (используем GET /auth/me)
     try {
       const token = localStorage.getItem('auth_token');
       if (token) {
@@ -127,6 +127,32 @@ export default function DebugPage() {
             status: 'warning',
             message: 'Токен истёк или недействителен',
           });
+        } else if (response.status === 404) {
+          // Эндпоинт /auth/me не существует, проверяем токен через /quests
+          const questsResponse = await fetch(`${apiUrl}/quests?limit=1`, {
+            headers: { Authorization: `Bearer ${token}` },
+            signal: AbortSignal.timeout(5000),
+          });
+          if (questsResponse.ok || questsResponse.status === 200) {
+            newChecks.push({
+              name: 'Аутентификация',
+              status: 'ok',
+              message: `Токен валиден (${latency}ms)`,
+              latency,
+            });
+          } else if (questsResponse.status === 401) {
+            newChecks.push({
+              name: 'Аутентификация',
+              status: 'warning',
+              message: 'Токен истёк или недействителен',
+            });
+          } else {
+            newChecks.push({
+              name: 'Аутентификация',
+              status: 'error',
+              message: `HTTP ${questsResponse.status}`,
+            });
+          }
         } else {
           newChecks.push({
             name: 'Аутентификация',
@@ -153,7 +179,7 @@ export default function DebugPage() {
     try {
       const token = localStorage.getItem('auth_token');
       const start = Date.now();
-      const response = await fetch(`${apiUrl}/tree`, {
+      const response = await fetch(`${apiUrl}/tree/semantic`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         signal: AbortSignal.timeout(5000),
       });

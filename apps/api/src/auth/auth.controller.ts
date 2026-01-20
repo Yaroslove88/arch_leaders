@@ -277,6 +277,27 @@ export class AuthController {
     return this.authService.loginWithTelegramWebApp(webAppDto);
   }
 
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Получить данные текущего пользователя' })
+  @ApiResponse({
+    status: 200,
+    description: 'Данные пользователя',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string' },
+        telegramUsername: { type: 'string' },
+        role: { type: 'string' },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: 'Не авторизован' })
+  async getMe(@CurrentUser() user: { sub: string }) {
+    return this.authService.findUserById(user.sub);
+  }
+
   @Delete('me')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
