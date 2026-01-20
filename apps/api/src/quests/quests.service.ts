@@ -41,12 +41,18 @@ export class QuestsService {
       throw new InternalServerErrorException('Prisma quest model is not available');
     }
 
-    const where: any = {};
+    // КРИТИЧНО: Фильтрация по приватности
+    // - Базовые квесты (source='base_template') видны всем
+    // - Личные квесты видны ТОЛЬКО владельцу
+    const where: any = {
+      OR: [
+        { source: 'base_template' }, // Базовые квесты для всех
+        { userId: userId || 'NO_USER_FALLBACK' }, // Личные квесты только для владельца
+      ],
+    };
+
     if (status) {
       where.status = status;
-    }
-    if (userId) {
-      where.userId = userId;
     }
 
     const quests = await this.prisma.quest.findMany({
