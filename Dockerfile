@@ -25,6 +25,9 @@ RUN pnpm install --frozen-lockfile
 # Build shared packages first
 RUN pnpm --filter @leadership-architect/shared build || true
 
+# Generate Prisma Client (MUST be before API build)
+RUN cd apps/api && npx prisma generate
+
 # Build API
 RUN pnpm --filter @leadership-architect/api build
 
