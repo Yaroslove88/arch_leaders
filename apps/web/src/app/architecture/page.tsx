@@ -9,8 +9,9 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { BranchCard, NodeCard, NodeDetailCard, BuildCard } from '@/components/cards';
 import { AddSituationModal, AddEvidenceModal } from '@/components/modals';
-import { PillTabs, Surface, Progress, Badge } from '@leadership-architect/ui';
+import { PillTabs, Surface, Progress, Badge, tokens } from '@leadership-architect/ui';
 import { cn } from '@/lib/utils';
+import { getBranchColorRaw } from '@/lib/ui-utils';
 
 // Функция перевода названий узлов (вынесена на уровень модуля для использования в разных компонентах)
 
@@ -374,7 +375,7 @@ function PathView({
               <div
                 key={buildStatus.build_id}
                 className="flex items-center gap-2 px-3 py-2 bg-obsidian-core rounded-lg"
-                style={{ borderLeft: `3px solid ${buildStatus.color || '#3A6F8F'}` }}
+                style={{ borderLeft: `3px solid ${buildStatus.color || tokens.colors.nodeStates.available.border}` }}
               >
                 <span className="text-lg">{buildStatus.icon}</span>
                 <span className="text-sm text-ash-light">{buildStatus.name}</span>
@@ -444,34 +445,6 @@ function TreeViewWrapper({
     });
     return { unlocks, requires };
   }, [nodes]);
-
-  const getBranchColor = (branchId: string, branchName?: string): string => {
-    const specialBranches: Record<string, string> = {
-      'subjectivity': '#4169E1',
-      'устойчивость': '#00CED1',
-      'resilience': '#00CED1',
-      'субъектность': '#4169E1',
-      'responsibility': '#FF6347',
-      'ответственность': '#FF6347',
-    };
-    if (branchName) {
-      const lowerName = branchName.toLowerCase();
-      for (const [key, color] of Object.entries(specialBranches)) {
-        if (lowerName.includes(key.toLowerCase())) return color;
-      }
-    }
-    const lowerId = branchId.toLowerCase();
-    for (const [key, color] of Object.entries(specialBranches)) {
-      if (lowerId.includes(key.toLowerCase())) return color;
-    }
-    const colors = ['#3A6F8F', '#D2691E', '#228B22', '#8B008B', '#DC143C', '#00CED1', '#FF8C00', '#9370DB', '#FFD700'];
-    let hash = 0;
-    for (let i = 0; i < branchId.length; i++) {
-      hash = ((hash << 5) - hash) + branchId.charCodeAt(i);
-      hash = hash & hash;
-    }
-    return colors[Math.abs(hash) % colors.length];
-  };
 
   const selectedBranchData = useMemo(() => 
     branches.find((b: any) => b.branch_id === selectedBranch),
@@ -595,7 +568,6 @@ function TreeViewWrapper({
           cases={casesData?.cases || []}
           caseProgress={caseProgressData || { solvedCases: [], nodeProgress: {} }}
           dependencyMap={dependencyMap}
-          getBranchColor={getBranchColor}
         />
       </div>
 
@@ -603,7 +575,7 @@ function TreeViewWrapper({
       {selectedNode && nodeDescription && (() => {
         const node = nodes.find((n: any) => n.node_id === selectedNode);
         const branch = node ? branches.find((b: any) => b.branch_id === node.branch_id) : null;
-        const branchColor = node?.branch_id ? getBranchColor(node.branch_id, branch?.name) : '#3A6F8F';
+        const branchColor = node?.branch_id ? getBranchColorRaw(node.branch_id) : tokens.colors.nodeStates.available.border;
         const branchNodes = node ? nodes.filter((n: any) => n.branch_id === node.branch_id) : [];
         const nodeLevel = node ? (([...branchNodes].sort((a, b) => (a.xp_required || 0) - (b.xp_required || 0)).findIndex((n: any) => n.node_id === node.node_id) + 1) || 0) : 0;
         const nodeQuests = (questsData?.quests || []).filter((q: any) => q.linked_nodes?.includes(selectedNode));
@@ -679,7 +651,6 @@ function TreeView({
   cases = [],
   caseProgress = { solvedCases: [], nodeProgress: {} },
   dependencyMap = { unlocks: {}, requires: {} },
-  getBranchColor
 }: { 
   tree: SemanticTree | null,
   selectedBranch: string | null,
@@ -692,7 +663,6 @@ function TreeView({
   cases?: InteractiveCase[],
   caseProgress?: { solvedCases: string[], nodeProgress: Record<string, { solved: string[], progress: number }> },
   dependencyMap?: { unlocks: Record<string, string[]>, requires: Record<string, string[]> },
-  getBranchColor: (id: string, name?: string) => string
 }) {
   const [nodeDescriptions, setNodeDescriptions] = useState<Record<string, NodeDescription>>({});
   
@@ -763,16 +733,17 @@ function TreeView({
               setSelectedNode(null);
               setNodeDescription(null);
             }}
-            className="text-[10px] uppercase tracking-widest font-bold text-strategic-blue hover:text-ash-light transition-colors flex items-center gap-1.5"
+            aria-label="Сбросить выделение узла"
+            className="text-[10px] uppercase tracking-widest font-bold text-strategic-blue hover:text-ash-light transition-colors flex items-center gap-1.5 min-h-[44px] px-2"
           >
-            <span>✕ Сбросить выделение</span>
+            <span aria-hidden="true">✕</span> Сбросить выделение
           </button>
         </div>
       )}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
       {filteredNodes.map((node: any) => {
         const branch = branches.find((b: any) => b.branch_id === node.branch_id);
-        const branchColor = node.branch_id ? getBranchColor(node.branch_id, branch?.name) : '#3A6F8F';
+        const branchColor = node.branch_id ? getBranchColorRaw(node.branch_id) : tokens.colors.nodeStates.available.border;
         const branchNodes = nodes.filter((n: any) => n.branch_id === node.branch_id);
         const nodeLevel = getNodeLevel(node, branchNodes);
         const stats = getNodeQuestCaseStats(node.node_id);

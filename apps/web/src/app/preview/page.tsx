@@ -15,6 +15,8 @@ import {
   AddEvidenceModal,
   ReflectionModal,
 } from '@/components/modals';
+import { tokens } from '@leadership-architect/ui';
+import { getBranchColorRaw } from '@/lib/ui-utils';
 
 /**
  * Страница превью всех новых компонентов
@@ -115,7 +117,7 @@ export default function PreviewPage() {
               questsCount={2}
               casesCount={3}
               state="active"
-              branchColor="#4CAF50"
+              branchColor={getBranchColorRaw('subjectivity')}
               onClick={() => setSelectedNode('1')}
             />
             <NodeCard
@@ -127,7 +129,7 @@ export default function PreviewPage() {
               questsCount={1}
               casesCount={2}
               state="available"
-              branchColor="#4CAF50"
+              branchColor={getBranchColorRaw('subjectivity')}
               onClick={() => setSelectedNode('2')}
             />
             <NodeCard
@@ -137,7 +139,7 @@ export default function PreviewPage() {
               level={1}
               progress={25}
               state="unlocked"
-              branchColor="#3A6F8F"
+              branchColor={getBranchColorRaw('architectural-thinking')}
               onClick={() => setSelectedNode('3')}
             />
             <NodeCard
@@ -146,7 +148,7 @@ export default function PreviewPage() {
               state="locked"
               progress={0}
               requirements={['Системное видение (Ур. 2)', 'Анализ трейдоффов (Ур. 1)']}
-              branchColor="#3A6F8F"
+              branchColor={getBranchColorRaw('architectural-thinking')}
             />
           </div>
         </section>
@@ -162,7 +164,7 @@ export default function PreviewPage() {
               name="Удержание напряжения"
               description="Способность выдерживать дискомфорт неопределённости и не торопиться с решениями, давая ситуации развернуться."
               branchName="Субъектность"
-              branchColor="#4CAF50"
+              branchColor={getBranchColorRaw('subjectivity')}
               level={3}
               maxLevel={5}
               currentXP={150}

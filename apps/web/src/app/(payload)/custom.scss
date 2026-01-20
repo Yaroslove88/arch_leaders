@@ -1,0 +1,32 @@
+/* Custom Payload Admin Styles */
+
+/* Leadership Architect branding */
+:root {
+  --theme-bg: #1a1a2e;
+  --theme-input-bg: #16213e;
+  --theme-elevation-50: #0f3460;
+  --theme-elevation-100: #0f3460;
+  --theme-elevation-150: #1a1a2e;
+  --theme-elevation-200: #16213e;
+  --theme-elevation-250: #1a1a2e;
+  --theme-elevation-300: #0f3460;
+  --theme-elevation-350: #16213e;
+  --theme-elevation-400: #1a1a2e;
+  --theme-elevation-450: #0f3460;
+  --theme-elevation-500: #16213e;
+  --theme-elevation-550: #1a1a2e;
+  --theme-elevation-600: #0f3460;
+  --theme-elevation-650: #16213e;
+  --theme-elevation-700: #1a1a2e;
+  --theme-elevation-750: #0f3460;
+  --theme-elevation-800: #16213e;
+  --theme-elevation-850: #1a1a2e;
+  --theme-elevation-900: #0f3460;
+  --theme-elevation-950: #16213e;
+  --theme-elevation-1000: #1a1a2e;
+}
+
+/* Custom styles for Leadership Architect admin */
+.nav-header {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}

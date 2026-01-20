@@ -417,7 +417,7 @@ export default function DebugPage() {
               🔄 Reset Admin Modes
             </button>
             <button
-              onClick={() => router.push('/admin')}
+              onClick={() => router.push('/admin-legacy')}
               className="px-4 py-2 bg-system-focus text-white rounded-lg hover:bg-system-focus/80 transition-colors text-sm"
             >
               🏠 К админ-панели

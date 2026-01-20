@@ -1,13 +1,7 @@
 # ===== BUILD STAGE =====
 FROM node:22-slim AS builder
 
-# Install system dependencies
-RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
-    apt-get install -y --no-install-recommends \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install pnpm via corepack (встроен в Node.js 16+)
+# Install pnpm
 RUN corepack enable && corepack prepare pnpm@10.26.2 --activate
 
 WORKDIR /app
@@ -28,28 +22,20 @@ COPY data/ ./data/
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
-# Generate Prisma client
-RUN cd apps/api && pnpm prisma generate
-
-# Build shared packages first, then API
+# Build shared packages first
 RUN pnpm --filter @leadership-architect/shared build || true
+
+# Build API
 RUN pnpm --filter @leadership-architect/api build
 
 # ===== PRODUCTION STAGE =====
 FROM node:22-slim AS runner
 
-# Install system dependencies (минимальные для runtime)
-RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
-    apt-get install -y --no-install-recommends \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install pnpm via corepack
 RUN corepack enable && corepack prepare pnpm@10.26.2 --activate
 
 WORKDIR /app
 
-# Create non-root user
+# Create non-root user (Debian syntax for slim image)
 RUN groupadd --system --gid 1001 nodejs && \
     useradd --system --uid 1001 --gid nodejs nestjs
 
@@ -61,13 +47,11 @@ COPY --from=builder /app/apps/api/prisma ./apps/api/prisma
 COPY --from=builder /app/packages ./packages
 COPY --from=builder /app/data ./data
 
-# Copy package.json for runtime
-COPY --from=builder /app/apps/api/package.json ./apps/api/
-
 EXPOSE 3000
 
 ENV NODE_ENV=production
 ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
 
 WORKDIR /app/apps/api
 
