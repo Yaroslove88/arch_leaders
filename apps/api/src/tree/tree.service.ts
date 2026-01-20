@@ -238,16 +238,26 @@ export class TreeService implements OnModuleInit {
 
     try {
       const contentPath = this.getNodeDescriptionsPath();
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/c0326067-9caf-4823-b221-37edfa52cbb2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'tree.service.ts:loadNodeContent',message:'LOADING_NODE_CONTENT',data:{contentPath,cwd:process.cwd(),projectRoot:this.pathConfig.getProjectRoot()},timestamp:Date.now(),sessionId:'debug-session',runId:'diag-1',hypothesisId:'H1'})}).catch(()=>{});
+      // #endregion
       const content = await readFile(contentPath, 'utf-8');
       const data = JSON.parse(content);
       const descriptions = data.node_descriptions || {};
 
       this.nodeContentCache = new Map(Object.entries(descriptions));
       this.nodeContentCacheLoadedAt = Date.now();
+      // #region agent log
+      const sampleNode = descriptions['node_grounding_point'];
+      fetch('http://127.0.0.1:7243/ingest/c0326067-9caf-4823-b221-37edfa52cbb2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'tree.service.ts:loadNodeContent:SUCCESS',message:'CONTENT_LOADED',data:{count:this.nodeContentCache.size,sampleNodeName:sampleNode?.name,sampleNodeHasDesc:!!sampleNode?.full_description},timestamp:Date.now(),sessionId:'debug-session',runId:'diag-1',hypothesisId:'H2'})}).catch(()=>{});
+      // #endregion
       this.logger.log(`✅ Loaded ${this.nodeContentCache.size} node descriptions into cache`);
 
       return this.nodeContentCache;
     } catch (error: any) {
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/c0326067-9caf-4823-b221-37edfa52cbb2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'tree.service.ts:loadNodeContent:ERROR',message:'CONTENT_LOAD_FAILED',data:{error:error.message,code:error.code},timestamp:Date.now(),sessionId:'debug-session',runId:'diag-1',hypothesisId:'H2'})}).catch(()=>{});
+      // #endregion
       this.logger.warn(`Failed to load node-descriptions.json: ${error.message}`);
       // Возвращаем пустой кэш при ошибке, не прерываем работу
       this.nodeContentCache = new Map();
@@ -332,6 +342,12 @@ export class TreeService implements OnModuleInit {
    */
   private enrichNodeWithContent(node: any, contentCache: Map<string, NodeContent>): AbilityNode {
     const content = contentCache.get(node.node_id);
+    
+    // #region agent log
+    if (node.node_id === 'node_grounding_point') {
+      fetch('http://127.0.0.1:7243/ingest/c0326067-9caf-4823-b221-37edfa52cbb2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'tree.service.ts:enrichNodeWithContent',message:'ENRICH_SAMPLE_NODE',data:{nodeId:node.node_id,hasContent:!!content,contentName:content?.name,nodeName:node.name,resultName:content?.name||node.name||node.node_id,cacheSize:contentCache.size},timestamp:Date.now(),sessionId:'debug-session',runId:'diag-1',hypothesisId:'H1'})}).catch(()=>{});
+    }
+    // #endregion
     
     // После миграции структура не содержит name, description, state, xp_current
     // Эти поля добавляются из контента и UserAbilityState
@@ -683,11 +699,12 @@ export class TreeService implements OnModuleInit {
         if (progress >= 1.0) return 'integrated';
         if (progress >= 0.7) return 'unlocked';
         if (progress >= 0.3 && relevance >= 0.3) return 'active';
-        // если уже доступен/активен/разблокирован – оставляем доступным, иначе locked
-        if (current === 'available' || current === 'active' || current === 'unlocked') {
+        // если уже доступен/активен/разблокирован – оставляем как есть
+        if (current === 'available' || current === 'active' || current === 'unlocked' || current === 'integrated') {
           return current;
         }
-        return 'available';
+        // FIX: возвращаем locked, а не available!
+        return 'locked';
       };
 
       // Добавляем отсутствующие записи UserAbilityState как миграцию по месту
@@ -716,6 +733,11 @@ export class TreeService implements OnModuleInit {
         inserted.forEach((s) => statesMap.set(s.node_id, s));
       }
 
+      // #region agent log
+      const firstFiveStates = Array.from(statesMap.entries()).slice(0,5).map(([k,v])=>({nodeId:k,state:v.state,progress:Number(v.progress),tier:data.nodes.find(n=>n.node_id===k)?.tier}));
+      fetch('http://127.0.0.1:7243/ingest/c0326067-9caf-4823-b221-37edfa52cbb2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'tree.service.ts:enrichWithUserState',message:'USER_STATES_SAMPLE',data:{userId,statesCount:statesMap.size,firstFiveStates},timestamp:Date.now(),sessionId:'debug-session',runId:'diag-1',hypothesisId:'H3'})}).catch(()=>{});
+      // #endregion
+
       const enrichedNodes: AbilityNode[] = data.nodes.map((node) => {
         const state = statesMap.get(node.node_id);
         if (state) {
@@ -726,7 +748,13 @@ export class TreeService implements OnModuleInit {
           const relevance = Number(state.relevance) || 0;
 
           // Автоматический апгрейд статуса по прогрессу (чтобы дочерние узлы открывались)
-          nodeState = deriveStateFromProgress(progress, relevance, nodeState);
+          const derivedState = deriveStateFromProgress(progress, relevance, nodeState);
+          // #region agent log
+          if (node.node_id === 'node_grounding_point' || progress > 0) {
+            fetch('http://127.0.0.1:7243/ingest/c0326067-9caf-4823-b221-37edfa52cbb2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'tree.service.ts:deriveState',message:'DERIVE_STATE_DEBUG',data:{nodeId:node.node_id,dbState:state.state,progress,relevance,derivedState,tier:node.tier},timestamp:Date.now(),sessionId:'debug-session',runId:'diag-1',hypothesisId:'H4'})}).catch(()=>{});
+          }
+          // #endregion
+          nodeState = derivedState;
           
           // Базовые узлы первого уровня (tier: "basic") всегда должны быть разблокированы
           // Если узел базовый и заблокирован, разблокируем его
