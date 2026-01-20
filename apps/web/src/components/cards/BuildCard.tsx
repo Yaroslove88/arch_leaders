@@ -153,7 +153,7 @@ export function BuildCard({
                   'h-1.5 rounded-full transition-all duration-300',
                   status === 'active' ? 'bg-sage-green' : 'bg-strategic-blue'
                 )}
-                style={{ width: `${activationProgress}%` }}
+                style={{ width: `${Math.min(100, activationProgress)}%` }}
               />
             </div>
           </div>
@@ -234,7 +234,7 @@ export function BuildCard({
                 'h-2 rounded-full transition-all duration-300',
                 status === 'active' ? 'bg-sage-green' : 'bg-strategic-blue'
               )}
-              style={{ width: `${activationProgress}%` }}
+              style={{ width: `${Math.min(100, activationProgress)}%` }}
             />
           </div>
         </div>
