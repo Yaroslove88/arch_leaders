@@ -19,14 +19,21 @@
     "test:e2e:webkit": "playwright test --project=webkit"
   },
   "dependencies": {
-    "@tanstack/react-query": "^5.90.16",
     "@leadership-architect/ui": "workspace:*",
+    "@payloadcms/db-postgres": "^3.72.0",
+    "@payloadcms/next": "^3.72.0",
+    "@payloadcms/richtext-lexical": "^3.72.0",
+    "@tanstack/react-query": "^5.90.16",
     "@twa-dev/sdk": "^8.0.2",
-    "next": "^14.2.18",
+    "graphql": "^16.12.0",
+    "next": "^15.5.9",
     "node-telegram-bot-api": "^0.67.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "payload": "^3.72.0",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
     "reactflow": "^11.11.4",
+    "sass": "^1.97.2",
+    "sharp": "^0.34.5",
     "zod": "^3.25.76"
   },
   "devDependencies": {
@@ -37,8 +44,8 @@
     "@types/jest": "^29.5.14",
     "@types/node": "^20.0.0",
     "@types/node-telegram-bot-api": "^0.64.13",
-    "@types/react": "^18.2.0",
-    "@types/react-dom": "^18.2.0",
+    "@types/react": "^19.2.9",
+    "@types/react-dom": "^19.2.3",
     "autoprefixer": "^10.4.16",
     "eslint": "^8.50.0",
     "eslint-config-next": "^14.2.18",
@@ -49,4 +56,3 @@
     "typescript": "^5.2.0"
   }
 }
-

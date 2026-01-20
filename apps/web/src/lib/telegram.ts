@@ -2,6 +2,7 @@
  * Telegram WebApp utilities
  * Provides detection and graceful degradation for Telegram Mini Apps
  */
+import { tokens } from '@leadership-architect/ui';
 
 declare global {
   interface Window {
@@ -129,8 +130,8 @@ export function initTelegramWebApp() {
 
   // Set theme colors to match our design system
   try {
-    webApp.setHeaderColor('#0F1216'); // obsidian-core
-    webApp.setBackgroundColor('#0F1216');
+    webApp.setHeaderColor(tokens.colors.base.obsidianCore);
+    webApp.setBackgroundColor(tokens.colors.base.obsidianCore);
   } catch {
     // Some versions may not support these methods
   }

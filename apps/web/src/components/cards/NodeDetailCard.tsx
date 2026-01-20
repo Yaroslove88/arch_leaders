@@ -2,7 +2,7 @@
 
 import { cn } from '@/lib/utils';
 import { NodeState, IntegrationLevel, DevelopmentType } from './NodeCard';
-import { Progress } from '@leadership-architect/ui';
+import { Progress, tokens } from '@leadership-architect/ui';
 
 export interface NodeDetailCardProps {
   /** ID узла */
@@ -163,7 +163,7 @@ export function NodeDetailCard({
       )}
       style={{
         borderTopWidth: '4px',
-        borderTopColor: branchColor || '#3A6F8F',
+        borderTopColor: branchColor || tokens.colors.nodeStates.available.border,
       }}
     >
       {/* Заголовок */}

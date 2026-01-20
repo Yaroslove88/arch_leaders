@@ -1,4 +1,4 @@
-import React, { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from 'react';
+import React, { ButtonHTMLAttributes, HTMLAttributes, InputHTMLAttributes, ReactNode, forwardRef } from 'react';
 
 const cn = (...classes: Array<string | false | null | undefined>) =>
   classes.filter(Boolean).join(' ');
@@ -240,3 +240,229 @@ export const PillTabs: React.FC<PillTabsProps> = ({
     </div>
   );
 };
+
+// =============================================================================
+// Spinner
+// =============================================================================
+
+export interface SpinnerProps extends HTMLAttributes<HTMLDivElement> {
+  size?: 'sm' | 'md' | 'lg';
+  tone?: Tone;
+  /** Optional loading text displayed below spinner */
+  text?: string;
+  /** Fullscreen centered mode */
+  fullScreen?: boolean;
+}
+
+const spinnerSizes = {
+  sm: 'w-4 h-4 border-2',
+  md: 'w-8 h-8 border-4',
+  lg: 'w-12 h-12 border-4',
+};
+
+const spinnerTones: Record<Tone, string> = {
+  focus: 'border-t-strategic-blue',
+  growth: 'border-t-sage-green',
+  warning: 'border-t-catalyst-gold',
+  critical: 'border-t-tension-red',
+  neutral: 'border-t-ash-light',
+};
+
+export const Spinner: React.FC<SpinnerProps> = ({
+  size = 'md',
+  tone = 'focus',
+  text,
+  fullScreen = false,
+  className,
+  ...rest
+}) => {
+  const spinnerEl = (
+    <div className="flex flex-col items-center justify-center" {...rest}>
+      <div
+        className={cn(
+          spinnerSizes[size],
+          'border-ui-border-soft rounded-full animate-spin',
+          spinnerTones[tone],
+          className
+        )}
+        role="status"
+        aria-label={text || 'Loading'}
+      />
+      {text && (
+        <p className="mt-4 text-sm text-ui-text-muted">{text}</p>
+      )}
+    </div>
+  );
+
+  if (fullScreen) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-obsidian-core">
+        {spinnerEl}
+      </div>
+    );
+  }
+
+  return spinnerEl;
+};
+
+// =============================================================================
+// Empty — пустое состояние
+// =============================================================================
+
+export interface EmptyProps extends HTMLAttributes<HTMLDivElement> {
+  /** Icon element (e.g. from lucide-react) */
+  icon?: ReactNode;
+  /** Title text */
+  title: string;
+  /** Description text */
+  description?: string;
+  /** Optional action button/element */
+  action?: ReactNode;
+}
+
+export const Empty: React.FC<EmptyProps> = ({
+  icon,
+  title,
+  description,
+  action,
+  className,
+  ...rest
+}) => {
+  return (
+    <Surface
+      padding="lg"
+      className={cn('flex flex-col items-center justify-center text-center py-12', className)}
+      {...rest}
+    >
+      {icon && (
+        <div className="mb-4 text-ui-text-dim" aria-hidden="true">
+          {icon}
+        </div>
+      )}
+      <h3 className="text-lg font-semibold text-ash-light mb-1">{title}</h3>
+      {description && (
+        <p className="text-sm text-ui-text-muted max-w-sm">{description}</p>
+      )}
+      {action && (
+        <div className="mt-6">{action}</div>
+      )}
+    </Surface>
+  );
+};
+
+// =============================================================================
+// Field — обертка для форм с label, description, error
+// =============================================================================
+
+export interface FieldProps extends HTMLAttributes<HTMLDivElement> {
+  /** Label text */
+  label: string;
+  /** Unique ID linking label to input */
+  htmlFor: string;
+  /** Optional description below label */
+  description?: string;
+  /** Error message */
+  error?: string;
+  /** Required indicator */
+  required?: boolean;
+}
+
+export const Field: React.FC<FieldProps> = ({
+  label,
+  htmlFor,
+  description,
+  error,
+  required,
+  children,
+  className,
+  ...rest
+}) => {
+  return (
+    <div className={cn('flex flex-col gap-1.5', className)} {...rest}>
+      <label
+        htmlFor={htmlFor}
+        className="text-sm font-medium text-ash-light flex items-center gap-1"
+      >
+        {label}
+        {required && <span className="text-tension-red">*</span>}
+      </label>
+      {description && (
+        <p className="text-xs text-ui-text-muted -mt-0.5">{description}</p>
+      )}
+      <div>{children}</div>
+      {error && (
+        <p className="text-xs text-tension-red flex items-center gap-1" role="alert">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+};
+
+// =============================================================================
+// Input — базовый инпут
+// =============================================================================
+
+export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+  /** Error state */
+  hasError?: boolean;
+}
+
+export const Input = forwardRef<HTMLInputElement, InputProps>(({
+  hasError,
+  className,
+  ...rest
+}, ref) => {
+  return (
+    <input
+      ref={ref}
+      className={cn(
+        'w-full px-3 py-2 text-sm text-ash-light bg-obsidian-core border rounded-lg',
+        'placeholder:text-ui-text-dim',
+        'focus:outline-none focus:ring-2 focus:ring-strategic-blue/50 focus:border-strategic-blue',
+        'transition-colors',
+        hasError
+          ? 'border-tension-red focus:ring-tension-red/50 focus:border-tension-red'
+          : 'border-ui-border-soft hover:border-ui-border-strong',
+        className
+      )}
+      {...rest}
+    />
+  );
+});
+
+Input.displayName = 'Input';
+
+// =============================================================================
+// Textarea — базовый textarea
+// =============================================================================
+
+export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+  /** Error state */
+  hasError?: boolean;
+}
+
+export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(({
+  hasError,
+  className,
+  ...rest
+}, ref) => {
+  return (
+    <textarea
+      ref={ref}
+      className={cn(
+        'w-full px-3 py-2 text-sm text-ash-light bg-obsidian-core border rounded-lg',
+        'placeholder:text-ui-text-dim',
+        'focus:outline-none focus:ring-2 focus:ring-strategic-blue/50 focus:border-strategic-blue',
+        'transition-colors resize-none',
+        hasError
+          ? 'border-tension-red focus:ring-tension-red/50 focus:border-tension-red'
+          : 'border-ui-border-soft hover:border-ui-border-strong',
+        className
+      )}
+      {...rest}
+    />
+  );
+});
+
+Textarea.displayName = 'Textarea';

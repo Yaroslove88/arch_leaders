@@ -1,6 +1,26 @@
 // Design tokens v2 for Leadership Architect
 // Централизованные палитры, типографика, радиусы, тени и отступы.
 
+/** Node state types for ability tree */
+export type NodeState = 'locked' | 'available' | 'active' | 'unlocked' | 'integrated';
+
+/** Branch IDs for ability tree */
+export type BranchId = 
+  | 'subjectivity' 
+  | 'architectural-thinking' 
+  | 'resilience' 
+  | 'responsibility' 
+  | 'feedback' 
+  | 'environment-maturity';
+
+/** Node state style structure */
+export interface NodeStateStyle {
+  bg: string;
+  border: string;
+  text: string;
+  accent: string;
+}
+
 export const tokens = {
   colors: {
     base: {
@@ -41,6 +61,50 @@ export const tokens = {
       border: 'rgba(255, 255, 255, 0.08)',
       borderStrong: 'rgba(255, 255, 255, 0.12)',
       shadow: '0 1px 0 rgba(255,255,255,0.04), 0 12px 24px rgba(0,0,0,0.45)',
+    },
+    // Branch colors (ability tree branches)
+    branches: {
+      subjectivity: '#4A90E2',
+      'architectural-thinking': '#50C878',
+      resilience: '#FF6B6B',
+      responsibility: '#FFA500',
+      feedback: '#9B59B6',
+      'environment-maturity': '#1ABC9C',
+      // Fallback for unknown branches
+      default: '#6B7280',
+    },
+    // Node state colors (for tree visualization)
+    nodeStates: {
+      locked: {
+        bg: '#1A1A1A',
+        border: '#2A2A2A',
+        text: '#555555',
+        accent: '#333333',
+      },
+      available: {
+        bg: '#1A212A',
+        border: '#3A6F8F',
+        text: '#8BA5B5',
+        accent: '#D29B1B',
+      },
+      active: {
+        bg: '#1A2A21',
+        border: '#4A9F6F',
+        text: '#8FC5A5',
+        accent: '#3A6F8F',
+      },
+      unlocked: {
+        bg: '#212A1A',
+        border: '#8FAF4A',
+        text: '#C5D58F',
+        accent: '#4A9F6F',
+      },
+      integrated: {
+        bg: '#2A211A',
+        border: '#CF9F4A',
+        text: '#E5C58F',
+        accent: '#CF9F4A',
+      },
     },
   },
     spacing: {
@@ -139,5 +203,38 @@ export const cssVars: Record<string, string> = {
   '--radius-lg': tokens.radii.lg,
   '--radius-xl': tokens.radii.xl,
   '--radius-2xl': tokens.radii['2xl'],
+  // Branch colors
+  '--branch-subjectivity': tokens.colors.branches.subjectivity,
+  '--branch-architectural-thinking': tokens.colors.branches['architectural-thinking'],
+  '--branch-resilience': tokens.colors.branches.resilience,
+  '--branch-responsibility': tokens.colors.branches.responsibility,
+  '--branch-feedback': tokens.colors.branches.feedback,
+  '--branch-environment-maturity': tokens.colors.branches['environment-maturity'],
+  '--branch-default': tokens.colors.branches.default,
+  // Node state: locked
+  '--node-locked-bg': tokens.colors.nodeStates.locked.bg,
+  '--node-locked-border': tokens.colors.nodeStates.locked.border,
+  '--node-locked-text': tokens.colors.nodeStates.locked.text,
+  '--node-locked-accent': tokens.colors.nodeStates.locked.accent,
+  // Node state: available
+  '--node-available-bg': tokens.colors.nodeStates.available.bg,
+  '--node-available-border': tokens.colors.nodeStates.available.border,
+  '--node-available-text': tokens.colors.nodeStates.available.text,
+  '--node-available-accent': tokens.colors.nodeStates.available.accent,
+  // Node state: active
+  '--node-active-bg': tokens.colors.nodeStates.active.bg,
+  '--node-active-border': tokens.colors.nodeStates.active.border,
+  '--node-active-text': tokens.colors.nodeStates.active.text,
+  '--node-active-accent': tokens.colors.nodeStates.active.accent,
+  // Node state: unlocked
+  '--node-unlocked-bg': tokens.colors.nodeStates.unlocked.bg,
+  '--node-unlocked-border': tokens.colors.nodeStates.unlocked.border,
+  '--node-unlocked-text': tokens.colors.nodeStates.unlocked.text,
+  '--node-unlocked-accent': tokens.colors.nodeStates.unlocked.accent,
+  // Node state: integrated
+  '--node-integrated-bg': tokens.colors.nodeStates.integrated.bg,
+  '--node-integrated-border': tokens.colors.nodeStates.integrated.border,
+  '--node-integrated-text': tokens.colors.nodeStates.integrated.text,
+  '--node-integrated-accent': tokens.colors.nodeStates.integrated.accent,
 };
 

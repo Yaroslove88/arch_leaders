@@ -16,29 +16,8 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import type { SemanticTree } from '../lib/api';
 import { cn } from '@/lib/utils';
-
-/**
- * Цвета состояний узлов - обновлены для соответствия дизайн-системе
- */
-const STATE_COLORS: Record<string, { bg: string; border: string; text: string; accent: string }> = {
-  locked: { bg: '#1A1A1A', border: '#2A2A2A', text: '#555555', accent: '#333333' },
-  available: { bg: '#1A212A', border: '#3A6F8F', text: '#8BA5B5', accent: '#D29B1B' },
-  active: { bg: '#1A2A21', border: '#4A9F6F', text: '#8FC5A5', accent: '#3A6F8F' },
-  unlocked: { bg: '#212A1A', border: '#8FAF4A', text: '#C5D58F', accent: '#4A9F6F' },
-  integrated: { bg: '#2A211A', border: '#CF9F4A', text: '#E5C58F', accent: '#CF9F4A' },
-};
-
-/**
- * Цвета веток
- */
-const BRANCH_COLORS: Record<string, string> = {
-  'subjectivity': '#4A90E2',
-  'architectural-thinking': '#50C878',
-  'resilience': '#FF6B6B',
-  'responsibility': '#FFA500',
-  'feedback': '#9B59B6',
-  'environment-maturity': '#1ABC9C',
-};
+import { getNodeStateColorsRaw, getBranchColorRaw } from '@/lib/ui-utils';
+import { tokens, NodeState } from '@leadership-architect/ui';
 
 interface TreeFlowViewProps {
   tree: SemanticTree | null;
@@ -54,7 +33,7 @@ interface TreeFlowViewProps {
  * Кастомный узел для дерева способностей
  */
 function AbilityNodeComponent({ data }: { data: any }) {
-  const colors = STATE_COLORS[data.state] || STATE_COLORS.locked;
+  const colors = getNodeStateColorsRaw(data.state as NodeState);
   const isSelected = data.isSelected;
   const isHighlighted = data.isHighlighted;
   const hasFocus = isSelected || isHighlighted;
@@ -68,7 +47,7 @@ function AbilityNodeComponent({ data }: { data: any }) {
       )}
       style={{
         backgroundColor: colors.bg,
-        borderColor: isSelected ? '#3A6F8F' : colors.border,
+        borderColor: isSelected ? tokens.colors.nodeStates.available.border : colors.border,
         minWidth: '180px',
         maxWidth: '220px',
       }}
@@ -83,26 +62,33 @@ function AbilityNodeComponent({ data }: { data: any }) {
             {data.tier || 'Level 1'}
           </span>
         </div>
-        {data.state === 'locked' && <span className="text-[10px]">🔒</span>}
-        {data.state === 'integrated' && <span className="text-[10px]">⭐</span>}
+        {data.state === 'locked' && <span className="text-[10px]" aria-label="Заблокировано" role="img">🔒</span>}
+        {data.state === 'integrated' && <span className="text-[10px]" aria-label="Интегрировано" role="img">⭐</span>}
       </div>
       
-      <div className="text-sm font-bold leading-tight mb-3" style={{ color: '#F5F5F5' }}>
+      <div className="text-sm font-bold leading-tight mb-3" style={{ color: tokens.colors.text.main }}>
         {data.name}
       </div>
       
       {data.progress !== undefined && data.state !== 'locked' && (
         <div className="space-y-1.5">
           <div className="flex justify-between items-center text-[9px] font-bold uppercase tracking-tighter opacity-50">
-            <span>Прогресс</span>
+            <span id={`progress-label-${data.name}`}>Прогресс</span>
             <span>{Math.round(data.progress * 100)}%</span>
           </div>
-          <div className="h-1.5 bg-black/40 rounded-full overflow-hidden p-[1px]">
+          <div 
+            className="h-1.5 bg-black/40 rounded-full overflow-hidden p-[1px]"
+            role="progressbar"
+            aria-valuenow={Math.round(data.progress * 100)}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-labelledby={`progress-label-${data.name}`}
+          >
             <div
               className="h-full rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(0,0,0,0.3)]"
               style={{
                 width: `${Math.min(data.progress * 100, 100)}%`,
-                backgroundColor: isSelected ? '#3A6F8F' : colors.border,
+                backgroundColor: isSelected ? tokens.colors.nodeStates.available.border : colors.border,
               }}
             />
           </div>
@@ -218,7 +204,7 @@ export function TreeFlowView({
       tierNodes.forEach((node, nodeIndex) => {
         const isSelected = selectedNode === node.node_id;
         const isHighlighted = highlightedNodes.has(node.node_id);
-        const branchColor = BRANCH_COLORS[node.branch_id || ''] || '#666666';
+        const branchColor = getBranchColorRaw(node.branch_id || '');
 
         nodes.push({
           id: node.node_id,
@@ -257,13 +243,13 @@ export function TreeFlowView({
             target: node.node_id,
             animated: isHighlighted && node.state !== 'locked',
             style: {
-              stroke: isHighlighted ? '#3A6F8F' : '#2A2A2A',
+              stroke: isHighlighted ? tokens.colors.nodeStates.available.border : tokens.colors.nodeStates.locked.border,
               strokeWidth: isHighlighted ? 3 : 1.5,
               opacity: selectedNode ? (isHighlighted ? 1 : 0.1) : 0.6,
             },
             markerEnd: {
               type: MarkerType.ArrowClosed,
-              color: isHighlighted ? '#3A6F8F' : '#2A2A2A',
+              color: isHighlighted ? tokens.colors.nodeStates.available.border : tokens.colors.nodeStates.locked.border,
             },
           });
         }
@@ -317,7 +303,7 @@ export function TreeFlowView({
         defaultViewport={{ x: 0, y: 0, zoom: 0.7 }}
         proOptions={{ hideAttribution: true }}
       >
-        <Background color="#111" gap={30} size={1} />
+        <Background color={tokens.colors.base.obsidianCore} gap={30} size={1} />
         <Controls
           showZoom={true}
           showFitView={true}
@@ -326,8 +312,8 @@ export function TreeFlowView({
         />
         <MiniMap
           nodeColor={(node) => {
-            const state = node.data?.state || 'locked';
-            return STATE_COLORS[state]?.border || '#333333';
+            const state = (node.data?.state || 'locked') as NodeState;
+            return getNodeStateColorsRaw(state).border;
           }}
           maskColor="rgba(0, 0, 0, 0.7)"
           className="bg-graphite-structure border-ui-border-soft rounded-lg overflow-hidden"
