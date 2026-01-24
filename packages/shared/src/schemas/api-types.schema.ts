@@ -8,8 +8,8 @@ import { EntryTypeSchema, EntrySourceSchema, CreateEntrySchema } from './entry.s
  * Single source of truth for API contracts
  */
 
-// Re-export Entry schemas to make them available from this file
-export { EntryTypeSchema, EntrySourceSchema, CreateEntrySchema };
+// NOTE: EntryTypeSchema, EntrySourceSchema, CreateEntrySchema, CreateEntryInput
+// are exported from entry.schema.ts - do NOT re-export here to avoid TS2308
 
 // ============================================
 // User Types
@@ -47,11 +47,9 @@ export const UserSummarySchema = z.object({
 export type UserSummary = z.infer<typeof UserSummarySchema>;
 
 // ============================================
-// Entry Types (imported from entry.schema.ts to avoid duplication)
+// Entry Types (EntrySchema extends entry.schema types)
 // ============================================
-export type EntryType = z.infer<typeof EntryTypeSchema>;
-export type EntrySource = z.infer<typeof EntrySourceSchema>;
-export type CreateEntryInput = z.infer<typeof CreateEntrySchema>;
+// NOTE: EntryType, EntrySource, CreateEntryInput are exported from entry.schema.ts
 
 export const EntrySchema = z.object({
   id: z.string().uuid(),
