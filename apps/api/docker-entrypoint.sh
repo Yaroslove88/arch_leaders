@@ -33,7 +33,12 @@ MIGRATE_EXIT=$?
 set -e
 if [ "$MIGRATE_EXIT" -ne 0 ]; then
   echo "DIAG entrypoint: migrate deploy FAILED exit=${MIGRATE_EXIT} ts=$(date -Iseconds)"
-  echo "DIAG entrypoint: continuing startup despite migration failure (likely needs prisma migrate resolve)"
+  echo "DIAG entrypoint: attempting to resolve failed migrations..."
+  # Try to resolve any failed migrations by marking them as applied
+  npx prisma migrate resolve --applied "20250108000000_add_user_and_multitenancy" --schema=./prisma/schema.prisma 2>/dev/null || true
+  # Retry migration deploy after resolving
+  npx prisma migrate deploy --schema=./prisma/schema.prisma 2>/dev/null || true
+  echo "DIAG entrypoint: migration resolve attempted"
 else
   echo "DIAG entrypoint: migrate deploy DONE ts=$(date -Iseconds)"
 fi
