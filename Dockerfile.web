@@ -70,5 +70,9 @@ ENV NEXT_PUBLIC_API_URL=https://yaroslove88-arch-leaders-12c6.twc1.net
 # DATABASE_URL - PostgreSQL connection string
 # PAYLOAD_SECRET - JWT secret for PayloadCMS auth
 
+# Healthcheck для Timeweb
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:3000/api/health', (r) => {if (r.statusCode !== 200) throw new Error('Health check failed: ' + r.statusCode)})"
+
 # Next.js standalone server
 CMD ["node", "apps/web/server.js"]
