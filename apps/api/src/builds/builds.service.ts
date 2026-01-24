@@ -123,10 +123,11 @@ export class BuildsService {
     const builds = await this.loadBuilds();
     const tree = await this.treeService.getSemantic(userId);
     
-    // Получаем активные/разблокированные узлы
-    // 'available' означает что узел разблокирован (XP >= threshold), но еще не активен
+    // Получаем ТОЛЬКО действительно активные/интегрированные узлы
+    // 'available' и 'unlocked' НЕ считаются активными для билдов - это промежуточные состояния
+    // Билды активируются только когда узлы действительно интегрированы
     const activeNodes = tree.nodes.filter(
-      (n) => n.state === 'active' || n.state === 'available' || n.state === 'unlocked' || n.state === 'integrated'
+      (n) => n.state === 'active' || n.state === 'integrated'
     );
     const activeNodeIds = activeNodes.map((n) => n.node_id);
     
@@ -172,7 +173,9 @@ export class BuildsService {
       }
 
       const activationPercentage = maxScore > 0 ? (activationScore / maxScore) * 100 : 0;
-      const isActive = activationPercentage >= 60; // Порог активации 60%
+      // СТРОГИЙ порог активации: билд активен только если ВСЕ обязательные условия выполнены (100%)
+      // Не 60%, а именно 100% - иначе все билды будут активны
+      const isActive = activationPercentage >= 100 && matchedConditions.length > 0 && missingConditions.length === 0;
 
       buildStatuses.push({
         build_id: build.build_id,

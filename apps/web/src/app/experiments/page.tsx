@@ -15,7 +15,7 @@ import CaseLockedModal from '../../components/CaseLockedModal';
 import { CaseCard as NewCaseCard, QuestCard as NewQuestCard, type CaseDifficulty, type QuestType, type QuestStatus } from '@/components/cards';
 import { PillTabs } from '@leadership-architect/ui';
 
-type ExperimentTab = 'active' | 'live-quests' | 'base-quests' | 'cases' | 'completed';
+type ExperimentTab = 'active' | 'base-quests' | 'cases' | 'completed';
 
 // Маппинг nodeId на русские названия с переводами
 
@@ -51,12 +51,12 @@ function ExperimentsPageInner() {
   // Читаем вкладку из URL параметров при загрузке
   useEffect(() => {
     const tabParam = searchParams.get('tab');
-    if (tabParam && ['active', 'live-quests', 'base-quests', 'cases', 'completed'].includes(tabParam)) {
+    if (tabParam && ['active', 'base-quests', 'cases', 'completed'].includes(tabParam)) {
       setActiveTab(tabParam as ExperimentTab);
     } else {
       // Или из localStorage
       const savedTab = typeof window !== 'undefined' ? localStorage.getItem('experiments_active_tab') : null;
-      if (savedTab && ['active', 'live-quests', 'base-quests', 'cases', 'completed'].includes(savedTab)) {
+      if (savedTab && ['active', 'base-quests', 'cases', 'completed'].includes(savedTab)) {
         setActiveTab(savedTab as ExperimentTab);
       }
     }
@@ -99,27 +99,43 @@ function ExperimentsPageInner() {
   const cases = casesData?.cases || [];
   const nodeDescriptions = nodeDescriptionsData?.descriptions || {};
 
-  // Живые квесты - это квесты типа 'in-person' (квесты из анализов), но не завершённые и не активные
-  // (активные в "Мои активные", завершённые в "Завершённые")
-  const liveQuests = useMemo(() => 
-    quests.filter((q: any) => 
-      q.type === 'in-person' && 
-      q.status !== 'done' && 
-      q.status !== 'active'
-    ),
-    [quests]
-  );
+  // УДАЛЕНО: Живые квесты (in-person) - это ЛИЧНОЕ, не показываем
 
-  // Базовые квесты - все остальные квесты (не in-person), но только те, которые не активны и не завершены
+  // Базовые квесты - все квесты (кроме in-person - это ЛИЧНОЕ), но только те, которые не активны и не завершены
   // (активные показываются в "Мои активные эксперименты", завершённые - в "Завершённые")
-  const baseQuests = useMemo(() => 
-    quests.filter((q: any) => 
+  // ВАЖНО: Последовательное открытие - показываем только первый доступный квест
+  // Следующий откроется после завершения предыдущего
+  const baseQuests = useMemo(() => {
+    const filtered = quests.filter((q: any) => 
       q.type !== 'in-person' && 
       q.status !== 'active' && 
       q.status !== 'done'
-    ),
-    [quests]
-  );
+    );
+    
+    // Последовательное открытие: показываем только первый доступный квест
+    // Считаем сколько базовых квестов завершено
+    const completedBaseQuests = quests.filter((q: any) => 
+      q.type !== 'in-person' && 
+      q.status === 'done'
+    ).length;
+    
+    // Показываем только квесты до текущего прогресса + 1 (следующий доступный)
+    if (filtered.length > 0) {
+      // Сортируем по created_at
+      const sorted = [...filtered].sort((a, b) => 
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+      
+      // Показываем только следующий доступный квест (после завершенных)
+      const nextQuestIndex = completedBaseQuests;
+      if (nextQuestIndex < sorted.length) {
+        return [sorted[nextQuestIndex]]; // Только следующий доступный квест
+      }
+      // Если все доступные квесты завершены, не показываем ничего
+      return [];
+    }
+    return [];
+  }, [quests]);
 
   // Активные эксперименты - все квесты (и живые, и базовые) со статусом 'active'
   const activeQuests = useMemo(() => 
@@ -218,7 +234,6 @@ function ExperimentsPageInner() {
           <PillTabs
             tabs={[
               { id: 'active', label: 'Мои активные', count: activeQuests.length },
-              { id: 'live-quests', label: 'Живые', count: liveQuests.length },
               { id: 'base-quests', label: 'Базовые', count: baseQuests.length },
               { id: 'cases', label: 'Кейсы', count: cases.length },
               { id: 'completed', label: 'Готовые', count: completedQuests.length },
@@ -235,17 +250,6 @@ function ExperimentsPageInner() {
           {activeTab === 'active' && (
             <ActiveExperimentsSection 
               quests={activeQuests} 
-              nodeDescriptions={nodeDescriptions}
-              onQuestUpdate={() => queryClient.invalidateQueries({ queryKey: ['quests'] })}
-              toast={toast}
-              tree={tree ?? null}
-            />
-          )}
-          {activeTab === 'live-quests' && (
-            <QuestsSection 
-              quests={liveQuests} 
-              title="Живые квесты"
-              subtitle="Квесты из анализов ситуаций (in-person)"
               nodeDescriptions={nodeDescriptions}
               onQuestUpdate={() => queryClient.invalidateQueries({ queryKey: ['quests'] })}
               toast={toast}
