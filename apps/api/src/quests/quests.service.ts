@@ -221,6 +221,25 @@ export class QuestsService {
   }
 
   /**
+   * Удалить все in-person квесты пользователя (личные квесты из анализов)
+   * Используется для очистки личной информации
+   */
+  async deleteAllInPersonQuests(userId: string) {
+    const deleted = await this.prisma.quest.deleteMany({
+      where: {
+        userId,
+        type: 'in-person',
+      },
+    });
+
+    return {
+      success: true,
+      deletedCount: deleted.count,
+      message: `Deleted ${deleted.count} in-person quests`,
+    };
+  }
+
+  /**
    * Активировать квест
    */
   async activate(id: string, userId?: string) {

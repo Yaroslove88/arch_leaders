@@ -250,6 +250,22 @@ export async function activateQuest(id: string): Promise<Quest> {
   return response.json();
 }
 
+/**
+ * Удалить все in-person квесты пользователя (личные квесты из анализов)
+ * Используется для очистки личной информации
+ */
+export async function deleteAllInPersonQuests(): Promise<{ success: boolean; deletedCount: number; message: string }> {
+  const response = await fetch(`${API_URL}/quests/in-person/all`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to delete in-person quests' }));
+    throw new Error(error.message || 'Failed to delete in-person quests');
+  }
+  return response.json();
+}
+
 export async function getCompletedQuestsByNode(nodeId: string): Promise<{ quests: Quest[]; count: number }> {
   const response = await fetch(`${API_URL}/quests/completed-by-node/${nodeId}`, {
     headers: getAuthHeaders(),
