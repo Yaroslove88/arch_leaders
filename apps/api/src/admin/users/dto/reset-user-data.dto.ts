@@ -14,7 +14,7 @@ export class ResetUserDataDto {
     example: 'progress',
   })
   @IsEnum(ResetScope)
-  scope: ResetScope;
+  scope!: ResetScope;
 
   @ApiProperty({
     description: 'Причина сброса данных',
@@ -23,5 +23,5 @@ export class ResetUserDataDto {
   })
   @IsString()
   @MinLength(5)
-  reason: string;
+  reason!: string;
 }

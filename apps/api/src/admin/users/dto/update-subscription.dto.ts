@@ -14,7 +14,7 @@ export class UpdateSubscriptionDto {
     example: 'premium',
   })
   @IsEnum(SubscriptionPlan)
-  plan: SubscriptionPlan;
+  plan!: SubscriptionPlan;
 
   @ApiPropertyOptional({
     description: 'Дата истечения подписки (ISO 8601)',
@@ -31,5 +31,5 @@ export class UpdateSubscriptionDto {
   })
   @IsString()
   @MinLength(3)
-  reason: string;
+  reason!: string;
 }
