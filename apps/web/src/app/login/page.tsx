@@ -10,6 +10,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [telegramBotId, setTelegramBotId] = useState<string>('');
+  const [showFallbackButton, setShowFallbackButton] = useState(false);
 
   useEffect(() => {
     // Проверяем, авторизован ли пользователь
@@ -93,10 +94,39 @@ export default function LoginPage() {
       script.setAttribute('data-onauth', 'onTelegramAuth(user)');
       script.async = true;
       
+      script.onerror = () => {
+        setError('Не удалось загрузить виджет Telegram. Проверьте подключение к интернету.');
+        setShowFallbackButton(true);
+      };
+      
       const container = document.getElementById('telegram-login-container');
       if (container) {
         container.appendChild(script);
       }
+      
+      // Fallback: если виджет не загрузился за 3 секунды, показываем кнопку
+      const fallbackTimer = setTimeout(() => {
+        const container = document.getElementById('telegram-login-container');
+        const hasWidget = container?.querySelector('iframe');
+        if (!hasWidget) {
+          setShowFallbackButton(true);
+        }
+      }, 3000);
+      
+      // Проверяем загрузку виджета периодически
+      const checkInterval = setInterval(() => {
+        const container = document.getElementById('telegram-login-container');
+        const hasWidget = container?.querySelector('iframe');
+        if (hasWidget) {
+          setShowFallbackButton(false);
+          clearInterval(checkInterval);
+        }
+      }, 500);
+      
+      return () => {
+        clearTimeout(fallbackTimer);
+        clearInterval(checkInterval);
+      };
 
       return () => {
         // Очистка при размонтировании
@@ -208,23 +238,54 @@ export default function LoginPage() {
             {/* Telegram OAuth - единственный способ входа */}
             {telegramBotId ? (
               <div className="mb-4">
-                <div id="telegram-login-container"></div>
+                {/* Контейнер для Telegram Widget */}
+                <div id="telegram-login-container" className="flex justify-center mb-4 min-h-[40px]"></div>
+                
+                {/* Fallback кнопка, показывается если виджет не загрузился */}
+                {showFallbackButton && (
+                  <button
+                    onClick={() => {
+                      // Проверяем, загрузился ли виджет
+                      const container = document.getElementById('telegram-login-container');
+                      const widgetButton = container?.querySelector('iframe');
+                      if (widgetButton) {
+                        // Если виджет загрузился, скрываем fallback кнопку
+                        setShowFallbackButton(false);
+                        // Пытаемся кликнуть на виджет программно (не всегда работает из-за CORS)
+                        setError('Виджет загружен. Пожалуйста, используйте кнопку Telegram выше.');
+                      } else {
+                        // Если виджет не загрузился, предлагаем обновить страницу
+                        setError('Виджет Telegram не загрузился. Пожалуйста, обновите страницу (F5 или Cmd+R).');
+                      }
+                    }}
+                    disabled={isSubmitting}
+                    className="w-full bg-strategic-blue hover:bg-strategic-blue/90 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <span>📱</span>
+                    <span>{isSubmitting ? 'Вход...' : 'Войти через Telegram'}</span>
+                  </button>
+                )}
+                
                 {error && (
                   <div className="mt-4 p-3 bg-system-critical/10 border border-system-critical/30 rounded-lg text-sm text-system-critical">
                     {error}
                   </div>
                 )}
-                {isSubmitting && (
-                  <div className="mt-4 text-center text-sm text-ui-text-muted">
-                    Вход через Telegram...
-                  </div>
-                )}
               </div>
             ) : (
-              <div className="mb-4 p-4 bg-bg-secondary border border-ui-border-soft rounded text-sm text-ui-text-muted">
-                <p className="mb-2">Telegram OAuth не настроен.</p>
-                <p className="text-xs">Укажите NEXT_PUBLIC_TELEGRAM_BOT_USERNAME в Dockerfile или env переменных Timeweb.</p>
-                <p className="text-xs mt-2 font-mono">Текущее значение: {telegramBotId || '(пусто)'}</p>
+              <div className="mb-4">
+                <button
+                  disabled
+                  className="w-full bg-ui-border-soft text-ui-text-muted font-semibold py-3 px-6 rounded-lg cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  <span>📱</span>
+                  <span>Войти через Telegram</span>
+                </button>
+                <div className="mt-4 p-4 bg-bg-secondary border border-ui-border-soft rounded text-sm text-ui-text-muted">
+                  <p className="mb-2">Telegram OAuth не настроен.</p>
+                  <p className="text-xs">Укажите NEXT_PUBLIC_TELEGRAM_BOT_USERNAME в Dockerfile или env переменных Timeweb.</p>
+                  <p className="text-xs mt-2 font-mono">Текущее значение: {telegramBotId || '(пусто)'}</p>
+                </div>
               </div>
             )}
 
