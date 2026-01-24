@@ -7,6 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { checkAdminAccess, extractActor } from './access-utils';
 
 /**
  * Guard для защиты базовых квестов (source='base_template') от перезаписи
@@ -17,8 +18,10 @@ import { PrismaService } from '../../prisma/prisma.service';
  * 
  * Разрешает изменения:
  * - Администраторы (role='admin')
- * - Системные операции (actor='system', 'analyzer', 'admin', 'script')
+ * - Системные операции (actor='system', 'analyzer', 'admin', 'script', 'sync-base-quests')
  * - Владельцы пользовательских квестов для своих квестов
+ * 
+ * @see access-utils.ts для централизованной проверки прав
  */
 @Injectable()
 export class ProtectBaseQuestsGuard implements CanActivate {
@@ -52,8 +55,22 @@ export class ProtectBaseQuestsGuard implements CanActivate {
 
     // Проверяем источник квеста
     if (quest.source === 'base_template') {
-      // Базовый квест - требует проверки прав
-      return this.checkBaseQuestAccess(user, quest, request);
+      // Базовый квест - требует проверки прав через централизованную утилиту
+      const { hasAccess, reason } = await checkAdminAccess(request, this.prisma);
+      
+      if (hasAccess) {
+        this.logger.log(`Allowed base quest access: questId=${quest.id}, reason=${reason}`);
+        return true;
+      }
+
+      const actor = extractActor(request);
+      this.logger.warn(
+        `Blocked attempt to modify base quest: questId=${quest.id} by user: ${user?.sub || 'anonymous'}, actor: ${actor || 'none'}`,
+      );
+      throw new ForbiddenException(
+        'Only administrators and system operations can modify base quests (source=base_template). ' +
+          'Please create a user-generated quest for custom modifications.',
+      );
     }
 
     // Пользовательский квест - проверяем права владельца
@@ -81,45 +98,6 @@ export class ProtectBaseQuestsGuard implements CanActivate {
     );
     throw new ForbiddenException(
       `You don't have permission to modify quest: ${questId}`,
-    );
-  }
-
-  private async checkBaseQuestAccess(user: any, quest: any, request: any): Promise<boolean> {
-    // Проверяем, является ли пользователь администратором
-    if (user?.sub) {
-      try {
-        const dbUser = await this.prisma.user.findUnique({
-          where: { id: user.sub },
-          select: { role: true },
-        });
-
-        if (dbUser?.role === 'admin') {
-          this.logger.log(
-            `Allowed admin access to base quest: questId=${quest.id}, userId=${user.sub}`,
-          );
-          return true;
-        }
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        this.logger.error(`Error checking user role: ${errorMessage}`);
-      }
-    }
-
-    // Проверяем, является ли это системной операцией
-    const actor = request?.body?.actor || request?.headers?.['x-actor'];
-    const systemActors = ['system', 'analyzer', 'admin', 'script', 'sync-base-quests'];
-    if (systemActors.includes(actor?.toLowerCase())) {
-      this.logger.log(`Allowed system operation on base quest: questId=${quest.id}, actor=${actor}`);
-      return true;
-    }
-
-    // Все остальные попытки запрещены
-    this.logger.warn(
-      `Blocked attempt to modify base quest: questId=${quest.id} by user: ${user?.sub || 'anonymous'}, actor: ${actor || 'none'}`,
-    );
-    throw new ForbiddenException(
-      'Only administrators and system operations can modify base quests (source=base_template). ' +
-        'Please create a user-generated quest for custom modifications.',
     );
   }
 }

@@ -29,10 +29,7 @@ export {
   type CaseStatus,
 } from './CaseCard';
 
-// Детальная карточка кейса с структурированным контекстом (legacy)
-export { CaseDetailCard, type CaseDetailCardProps, type CaseOption, type CaseOutcome } from './CaseDetailCard';
-
-// Детальная карточка кейса v2 (новый дизайн)
+// Детальная карточка кейса v2
 export { CaseDetailCardV2 } from './CaseDetailCardV2';
 export type {
   CaseDetailCardV2Props,

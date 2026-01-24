@@ -1,5 +1,10 @@
 /**
  * API клиент для работы с Leadership Architect API
+ * 
+ * TODO: Migrate to shared types from @leadership-architect/shared
+ * The types below are duplicated in packages/shared/src/schemas/api-types.schema.ts
+ * After migration, import types like:
+ *   import { User, Entry, Session, Quest, Evidence, SemanticTree } from '@leadership-architect/shared';
  */
 
 // API всегда на порту 3001
@@ -7,6 +12,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 /**
  * Auth types and interfaces
+ * @deprecated Use User from @leadership-architect/shared instead
  */
 export interface User {
   id: string;

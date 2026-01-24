@@ -1,5 +1,28 @@
 # Timeweb Cloud — деплой Leadership Architect (монорепа)
 
+> **Единственный источник документации по деплою на Timeweb Cloud.**
+> 
+> Для быстрого старта см. секцию "Быстрый старт: ENV переменные".
+
+## Архитектура
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│   Frontend      │────▶│    Backend      │────▶│   PostgreSQL    │
+│   (Next.js)     │     │    (NestJS)     │     │   (Managed DB)  │
+│   Dockerfile.web│     │   Dockerfile.api│     │   Timeweb DBaaS │
+│   Branch: web   │     │   Branch: main  │     │                 │
+└─────────────────┘     └─────────────────┘     └─────────────────┘
+        ↓                       ↓
+   Port: 3000              Port: 3001
+```
+
+**Деплоим 2 отдельных приложения** в App Platform с разных веток:
+- **API (NestJS)**: ветка `main`, использует `Dockerfile.api`
+- **WEB (Next.js)**: ветка `web`, использует `Dockerfile.web` (переименован в `Dockerfile`)
+
+---
+
 ## Быстрый старт: ENV переменные
 
 ### API (NestJS) — прописать в Timeweb App Platform
@@ -11,14 +34,14 @@ NODE_ENV=production
 WEB_URL=https://yaroslove88-arch-leaders-3cd4.twc1.net
 JWT_SECRET=eb9dcb841e6d5b8e0c052e00a035b98b0ad602d1e7198c1fe5e24b5397699849
 JWT_EXPIRES_IN=604800
-TELEGRAM_BOT_TOKEN=8492047562:AAH_iSTGvjWQKNUCsOA4Cl5AQlSOonFq6Iw
+TELEGRAM_BOT_TOKEN=8118350067:AAGYxV6LfNYV74tqyHOnVlNyQJ8u7gtLXfY
 ```
 
 ### WEB (Next.js) — прописать в Timeweb App Platform
 
 ```bash
 NEXT_PUBLIC_API_URL=https://yaroslove88-arch-leaders-12c6.twc1.net
-NEXT_PUBLIC_TELEGRAM_BOT_USERNAME=life_yaroslav_rpg_bot
+NEXT_PUBLIC_TELEGRAM_BOT_USERNAME=arhitecture_leaders_bot
 ```
 
 ---
@@ -29,7 +52,7 @@ NEXT_PUBLIC_TELEGRAM_BOT_USERNAME=life_yaroslav_rpg_bot
 
 ```
 /mybots
-→ @life_yaroslav_rpg_bot
+→ @arhitecture_leaders_bot
 → Bot Settings
 → Menu Button → Configure menu button
 → URL: https://yaroslove88-arch-leaders-3cd4.twc1.net

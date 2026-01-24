@@ -4,9 +4,9 @@ import {
   ExecutionContext,
   ForbiddenException,
   Logger,
-  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { checkAdminAccess, extractActor } from './access-utils';
 
 /**
  * Guard для защиты глобального дерева (tree_main) от перезаписи
@@ -17,8 +17,10 @@ import { PrismaService } from '../../prisma/prisma.service';
  * 
  * Разрешает изменения:
  * - Администраторы (role='admin')
- * - Системные операции (actor='system', 'analyzer', 'admin')
+ * - Системные операции (actor='system', 'analyzer', 'admin', 'script')
  * - Владельцы пользовательских деревьев для своих деревьев
+ * 
+ * @see access-utils.ts для централизованной проверки прав
  */
 @Injectable()
 export class ProtectGlobalTreeGuard implements CanActivate {
@@ -33,13 +35,26 @@ export class ProtectGlobalTreeGuard implements CanActivate {
 
     // Извлекаем информацию о дереве из запроса
     const treeId = this.extractTreeId(request, body);
-    const actor = body.actor || request.headers['x-actor'] || 'user';
     const userId = user?.sub || body.userId;
 
     // Проверяем, это глобальное дерево?
     if (treeId === 'tree_main' || !treeId || treeId.startsWith('tree_main')) {
-      // Глобальное дерево - требует проверки прав
-      return this.checkGlobalTreeAccess(user, actor, userId);
+      // Глобальное дерево - требует проверки прав через централизованную утилиту
+      const { hasAccess, reason } = await checkAdminAccess(request, this.prisma);
+      
+      if (hasAccess) {
+        this.logger.log(`Allowed global tree access: reason=${reason}`);
+        return true;
+      }
+
+      const actor = extractActor(request);
+      this.logger.warn(
+        `Blocked attempt to modify global tree by user: ${userId || 'anonymous'}, actor: ${actor || 'none'}`,
+      );
+      throw new ForbiddenException(
+        'Only administrators and system operations can modify the global tree. ' +
+          'Please use your personal tree for custom modifications.',
+      );
     }
 
     // Пользовательское дерево - проверяем права владельца
@@ -52,6 +67,7 @@ export class ProtectGlobalTreeGuard implements CanActivate {
     }
 
     // По умолчанию запрещаем
+    const actor = extractActor(request);
     this.logger.warn(
       `Blocked attempt to modify tree: ${treeId} by user: ${userId}, actor: ${actor}`,
     );
@@ -77,45 +93,5 @@ export class ProtectGlobalTreeGuard implements CanActivate {
     }
 
     return null;
-  }
-
-  private async checkGlobalTreeAccess(
-    user: any,
-    actor: string,
-    userId: string | undefined,
-  ): Promise<boolean> {
-    // Системные операции всегда разрешены
-    const systemActors = ['system', 'analyzer', 'admin', 'script'];
-    if (systemActors.includes(actor?.toLowerCase())) {
-      this.logger.log(`Allowed system operation: actor=${actor}`);
-      return true;
-    }
-
-    // Проверяем, является ли пользователь администратором
-    if (user?.sub) {
-      try {
-        const dbUser = await this.prisma.user.findUnique({
-          where: { id: user.sub },
-          select: { role: true },
-        });
-
-        if (dbUser?.role === 'admin') {
-          this.logger.log(`Allowed admin access: userId=${user.sub}`);
-          return true;
-        }
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        this.logger.error(`Error checking user role: ${errorMessage}`);
-      }
-    }
-
-    // Все остальные попытки запрещены
-    this.logger.warn(
-      `Blocked attempt to modify global tree by user: ${userId || 'anonymous'}, actor: ${actor}`,
-    );
-    throw new ForbiddenException(
-      'Only administrators and system operations can modify the global tree. ' +
-        'Please use your personal tree for custom modifications.',
-    );
   }
 }

@@ -1303,9 +1303,16 @@ export class TreeService implements OnModuleInit {
     const updatedTree = await this.getSemantic(userId);
     const updatedNode = updatedTree.nodes.find((n) => n.node_id === nodeId)!;
 
-    // Синхронизируем state с UserAbilityState (если userId указан и state изменился)
-    if (userId && (node.state !== updatedNode.state || node.integration_level !== updatedNode.integration_level)) {
-      await this.syncStateToUserAbilityState(userId, nodeId, updatedNode.state);
+    // Синхронизируем state И XP с UserAbilityState (всегда, когда userId указан)
+    // Это критически важно для SSOT — UserAbilityState хранит резервную копию XP
+    if (userId) {
+      await this.syncStateToUserAbilityState(
+        userId, 
+        nodeId, 
+        updatedNode.state,
+        updatedNode.xp_current,  // Синхронизируем XP для защиты от потери данных
+        updatedNode.xp_required,
+      );
       
       // ВАЖНО: Если узел перешел в 'unlocked' или 'integrated', проверяем и разблокируем зависимые узлы
       if ((updatedNode.state === NodeState.UNLOCKED || updatedNode.state === NodeState.INTEGRATED) && 
@@ -1387,13 +1394,22 @@ export class TreeService implements OnModuleInit {
   }
 
   /**
-   * Синхронизировать state узла с UserAbilityState
-   * TreeSemantic является источником истины для state
+   * Синхронизировать state и progress узла с UserAbilityState
+   * TreeSemantic является источником истины для state, но UserAbilityState
+   * хранит internal_progress как резервную копию XP для защиты от потери данных при auto-sync
+   * 
+   * @param userId - ID пользователя
+   * @param nodeId - ID узла
+   * @param state - новое состояние узла
+   * @param xpCurrent - текущий XP (опционально, для синхронизации прогресса)
+   * @param xpRequired - требуемый XP (опционально, для вычисления progress)
    */
   private async syncStateToUserAbilityState(
     userId: string,
     nodeId: string,
     state: AbilityNode['state'],
+    xpCurrent?: number,
+    xpRequired?: number,
   ): Promise<void> {
     try {
       // Проверяем, существует ли запись в UserAbilityState
@@ -1406,8 +1422,22 @@ export class TreeService implements OnModuleInit {
         },
       });
 
+      // Вычисляем progress и internal_progress если XP указан
+      const updateData: any = {
+        state,
+        last_updated_at: new Date(),
+      };
+
+      if (xpCurrent !== undefined) {
+        const xpReq = xpRequired || 100;
+        // internal_progress хранит XP как число (не процент), для восстановления при необходимости
+        updateData.internal_progress = xpCurrent;
+        // progress хранит процент (0..1), ограничен 1.0 для отображения
+        updateData.progress = Math.min(1.0, xpReq > 0 ? xpCurrent / xpReq : 0);
+      }
+
       if (existing) {
-        // Обновляем только state, сохраняем progress и relevance
+        // Обновляем state и прогресс
         await this.prisma.userAbilityState.update({
           where: {
             user_id_node_id: {
@@ -1415,12 +1445,9 @@ export class TreeService implements OnModuleInit {
               node_id: nodeId,
             },
           },
-          data: {
-            state,
-            last_updated_at: new Date(),
-          },
+          data: updateData,
         });
-        this.logger.debug(`Synced state for node ${nodeId} to UserAbilityState: ${state}`);
+        this.logger.debug(`Synced state and progress for node ${nodeId} to UserAbilityState: ${state}, xp=${xpCurrent}`);
       } else {
         // Если записи нет, создаем с дефолтными значениями
         await this.prisma.userAbilityState.create({
@@ -1428,12 +1455,13 @@ export class TreeService implements OnModuleInit {
             user_id: userId,
             node_id: nodeId,
             state,
-            progress: 0,
+            progress: updateData.progress || 0,
+            internal_progress: updateData.internal_progress || 0,
             relevance: 0,
             last_updated_at: new Date(),
           },
         });
-        this.logger.debug(`Created UserAbilityState entry for node ${nodeId} with state: ${state}`);
+        this.logger.debug(`Created UserAbilityState entry for node ${nodeId} with state: ${state}, xp=${xpCurrent}`);
       }
     } catch (error: any) {
       // Логируем ошибку, но не прерываем выполнение
