@@ -61,7 +61,9 @@ ADD COLUMN IF NOT EXISTS "last_activity_date" TIMESTAMP(3);
 ALTER TABLE "users"
 ADD COLUMN IF NOT EXISTS "subscription_plan" TEXT NOT NULL DEFAULT 'free',
 ADD COLUMN IF NOT EXISTS "subscription_expires_at" TIMESTAMP(3),
-ADD COLUMN IF NOT EXISTS "is_verified" BOOLEAN NOT NULL DEFAULT false;
+ADD COLUMN IF NOT EXISTS "is_verified" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN IF NOT EXISTS "onboarding_completed" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN IF NOT EXISTS "onboarding_step" INTEGER NOT NULL DEFAULT 0;
 
 -- Index for subscription queries
 CREATE INDEX IF NOT EXISTS "users_subscription_plan_idx" ON "users"("subscription_plan");
