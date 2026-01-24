@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Param, Query, Body, Inject, UseGuards, UseInterceptors, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Query, Body, Inject, UseGuards, UseInterceptors, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { QuestsService } from './quests.service';
 import { QuestGenerationService } from './quest-generation.service';
@@ -249,6 +249,25 @@ export class QuestsController {
       throw new BadRequestException('User ID is required');
     }
     return this.questsService.deleteAllInPersonQuests(user.sub);
+  }
+
+  @Delete('in-person/all-users')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Удалить все in-person квесты для ВСЕХ пользователей (массовая очистка личной информации)' })
+  @ApiResponse({ status: 200, description: 'Все in-person квесты удалены для всех пользователей' })
+  @ApiResponse({ status: 401, description: 'Не авторизован' })
+  @ApiResponse({ status: 403, description: 'Доступ запрещён (только для админов)' })
+  async deleteAllInPersonQuestsForAllUsers(@CurrentUser() user?: JwtPayload) {
+    if (!user?.sub) {
+      throw new BadRequestException('User ID is required');
+    }
+    // Проверка на админа через сервис
+    const isAdmin = await this.questsService.checkAdminRole(user.sub);
+    if (!isAdmin) {
+      throw new ForbiddenException('Only admins can delete quests for all users');
+    }
+    return this.questsService.deleteAllInPersonQuestsForAllUsers();
   }
 }
 

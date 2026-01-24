@@ -223,8 +223,34 @@ export class QuestsService {
   /**
    * Удалить все in-person квесты пользователя (личные квесты из анализов)
    * Используется для очистки личной информации
+   * Удаляет также связанные Evidence (контент квестов)
    */
   async deleteAllInPersonQuests(userId: string) {
+    // Находим все in-person квесты пользователя
+    const inPersonQuests = await this.prisma.quest.findMany({
+      where: {
+        userId,
+        type: 'in-person',
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    const questIds = inPersonQuests.map((q) => q.id);
+
+    // Удаляем связанные Evidence (контент квестов)
+    if (questIds.length > 0) {
+      await this.prisma.evidence.deleteMany({
+        where: {
+          quest_id: {
+            in: questIds,
+          },
+        },
+      });
+    }
+
+    // Удаляем сами квесты
     const deleted = await this.prisma.quest.deleteMany({
       where: {
         userId,
@@ -235,7 +261,64 @@ export class QuestsService {
     return {
       success: true,
       deletedCount: deleted.count,
-      message: `Deleted ${deleted.count} in-person quests`,
+      evidenceDeleted: questIds.length,
+      message: `Deleted ${deleted.count} in-person quests and their evidence`,
+    };
+  }
+
+  /**
+   * Проверить, является ли пользователь админом
+   */
+  async checkAdminRole(userId: string): Promise<boolean> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+    return user?.role === 'admin';
+  }
+
+  /**
+   * Удалить все in-person квесты для ВСЕХ пользователей (массовая очистка)
+   * Используется для полного удаления личной информации из системы
+   */
+  async deleteAllInPersonQuestsForAllUsers() {
+    // Находим все in-person квесты
+    const inPersonQuests = await this.prisma.quest.findMany({
+      where: {
+        type: 'in-person',
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    const questIds = inPersonQuests.map((q) => q.id);
+
+    // Удаляем связанные Evidence (контент квестов)
+    let evidenceDeleted = 0;
+    if (questIds.length > 0) {
+      const deletedEvidence = await this.prisma.evidence.deleteMany({
+        where: {
+          quest_id: {
+            in: questIds,
+          },
+        },
+      });
+      evidenceDeleted = deletedEvidence.count;
+    }
+
+    // Удаляем сами квесты
+    const deleted = await this.prisma.quest.deleteMany({
+      where: {
+        type: 'in-person',
+      },
+    });
+
+    return {
+      success: true,
+      deletedQuests: deleted.count,
+      deletedEvidence: evidenceDeleted,
+      message: `Deleted ${deleted.count} in-person quests and ${evidenceDeleted} evidence records for all users`,
     };
   }
 
