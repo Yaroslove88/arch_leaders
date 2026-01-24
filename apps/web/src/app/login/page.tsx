@@ -14,6 +14,49 @@ export default function LoginPage() {
   const [telegramBotId, setTelegramBotId] = useState<string>('');
   const [showFallbackButton, setShowFallbackButton] = useState(false);
   const [isMiniApp, setIsMiniApp] = useState(false);
+  
+  // Форма логин/пароль
+  const [showLoginForm, setShowLoginForm] = useState(false);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+
+  // Обработка логина через username/password
+  const handlePasswordLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!username || !password) {
+      setError('Введите логин и пароль');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      setError(null);
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telegramUsername: username, password }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Ошибка входа' }));
+        throw new Error(errorData.message || `Ошибка ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('auth_token', data.access_token);
+        localStorage.setItem('auth_user', JSON.stringify(data.user));
+      }
+      
+      router.push('/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Ошибка входа');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleTelegramMiniAppAuth = useCallback(async () => {
     const tg = getTelegramWebApp();
@@ -339,6 +382,68 @@ export default function LoginPage() {
                   <p className="text-xs mt-2 font-mono">Текущее значение: {telegramBotId || '(пусто)'}</p>
                 </div>
               </div>
+            )}
+
+            {/* Разделитель */}
+            <div className="flex items-center my-6">
+              <div className="flex-1 border-t border-ui-border-soft"></div>
+              <span className="px-4 text-xs text-ui-text-dim">или</span>
+              <div className="flex-1 border-t border-ui-border-soft"></div>
+            </div>
+
+            {/* Форма логин/пароль */}
+            {!showLoginForm ? (
+              <button
+                onClick={() => setShowLoginForm(true)}
+                className="w-full text-sm text-ui-text-muted hover:text-ui-text-main transition-colors py-2"
+              >
+                Войти по логину и паролю →
+              </button>
+            ) : (
+              <form onSubmit={handlePasswordLogin} className="space-y-4">
+                <div>
+                  <label htmlFor="username" className="block text-sm text-ui-text-muted mb-1">
+                    Логин (Telegram username)
+                  </label>
+                  <input
+                    id="username"
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="username"
+                    className="w-full px-4 py-3 bg-bg-secondary border border-ui-border-soft rounded-lg text-ui-text-main placeholder-ui-text-dim focus:outline-none focus:border-system-focus"
+                    autoComplete="username"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="password" className="block text-sm text-ui-text-muted mb-1">
+                    Пароль
+                  </label>
+                  <input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full px-4 py-3 bg-bg-secondary border border-ui-border-soft rounded-lg text-ui-text-main placeholder-ui-text-dim focus:outline-none focus:border-system-focus"
+                    autoComplete="current-password"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full bg-system-focus hover:bg-system-focus/90 text-white font-semibold py-3 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? 'Вход...' : 'Войти'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowLoginForm(false)}
+                  className="w-full text-sm text-ui-text-dim hover:text-ui-text-muted transition-colors py-2"
+                >
+                  ← Назад к Telegram
+                </button>
+              </form>
             )}
 
             {/* Лейбл доверия */}

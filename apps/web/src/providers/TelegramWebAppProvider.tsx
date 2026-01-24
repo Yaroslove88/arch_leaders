@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { setToken, setUser, getToken } from '../lib/api';
+import { initTelegramDevMock, isTelegramDevMock } from '../lib/telegram-dev-mock';
 
 interface TelegramUser {
   id: number;
@@ -97,6 +98,12 @@ export function TelegramWebAppProvider({ children }: Props) {
   }, []);
 
   useEffect(() => {
+    // Dev mode: инициализируем mock если включен
+    const mockEnabled = initTelegramDevMock();
+    if (mockEnabled) {
+      console.log('[TelegramWebAppProvider] Dev mock active');
+    }
+    
     // Проверяем, запущено ли приложение в Telegram
     const tg = (window as any).Telegram?.WebApp as TelegramWebApp | undefined;
     
