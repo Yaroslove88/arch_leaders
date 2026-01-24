@@ -56,10 +56,10 @@ RUN chmod +x ./docker-entrypoint.sh
 
 USER nestjs
 
-EXPOSE 3001
+EXPOSE 3000
 
 ENV NODE_ENV=production
-ENV PORT=3001
+ENV PORT=3000
 
 # Entrypoint runs migrations and seeds admin
 ENTRYPOINT ["./docker-entrypoint.sh"]

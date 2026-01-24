@@ -19,5 +19,13 @@ export class AppController {
   getHello(): string {
     return this.appService.getHello();
   }
+
+  @Get('ping')
+  @Public()
+  @ApiOperation({ summary: 'Simple healthcheck (no DB)' })
+  @ApiResponse({ status: 200, description: 'pong' })
+  ping(): string {
+    return 'pong';
+  }
 }
 

@@ -121,8 +121,8 @@ async function bootstrap() {
   // Swagger документация
   // Временно отключено для диагностики ошибок
   // Раскомментируйте после добавления всех декораторов Swagger
-  // API всегда на порту 3001, Next.js на 3000
-  const port = configService.get<number>('PORT') || 3001;// Проверка доступности порта перед запуском
+  // В Docker: API на 3000, локально можно переопределить через PORT
+  const port = configService.get<number>('PORT') || 3000;// Проверка доступности порта перед запуском
   const portAvailable = await isPortAvailable(port);if (!portAvailable) {
     const processInfo = await getProcessUsingPort(port);
     
