@@ -1,11 +1,15 @@
 import { z } from 'zod';
 import { QuestTypeSchema, QuestStatusSchema, QuestCriteriaSchema, QuestRewardSchema } from './quest.schema';
+import { EntryTypeSchema, EntrySourceSchema, CreateEntrySchema } from './entry.schema';
 
 /**
  * Shared API types for Leadership Architect
  * These types are used across frontend and backend
  * Single source of truth for API contracts
  */
+
+// Re-export Entry schemas to make them available from this file
+export { EntryTypeSchema, EntrySourceSchema, CreateEntrySchema };
 
 // ============================================
 // User Types
@@ -43,13 +47,11 @@ export const UserSummarySchema = z.object({
 export type UserSummary = z.infer<typeof UserSummarySchema>;
 
 // ============================================
-// Entry Types
+// Entry Types (imported from entry.schema.ts to avoid duplication)
 // ============================================
-export const EntryTypeSchema = z.enum(['situation', 'reflection', 'feedback', 'planning']);
 export type EntryType = z.infer<typeof EntryTypeSchema>;
-
-export const EntrySourceSchema = z.enum(['telegram', 'web', 'import', 'system']);
 export type EntrySource = z.infer<typeof EntrySourceSchema>;
+export type CreateEntryInput = z.infer<typeof CreateEntrySchema>;
 
 export const EntrySchema = z.object({
   id: z.string().uuid(),
@@ -64,16 +66,6 @@ export const EntrySchema = z.object({
   updated_at: z.string().datetime(),
 });
 export type Entry = z.infer<typeof EntrySchema>;
-
-export const CreateEntrySchema = z.object({
-  type: EntryTypeSchema,
-  source: EntrySourceSchema,
-  text: z.string().min(1).max(50000),
-  participants: z.array(z.string()).optional(),
-  context_json: z.any().optional(),
-  tags: z.array(z.string()).optional(),
-});
-export type CreateEntryInput = z.infer<typeof CreateEntrySchema>;
 
 // ============================================
 // Session Types
