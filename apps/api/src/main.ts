@@ -122,18 +122,8 @@ async function bootstrap() {
   // Временно отключено для диагностики ошибок
   // Раскомментируйте после добавления всех декораторов Swagger
   // API всегда на порту 3001, Next.js на 3000
-  const port = configService.get<number>('PORT') || 3001;
-  // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/d62f3774-e975-44dd-84db-681709a5074c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H-A',location:'apps/api/src/main.ts:PORT',message:'Computed PORT value',data:{portValue:port,portType:typeof port,configPort:configService.get('PORT'),envPort:process.env.PORT,nodeEnv:process.env.NODE_ENV},timestamp:Date.now()})}).catch(()=>{});
-  // #endregion
-  
-  // Проверка доступности порта перед запуском
-  const portAvailable = await isPortAvailable(port);
-  // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/d62f3774-e975-44dd-84db-681709a5074c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H-A',location:'apps/api/src/main.ts:PORT_CHECK',message:'Port availability checked',data:{portValue:port,portType:typeof port,portAvailable},timestamp:Date.now()})}).catch(()=>{});
-  // #endregion
-  
-  if (!portAvailable) {
+  const port = configService.get<number>('PORT') || 3001;// Проверка доступности порта перед запуском
+  const portAvailable = await isPortAvailable(port);if (!portAvailable) {
     const processInfo = await getProcessUsingPort(port);
     
     // Extract PID from process info
@@ -200,15 +190,7 @@ async function bootstrap() {
     }
   }
   
-  try {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/d62f3774-e975-44dd-84db-681709a5074c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H-B',location:'apps/api/src/main.ts:LISTEN',message:'Calling app.listen()',data:{portValue:port,portType:typeof port},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
-    await app.listen(port);
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/d62f3774-e975-44dd-84db-681709a5074c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H-A',location:'apps/api/src/main.ts:LISTEN_OK',message:'app.listen() resolved',data:{portValue:port,portType:typeof port,url:await app.getUrl().catch(()=>null)},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
-    console.log(`🚀 Leadership Architect API running on http://localhost:${port}`);
+  try {await app.listen(port);console.log(`🚀 Leadership Architect API running on http://localhost:${port}`);
     console.log(`📡 CORS enabled for: ${allowedOrigins.join(', ')}`);
   } catch (error: any) {
     

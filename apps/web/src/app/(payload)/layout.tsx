@@ -22,12 +22,7 @@ const serverFunction: ServerFunctionClient = async function (args) {
   })
 }
 
-const Layout = ({ children }: Args) => {
-  // #region agent log
-  fetch('http://127.0.0.1:7243/ingest/c0326067-9caf-4823-b221-37edfa52cbb2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'(payload)/layout.tsx:25',message:'PAYLOAD_LAYOUT_RENDERING',data:{hasConfig:!!config,hasImportMap:!!importMap},timestamp:Date.now(),sessionId:'debug-session',runId:'init-check',hypothesisId:'B'})}).catch(()=>{});
-  // #endregion
-  
-  return (
+const Layout = ({ children }: Args) => {return (
     <RootLayout config={config} importMap={importMap} serverFunction={serverFunction}>
       {children}
     </RootLayout>

@@ -37,15 +37,9 @@ export class HealthController {
     },
   })
   async check() {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/d62f3774-e975-44dd-84db-681709a5074c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H-E',location:'apps/api/src/common/health/health.controller.ts:check',message:'Health check called',data:{},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
     try {
       // Проверяем подключение к БД
       await this.prisma.$queryRaw`SELECT 1`;
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/d62f3774-e975-44dd-84db-681709a5074c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H-E',location:'apps/api/src/common/health/health.controller.ts:db_ok',message:'Health DB query ok',data:{},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       
       return {
         status: 'ok',
@@ -53,9 +47,6 @@ export class HealthController {
         database: 'connected',
       };
     } catch (error) {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/d62f3774-e975-44dd-84db-681709a5074c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H-E',location:'apps/api/src/common/health/health.controller.ts:db_err',message:'Health DB query failed',data:{error:error instanceof Error ? error.message : 'unknown'},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       return {
         status: 'error',
         timestamp: new Date().toISOString(),

@@ -11,13 +11,7 @@ import { AdminContent } from '../../components/admin/AdminContent';
 import { AdminAI } from '../../components/admin/AdminAI';
 import { AdminJobs } from '../../components/admin/AdminJobs';
 import { AdminAudit } from '../../components/admin/AdminAudit';
-import { adminLogin, getAdminMe } from '../../lib/admin-api';
-
-// #region agent log
-fetch('http://127.0.0.1:7243/ingest/c0326067-9caf-4823-b221-37edfa52cbb2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'admin/page.tsx:26',message:'OLD_ADMIN_LOADED',data:{route:'/admin',component:'AdminPage'},timestamp:Date.now(),sessionId:'debug-session',runId:'route-check',hypothesisId:'A'})}).catch(()=>{});
-// #endregion
-
-const tabs = [
+import { adminLogin, getAdminMe } from '../../lib/admin-api';const tabs = [
   { id: 'overview', label: 'Обзор', icon: '📊' },
   { id: 'users', label: 'Пользователи', icon: '👥' },
   { id: 'analytics', label: 'Аналитика', icon: '📈' },
