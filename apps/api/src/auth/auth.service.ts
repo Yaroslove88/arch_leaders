@@ -391,19 +391,32 @@ export class AuthService {
    * Верификация initData от Telegram Mini App (WebApp)
    * Алгоритм: https://core.telegram.org/bots/webapps#validating-data-received-via-the-mini-app
    */
-  private verifyTelegramWebAppData(initData: string): { isValid: boolean; user?: any } {
+  private verifyTelegramWebAppData(initData: string): { isValid: boolean; user?: any; error?: string } {
     const botToken = this.configService.get<string>('TELEGRAM_BOT_TOKEN');
-    if (!botToken) {
-      // В development пропускаем проверку
-      const params = new URLSearchParams(initData);
-      const userStr = params.get('user');
-      return { isValid: true, user: userStr ? JSON.parse(decodeURIComponent(userStr)) : null };
+    const skipValidation = this.configService.get<string>('SKIP_TELEGRAM_VALIDATION') === 'true';
+    
+    // Парсим параметры сразу
+    const params = new URLSearchParams(initData);
+    const userStr = params.get('user');
+    let user = null;
+    
+    try {
+      user = userStr ? JSON.parse(decodeURIComponent(userStr)) : null;
+    } catch (e) {
+      this.logger.error(`Failed to parse user from initData: ${e}`);
+      return { isValid: false, error: 'Invalid user data in initData' };
+    }
+    
+    // Пропускаем проверку если нет токена или включён SKIP_TELEGRAM_VALIDATION
+    if (!botToken || skipValidation) {
+      this.logger.warn(`Telegram validation skipped: botToken=${!!botToken}, skipValidation=${skipValidation}`);
+      return { isValid: true, user };
     }
 
-    const params = new URLSearchParams(initData);
     const hash = params.get('hash');
     if (!hash) {
-      return { isValid: false };
+      this.logger.error('No hash in initData');
+      return { isValid: false, error: 'No hash in initData' };
     }
 
     // Удаляем hash из параметров и сортируем
@@ -427,13 +440,13 @@ export class AuthService {
 
     const isValid = calculatedHash === hash;
     
-    if (isValid) {
-      const userStr = params.get('user');
-      const user = userStr ? JSON.parse(decodeURIComponent(userStr)) : null;
-      return { isValid: true, user };
+    if (!isValid) {
+      this.logger.error(`Hash mismatch: expected=${hash.substring(0, 16)}..., got=${calculatedHash.substring(0, 16)}...`);
+      this.logger.debug(`dataCheckString: ${dataCheckString.substring(0, 100)}...`);
+      return { isValid: false, error: 'Hash mismatch - check TELEGRAM_BOT_TOKEN' };
     }
 
-    return { isValid: false };
+    return { isValid: true, user };
   }
 
   /**
@@ -441,12 +454,13 @@ export class AuthService {
    */
   async loginWithTelegramWebApp(webAppDto: TelegramWebAppDto): Promise<{ access_token: string; user: { id: string; telegramUsername: string; role: string } }> {
     this.logger.warn(
-      `DIAG auth.loginWithTelegramWebApp called: initDataPresent=${!!webAppDto?.initData}`,
+      `DIAG auth.loginWithTelegramWebApp called: initDataPresent=${!!webAppDto?.initData}, initDataLength=${webAppDto?.initData?.length || 0}`,
     );
-    const { isValid, user: tgUser } = this.verifyTelegramWebAppData(webAppDto.initData);
+    const { isValid, user: tgUser, error } = this.verifyTelegramWebAppData(webAppDto.initData);
     
     if (!isValid) {
-      throw new UnauthorizedException('Неверная подпись Telegram WebApp данных');
+      this.logger.error(`Telegram WebApp auth failed: ${error}`);
+      throw new UnauthorizedException(error || 'Неверная подпись Telegram WebApp данных');
     }
 
     if (!tgUser || !tgUser.id) {
