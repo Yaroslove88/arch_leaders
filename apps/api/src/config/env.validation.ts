@@ -76,8 +76,9 @@ export function validate(config: Record<string, unknown>) {
       missingVars.push('DATABASE_URL');
     }
     
+    // WEB_URL is optional - will use default if not set
     if (!validatedConfig.WEB_URL) {
-      missingVars.push('WEB_URL');
+      console.warn('⚠️  WARNING: WEB_URL is not set. Using default CORS origins.');
     }
     
     // Хотя бы один LLM ключ должен быть установлен

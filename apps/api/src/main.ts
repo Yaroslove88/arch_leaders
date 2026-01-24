@@ -88,7 +88,7 @@ async function bootstrap() {
 
   // CORS настройка с белым списком
   // По умолчанию Next.js может работать на разных портах (3000, 3001, 3002...)
-  const webUrl = configService.get<string>('WEB_URL') || 'http://localhost:3000';
+  const webUrl = configService.get<string>('WEB_URL') || 'https://yaroslove88-arch-leaders-3cd4.twc1.net';
   const allowedOrigins = [webUrl];
   
   // В development добавляем дополнительные origins для удобства разработки
