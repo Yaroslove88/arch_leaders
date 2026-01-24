@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { cn } from '@/lib/utils';
+import { Modal, Button, Textarea } from '@leadership-architect/ui';
 
 export interface ReflectionModalProps {
   /** Открыто ли модальное окно */
@@ -38,7 +38,7 @@ export interface ReflectionFormData {
 
 /**
  * Модальное окно для рефлексии после кейса
- * Согласно DESIGN_ARCHITECTURE_CARDS_MODALS.md:771-814
+ * Использует единый Modal компонент с focus trap
  */
 export function ReflectionModal({
   isOpen,
@@ -56,27 +56,7 @@ export function ReflectionModal({
   });
   const [errors, setErrors] = useState<Partial<Record<keyof ReflectionFormData, string>>>({});
   
-  const modalRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  // Закрытие по Escape
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'hidden';
-    }
-
-    return () => {
-      document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen, onClose]);
 
   // Сброс формы при открытии
   useEffect(() => {
@@ -133,141 +113,112 @@ export function ReflectionModal({
   const displayQuestion = reflectionQuestion || 
     'Что ты узнал из этого опыта?';
 
-  if (!isOpen) return null;
+  const title = (
+    <span className="flex items-center gap-2">
+      <span>🪞</span>
+      <span>РЕФЛЕКСИЯ (опционально)</span>
+    </span>
+  );
+
+  const footer = (
+    <div className="flex gap-3">
+      {onSkip && (
+        <Button
+          variant="secondary"
+          onClick={onSkip}
+          disabled={isLoading}
+        >
+          Пропустить
+        </Button>
+      )}
+      <div className="flex-1" />
+      <Button
+        variant="primary"
+        onClick={handleSubmit}
+        loading={isLoading}
+      >
+        <span>💾</span>
+        <span>Сохранить и продолжить</span>
+      </Button>
+    </div>
+  );
 
   return (
-    <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto"
-      onClick={onClose}
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={title}
+      size="lg"
+      footer={footer}
     >
-      <div
-        ref={modalRef}
-        className="bg-graphite-structure rounded-xl shadow-active border border-ui-border-soft max-w-lg w-full my-auto"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="reflection-modal-title"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Заголовок */}
-        <div className="p-4 border-b border-ui-border-soft">
-          <div className="flex justify-between items-start">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Контекст */}
+        {context && (
+          <>
             <div>
-              <h2 id="reflection-modal-title" className="font-bold text-lg text-ash-light flex items-center gap-2">
-                <span>🪞</span>
-                <span>РЕФЛЕКСИЯ (опционально)</span>
-              </h2>
-            </div>
-            <button
-              onClick={onClose}
-              className="text-ui-text-muted hover:text-ash-light p-2 min-w-[44px] min-h-[44px] flex items-center justify-center transition-colors"
-              aria-label="Закрыть модальное окно рефлексии"
-            >
-              ✕
-            </button>
-          </div>
-        </div>
-
-        {/* Форма */}
-        <form onSubmit={handleSubmit}>
-          <div className="p-4 space-y-4">
-            {/* Контекст */}
-            {context && (
-              <>
-                <div>
-                  <p className="text-sm text-ash-light flex items-center gap-2">
-                    <span>📊</span>
-                    <span>
-                      {context.type === 'case' ? 'Кейс' : 
-                       context.type === 'quest' ? 'Квест' : 
-                       context.type === 'situation' ? 'Ситуация' : 'Узел'}: «{context.title}»
-                    </span>
-                  </p>
-                  {context.type === 'case' && context.selectedOption && (
-                    <p className="text-sm text-ui-text-muted mt-1 ml-6">
-                      Твой выбор: {context.selectedOption} {context.selectedOptionTitle && `— ${context.selectedOptionTitle}`}
-                    </p>
-                  )}
-                </div>
-
-                {/* Разделитель */}
-                <div className="border-t border-ui-border-soft"></div>
-              </>
-            )}
-
-            {/* Вопрос для размышления */}
-            <div>
-              <label className="block text-sm font-medium text-ash-light mb-2 flex items-center gap-2">
-                <span>💭</span>
-                <span>Вопрос для размышления</span>
-              </label>
-              <p className="text-sm text-ash-light mb-3 italic">
-                «{displayQuestion}»
+              <p className="text-sm text-ash-light flex items-center gap-2">
+                <span>📊</span>
+                <span>
+                  {context.type === 'case' ? 'Кейс' : 
+                   context.type === 'quest' ? 'Квест' : 
+                   context.type === 'situation' ? 'Ситуация' : 'Узел'}: «{context.title}»
+                </span>
               </p>
-            </div>
-
-            {/* Текстовое поле */}
-            <div>
-              <textarea
-                ref={textareaRef}
-                value={formData.text}
-                onChange={handleChange}
-                placeholder={exampleText}
-                rows={6}
-                className={cn(
-                  'w-full p-3 rounded-lg border bg-obsidian-core text-ash-light resize-none',
-                  'placeholder:text-ui-text-dim placeholder:italic',
-                  errors.text ? 'border-system-critical' : 'border-ui-border-soft'
-                )}
-              />
-              {errors.text && (
-                <p className="text-xs text-tension-red mt-1">{errors.text}</p>
-              )}
-              {!formData.text && (
-                <p className="text-xs text-ui-text-muted mt-2 italic">
-                  Пример: «{exampleText}»
+              {context.type === 'case' && context.selectedOption && (
+                <p className="text-sm text-ui-text-muted mt-1 ml-6">
+                  Твой выбор: {context.selectedOption} {context.selectedOptionTitle && `— ${context.selectedOptionTitle}`}
                 </p>
               )}
             </div>
 
-            {/* Мотивационный текст */}
-            <div className="p-3 bg-obsidian-core rounded-lg">
-              <p className="text-sm text-ui-text-muted flex items-start gap-2">
-                <span>💡</span>
-                <span>
-                  Рефлексия помогает закрепить инсайты и создаёт личный журнал размышлений.
-                </span>
-              </p>
-            </div>
-          </div>
+            {/* Разделитель */}
+            <div className="border-t border-ui-border-soft"></div>
+          </>
+        )}
 
-          {/* Разделитель */}
-          <div className="border-t border-ui-border-soft"></div>
+        {/* Вопрос для размышления */}
+        <div>
+          <label className="block text-sm font-medium text-ash-light mb-2 flex items-center gap-2">
+            <span>💭</span>
+            <span>Вопрос для размышления</span>
+          </label>
+          <p className="text-sm text-ash-light mb-3 italic">
+            «{displayQuestion}»
+          </p>
+        </div>
 
-          {/* Кнопки */}
-          <div className="p-4 flex gap-3">
-            {onSkip && (
-              <button
-                type="button"
-                onClick={onSkip}
-                className="py-3 px-4 rounded-lg border border-ui-border-soft text-ash-light hover:bg-obsidian-core transition-colors"
-                disabled={isLoading}
-              >
-                Пропустить
-              </button>
-            )}
-            <div className="flex-1" />
-            <button
-              type="submit"
-              className="py-3 px-6 rounded-lg bg-system-focus text-white hover:bg-system-focus/90 transition-colors disabled:opacity-50 flex items-center gap-2"
-              disabled={isLoading}
-            >
-              <span>💾</span>
-              <span>{isLoading ? 'Сохранение...' : 'Сохранить и продолжить'}</span>
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        {/* Текстовое поле */}
+        <div>
+          <Textarea
+            ref={textareaRef}
+            value={formData.text}
+            onChange={handleChange}
+            placeholder={exampleText}
+            rows={6}
+            hasError={!!errors.text}
+            className="placeholder:italic"
+          />
+          {errors.text && (
+            <p className="text-xs text-tension-red mt-1">{errors.text}</p>
+          )}
+          {!formData.text && (
+            <p className="text-xs text-ui-text-muted mt-2 italic">
+              Пример: «{exampleText}»
+            </p>
+          )}
+        </div>
+
+        {/* Мотивационный текст */}
+        <div className="p-3 bg-obsidian-core rounded-lg">
+          <p className="text-sm text-ui-text-muted flex items-start gap-2">
+            <span>💡</span>
+            <span>
+              Рефлексия помогает закрепить инсайты и создаёт личный журнал размышлений.
+            </span>
+          </p>
+        </div>
+      </form>
+    </Modal>
   );
 }
 

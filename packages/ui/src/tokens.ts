@@ -34,7 +34,7 @@ export const tokens = {
       dim: '#8A8E94',
     },
     core: {
-      strategicBlue: '#5C85BB',
+      strategicBlue: '#1F3A5F', // Синхронизировано с globals.css
       innerViolet: '#8B5CF6',
       sageGreen: '#4E6F5D',
       tensionRed: '#8C2F2F',

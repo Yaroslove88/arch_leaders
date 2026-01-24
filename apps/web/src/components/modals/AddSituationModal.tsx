@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { cn } from '@/lib/utils';
+import { useState, useEffect } from 'react';
+import { Modal, Button, Input, Textarea, Field } from '@leadership-architect/ui';
 
 export interface AddSituationModalProps {
   /** Открыто ли модальное окно */
@@ -37,7 +37,7 @@ export interface SituationFormData {
 
 /**
  * Модальное окно для добавления ситуации
- * Используется для записи практического опыта
+ * Использует единый Modal компонент с focus trap
  */
 export function AddSituationModal({
   isOpen,
@@ -58,27 +58,6 @@ export function AddSituationModal({
   });
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof SituationFormData, string>>>({});
-  
-  const modalRef = useRef<HTMLDivElement>(null);
-
-  // Закрытие поEscape
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'hidden';
-    }
-
-    return () => {
-      document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen, onClose]);
 
   // Сброс формы при открытии
   useEffect(() => {
@@ -135,204 +114,170 @@ export function AddSituationModal({
     }
   };
 
-  if (!isOpen) return null;
+  const title = (
+    <div>
+      <span className="flex items-center gap-2">
+        <span>➕</span>
+        <span>Добавить ситуацию</span>
+      </span>
+      {nodeName && (
+        <p className="text-xs text-ui-text-muted mt-1 font-normal">
+          Связано с: {nodeName}
+        </p>
+      )}
+    </div>
+  );
+
+  const footer = (
+    <div className="flex gap-3">
+      <Button
+        variant="secondary"
+        onClick={onClose}
+        disabled={isLoading}
+      >
+        Отмена
+      </Button>
+      <Button
+        variant="primary"
+        onClick={handleSubmit}
+        loading={isLoading}
+      >
+        Сохранить
+      </Button>
+    </div>
+  );
 
   return (
-    <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto"
-      onClick={onClose}
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={title}
+      size="lg"
+      footer={footer}
     >
-      <div
-        ref={modalRef}
-        className="bg-graphite-structure rounded-xl shadow-active border border-ui-border-soft max-w-lg w-full my-auto"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="situation-modal-title"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Заголовок */}
-        <div className="p-4 border-b border-ui-border-soft">
-          <div className="flex justify-between items-start">
-            <div>
-              <h2 id="situation-modal-title" className="font-bold text-lg text-ash-light">
-                ➕ Добавить ситуацию
-              </h2>
-              {nodeName && (
-                <p className="text-xs text-ui-text-muted mt-1">
-                  Связано с: {nodeName}
-                </p>
-              )}
-            </div>
-            <button
-              onClick={onClose}
-              className="text-ui-text-muted hover:text-ash-light p-2 min-w-[44px] min-h-[44px] flex items-center justify-center transition-colors"
-              aria-label="Закрыть модальное окно добавления ситуации"
-            >
-              ✕
-            </button>
-          </div>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Подсказка */}
+        <div className="bg-obsidian-core p-3 rounded-lg">
+          <p className="text-xs text-ui-text-muted">
+            💡 <strong>Совет:</strong> Опишите конкретную ситуацию из вашей практики.
+            Чем детальнее — тем полезнее для рефлексии.
+          </p>
         </div>
 
-        {/* Форма */}
-        <form onSubmit={handleSubmit}>
-          <div className="p-4 space-y-4">
-            {/* Подсказка */}
-            <div className="bg-obsidian-core p-3 rounded-lg">
-              <p className="text-xs text-ui-text-muted">
-                💡 <strong>Совет:</strong> Опишите конкретную ситуацию из вашей практики.
-                Чем детальнее — тем полезнее для рефлексии.
-              </p>
-            </div>
+        {/* Краткое описание */}
+        <Field
+          label="Краткое описание"
+          htmlFor="title"
+          required
+          error={errors.title}
+        >
+          <Input
+            id="title"
+            name="title"
+            value={formData.title}
+            onChange={handleChange}
+            placeholder="О чём ситуация?"
+            hasError={!!errors.title}
+            maxLength={100}
+          />
+        </Field>
 
-            {/* Краткое описание */}
-            <div>
-              <label htmlFor="title" className="block text-sm font-medium text-ash-light mb-1">
-                Краткое описание *
-              </label>
-              <input
-                type="text"
-                id="title"
-                name="title"
-                value={formData.title}
-                onChange={handleChange}
-                placeholder="О чём ситуация?"
-                className={cn(
-                  'w-full p-3 rounded-lg border bg-obsidian-core text-ash-light',
-                  errors.title ? 'border-system-critical' : 'border-ui-border-soft'
-                )}
-                maxLength={100}
-              />
-              {errors.title && (
-                <p className="text-xs text-system-critical mt-1">{errors.title}</p>
-              )}
-            </div>
+        {/* Подробное описание */}
+        <Field
+          label="Что произошло?"
+          htmlFor="description"
+          required
+          error={errors.description}
+        >
+          <Textarea
+            id="description"
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            placeholder="Опишите ситуацию подробнее..."
+            rows={4}
+            hasError={!!errors.description}
+          />
+          <p className="text-xs text-ui-text-muted mt-1">
+            {formData.description.length}/500 символов
+          </p>
+        </Field>
 
-            {/* Подробное описание */}
-            <div>
-              <label htmlFor="description" className="block text-sm font-medium text-ash-light mb-1">
-                Что произошло? *
-              </label>
-              <textarea
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                placeholder="Опишите ситуацию подробнее..."
-                rows={4}
-                className={cn(
-                  'w-full p-3 rounded-lg border bg-obsidian-core text-ash-light resize-none',
-                  errors.description ? 'border-system-critical' : 'border-ui-border-soft'
-                )}
-              />
-              {errors.description && (
-                <p className="text-xs text-system-critical mt-1">{errors.description}</p>
-              )}
-              <p className="text-xs text-ui-text-muted mt-1">
-                {formData.description.length}/500 символов
-              </p>
-            </div>
+        {/* Дата */}
+        <Field
+          label="Когда это было?"
+          htmlFor="date"
+        >
+          <Input
+            type="date"
+            id="date"
+            name="date"
+            value={formData.date}
+            onChange={handleChange}
+          />
+        </Field>
 
-            {/* Дата */}
-            <div>
-              <label htmlFor="date" className="block text-sm font-medium text-ash-light mb-1">
-                Когда это было?
-              </label>
-              <input
-                type="date"
-                id="date"
-                name="date"
-                value={formData.date}
-                onChange={handleChange}
-                className="w-full p-3 rounded-lg border border-ui-border-soft bg-obsidian-core text-ash-light"
-              />
-            </div>
+        {/* Дополнительные поля (сворачиваемые) */}
+        <div>
+          <button
+            type="button"
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            className="flex items-center gap-2 text-sm text-strategic-blue hover:text-strategic-blue/80 transition-colors"
+          >
+            <span>{showAdvanced ? '▼' : '▶'}</span>
+            <span>Дополнительные поля (необязательно)</span>
+          </button>
 
-            {/* Дополнительные поля (сворачиваемые) */}
-            <div>
-              <button
-                type="button"
-                onClick={() => setShowAdvanced(!showAdvanced)}
-                className="flex items-center gap-2 text-sm text-system-focus"
+          {showAdvanced && (
+            <div className="mt-3 space-y-4">
+              {/* Контекст */}
+              <Field
+                label="Контекст"
+                htmlFor="context"
               >
-                <span>{showAdvanced ? '▼' : '▶'}</span>
-                <span>Дополнительные поля (необязательно)</span>
-              </button>
+                <Input
+                  id="context"
+                  name="context"
+                  value={formData.context}
+                  onChange={handleChange}
+                  placeholder="Где, с кем, при каких обстоятельствах?"
+                />
+              </Field>
 
-              {showAdvanced && (
-                <div className="mt-3 space-y-4">
-                  {/* Контекст */}
-                  <div>
-                    <label htmlFor="context" className="block text-sm font-medium text-ash-light mb-1">
-                      Контекст
-                    </label>
-                    <input
-                      type="text"
-                      id="context"
-                      name="context"
-                      value={formData.context}
-                      onChange={handleChange}
-                      placeholder="Где, с кем, при каких обстоятельствах?"
-                      className="w-full p-3 rounded-lg border border-ui-border-soft bg-obsidian-core text-ash-light"
-                    />
-                  </div>
+              {/* Что сделал */}
+              <Field
+                label="Что вы сделали?"
+                htmlFor="action"
+              >
+                <Textarea
+                  id="action"
+                  name="action"
+                  value={formData.action}
+                  onChange={handleChange}
+                  placeholder="Ваши действия в этой ситуации..."
+                  rows={2}
+                />
+              </Field>
 
-                  {/* Что сделал */}
-                  <div>
-                    <label htmlFor="action" className="block text-sm font-medium text-ash-light mb-1">
-                      Что вы сделали?
-                    </label>
-                    <textarea
-                      id="action"
-                      name="action"
-                      value={formData.action}
-                      onChange={handleChange}
-                      placeholder="Ваши действия в этой ситуации..."
-                      rows={2}
-                      className="w-full p-3 rounded-lg border border-ui-border-soft bg-obsidian-core text-ash-light resize-none"
-                    />
-                  </div>
-
-                  {/* Результат */}
-                  <div>
-                    <label htmlFor="result" className="block text-sm font-medium text-ash-light mb-1">
-                      Результат
-                    </label>
-                    <textarea
-                      id="result"
-                      name="result"
-                      value={formData.result}
-                      onChange={handleChange}
-                      placeholder="К чему это привело?"
-                      rows={2}
-                      className="w-full p-3 rounded-lg border border-ui-border-soft bg-obsidian-core text-ash-light resize-none"
-                    />
-                  </div>
-                </div>
-              )}
+              {/* Результат */}
+              <Field
+                label="Результат"
+                htmlFor="result"
+              >
+                <Textarea
+                  id="result"
+                  name="result"
+                  value={formData.result}
+                  onChange={handleChange}
+                  placeholder="К чему это привело?"
+                  rows={2}
+                />
+              </Field>
             </div>
-          </div>
-
-          {/* Кнопки */}
-          <div className="p-4 border-t border-ui-border-soft flex gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 py-3 rounded-lg border border-ui-border-soft text-ash-light hover:bg-obsidian-core transition-colors"
-              disabled={isLoading}
-            >
-              Отмена
-            </button>
-            <button
-              type="submit"
-              className="flex-1 py-3 rounded-lg bg-system-focus text-white hover:bg-system-focus/90 transition-colors disabled:opacity-50"
-              disabled={isLoading}
-            >
-              {isLoading ? 'Сохранение...' : 'Сохранить'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+          )}
+        </div>
+      </form>
+    </Modal>
   );
 }
 

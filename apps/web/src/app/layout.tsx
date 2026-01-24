@@ -6,6 +6,7 @@ import { TelegramWebAppProvider } from '../providers/TelegramWebAppProvider';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { ToastProvider } from '../components/ToastProvider';
 import { ConditionalNavigation } from '../components/ConditionalNavigation';
+import { SkipLink } from '@leadership-architect/ui';
 
 export const metadata: Metadata = {
   title: 'Архитектор лидерства',
@@ -31,8 +32,9 @@ export default function RootLayout({
           <QueryProvider>
             <TelegramWebAppProvider>
               <ToastProvider>
+                <SkipLink />
                 <ConditionalNavigation />
-                <main>{children}</main>
+                <main id="main-content">{children}</main>
                 <ConditionalNavigation showAdminToggle />
               </ToastProvider>
             </TelegramWebAppProvider>

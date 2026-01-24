@@ -4,10 +4,15 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createEntry } from '@/lib/api';
 import { useToast } from '@/components/ToastProvider';
+import { useTelegramNavigation } from '@/hooks/useTelegramNavigation';
 
 export default function NewEntryPage() {
   const router = useRouter();
   const toast = useToast();
+  
+  // Telegram BackButton integration
+  useTelegramNavigation('/traces', { hapticFeedback: true });
+  
   const [loading, setLoading] = useState(false);
   const [showDescription, setShowDescription] = useState(false);
   const [formData, setFormData] = useState({
@@ -251,7 +256,7 @@ export default function NewEntryPage() {
             </button>
             <button
               type="button"
-              onClick={() => router.back()}
+              onClick={() => router.push('/traces')}
               className="px-6 py-2 bg-obsidian-core border border-ui-border-soft text-ui-text-muted rounded hover:border-ui-border-strong hover:text-ash-light focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-strategic-blue transition-colors"
             >
               Отмена

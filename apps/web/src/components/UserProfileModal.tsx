@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '../hooks/useAuth';
 import { changePassword } from '../lib/api';
+import { Modal, Button, Input, Field } from '@leadership-architect/ui';
 
 interface UserProfileModalProps {
   isOpen: boolean;
@@ -89,234 +90,208 @@ export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
     }
   };
 
-  if (!isOpen) return null;
+  const title = isAuthenticated 
+    ? 'Личный кабинет' 
+    : isLoginMode 
+      ? 'Вход' 
+      : 'Регистрация';
 
   return (
-    <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto" 
-      onClick={onClose}
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={title}
+      size="md"
     >
-      <div
-        className="relative bg-graphite-structure border border-ui-border-soft rounded-lg shadow-floating max-w-md w-full p-6 my-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-bold text-ash-light">
-              {isAuthenticated ? 'Личный кабинет' : isLoginMode ? 'Вход' : 'Регистрация'}
-            </h2>
-            <button
-              onClick={onClose}
-              className="text-ui-text-dim hover:text-ui-text-muted text-2xl font-bold transition-colors"
-            >
-              ×
-            </button>
-          </div>
-
-          {isAuthenticated ? (
-            <div className="space-y-4">
-              {!showChangePassword ? (
-                <>
-                  <div className="bg-obsidian-core border border-ui-border-soft rounded-lg p-4">
-                    <div className="space-y-2">
-                      <div>
-                        <span className="text-sm text-ui-text-dim">Telegram username:</span>
-                        <p className="text-lg font-semibold text-ash-light">@{user?.telegramUsername}</p>
-                      </div>
-                      <div>
-                        <span className="text-sm text-ui-text-dim">Роль:</span>
-                        <p className="text-lg font-semibold text-ash-light">
-                          {user?.role === 'admin' ? 'Администратор' : 'Пользователь'}
-                        </p>
-                      </div>
-                      <div>
-                        <span className="text-sm text-ui-text-dim">ID:</span>
-                        <p className="text-sm text-ui-text-muted font-mono">{user?.id}</p>
-                      </div>
-                    </div>
+      {isAuthenticated ? (
+        <div className="space-y-4">
+          {!showChangePassword ? (
+            <>
+              <div className="bg-obsidian-core border border-ui-border-soft rounded-lg p-4">
+                <div className="space-y-2">
+                  <div>
+                    <span className="text-sm text-ui-text-dim">Telegram username:</span>
+                    <p className="text-lg font-semibold text-ash-light">@{user?.telegramUsername}</p>
                   </div>
-                  {/* Быстрые ссылки */}
-                  <div className="border-t border-ui-border-soft pt-4 mt-2">
-                    <p className="text-xs text-ui-text-dim mb-2">Ссылки</p>
-                    <div className="space-y-2">
-                      <Link
-                        href="/introduce"
-                        onClick={onClose}
-                        className="flex items-center gap-2 w-full bg-obsidian-core border border-ui-border-soft py-2 px-4 rounded-lg hover:border-system-focus hover:text-system-focus transition-colors text-ash-light text-sm"
-                      >
-                        <span>📖</span>
-                        <span>Об Архитекторе</span>
-                      </Link>
-                      <Link
-                        href="/architecture"
-                        onClick={onClose}
-                        className="flex items-center gap-2 w-full bg-obsidian-core border border-ui-border-soft py-2 px-4 rounded-lg hover:border-system-focus hover:text-system-focus transition-colors text-ash-light text-sm"
-                      >
-                        <span>🌳</span>
-                        <span>Моё дерево</span>
-                      </Link>
-                    </div>
+                  <div>
+                    <span className="text-sm text-ui-text-dim">Роль:</span>
+                    <p className="text-lg font-semibold text-ash-light">
+                      {user?.role === 'admin' ? 'Администратор' : 'Пользователь'}
+                    </p>
                   </div>
-
-                  <div className="border-t border-ui-border-soft pt-4 mt-2">
-                    <button
-                      onClick={() => setShowChangePassword(true)}
-                      className="w-full bg-obsidian-core border border-ui-border-soft text-ui-text-muted py-2 px-4 rounded-lg hover:border-system-focus hover:text-system-focus transition-colors text-sm"
-                    >
-                      Сменить пароль
-                    </button>
+                  <div>
+                    <span className="text-sm text-ui-text-dim">ID:</span>
+                    <p className="text-sm text-ui-text-muted font-mono">{user?.id}</p>
                   </div>
-                  <button
-                    onClick={handleLogout}
-                    className="w-full bg-obsidian-core border border-system-critical/50 text-system-critical py-2 px-4 rounded-lg hover:border-system-critical hover:bg-graphite-structure transition-colors text-sm"
+                </div>
+              </div>
+              
+              {/* Быстрые ссылки */}
+              <div className="border-t border-ui-border-soft pt-4 mt-2">
+                <p className="text-xs text-ui-text-dim mb-2">Ссылки</p>
+                <div className="space-y-2">
+                  <Link
+                    href="/introduce"
+                    onClick={onClose}
+                    className="flex items-center gap-2 w-full bg-obsidian-core border border-ui-border-soft py-2 px-4 rounded-lg hover:border-strategic-blue hover:text-strategic-blue transition-colors text-ash-light text-sm"
                   >
-                    Выйти
-                  </button>
-                </>
-              ) : (
-                <form onSubmit={handleChangePassword} className="space-y-4">
-                  {error && (
-                    <div className="bg-obsidian-core border border-system-critical/30 text-system-critical px-4 py-3 rounded">
-                      {error}
-                    </div>
-                  )}
-                  {success && (
-                    <div className="bg-obsidian-core border border-system-growth/30 text-system-growth px-4 py-3 rounded">
-                      {success}
-                    </div>
-                  )}
-                  <div>
-                    <label htmlFor="currentPassword" className="block text-sm font-medium text-ash-light mb-1">
-                      Текущий пароль
-                    </label>
-                    <input
-                      id="currentPassword"
-                      type="password"
-                      value={currentPassword}
-                      onChange={(e) => setCurrentPassword(e.target.value)}
-                      placeholder="Введите текущий пароль"
-                      required
-                      className="w-full px-3 py-2 bg-obsidian-core border border-ui-border-soft rounded-lg text-ash-light placeholder-ui-text-dim focus:outline-none focus:ring-2 focus:ring-system-focus focus:border-system-focus"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="newPassword" className="block text-sm font-medium text-ash-light mb-1">
-                      Новый пароль
-                    </label>
-                    <input
-                      id="newPassword"
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="Минимум 8 символов"
-                      required
-                      minLength={8}
-                      className="w-full px-3 py-2 bg-obsidian-core border border-ui-border-soft rounded-lg text-ash-light placeholder-ui-text-dim focus:outline-none focus:ring-2 focus:ring-system-focus focus:border-system-focus"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-ash-light mb-1">
-                      Подтвердите новый пароль
-                    </label>
-                    <input
-                      id="confirmPassword"
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Повторите новый пароль"
-                      required
-                      minLength={8}
-                      className="w-full px-3 py-2 bg-obsidian-core border border-ui-border-soft rounded-lg text-ash-light placeholder-ui-text-dim focus:outline-none focus:ring-2 focus:ring-system-focus focus:border-system-focus"
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowChangePassword(false);
-                        setError(null);
-                        setSuccess(null);
-                        setCurrentPassword('');
-                        setNewPassword('');
-                        setConfirmPassword('');
-                      }}
-                      className="flex-1 bg-obsidian-core border border-ui-border-soft text-ui-text-muted py-2 px-4 rounded-lg hover:border-ui-border-strong hover:text-ash-light transition-colors"
-                    >
-                      Отмена
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={isLoading}
-                      className="flex-1 bg-obsidian-core border border-system-focus text-system-focus py-2 px-4 rounded-lg hover:border-system-focus/70 hover:bg-graphite-structure transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isLoading ? 'Сохранение...' : 'Изменить пароль'}
-                    </button>
-                  </div>
-                </form>
-              )}
-            </div>
+                    <span>📖</span>
+                    <span>Об Архитекторе</span>
+                  </Link>
+                  <Link
+                    href="/architecture"
+                    onClick={onClose}
+                    className="flex items-center gap-2 w-full bg-obsidian-core border border-ui-border-soft py-2 px-4 rounded-lg hover:border-strategic-blue hover:text-strategic-blue transition-colors text-ash-light text-sm"
+                  >
+                    <span>🌳</span>
+                    <span>Моё дерево</span>
+                  </Link>
+                </div>
+              </div>
+
+              <div className="border-t border-ui-border-soft pt-4 mt-2">
+                <Button
+                  variant="secondary"
+                  block
+                  onClick={() => setShowChangePassword(true)}
+                >
+                  Сменить пароль
+                </Button>
+              </div>
+              <Button
+                variant="critical"
+                block
+                onClick={handleLogout}
+              >
+                Выйти
+              </Button>
+            </>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleChangePassword} className="space-y-4">
               {error && (
-                <div className="bg-obsidian-core border border-system-critical/30 text-system-critical px-4 py-3 rounded">
+                <div className="bg-obsidian-core border border-tension-red/30 text-tension-red px-4 py-3 rounded">
                   {error}
                 </div>
               )}
-
-              <div>
-                <label htmlFor="telegramUsername" className="block text-sm font-medium text-ash-light mb-1">
-                  Telegram username
-                </label>
-                <input
-                  id="telegramUsername"
-                  type="text"
-                  value={telegramUsername}
-                  onChange={(e) => setTelegramUsername(e.target.value)}
-                  placeholder="username"
-                  required
-                  className="w-full px-3 py-2 bg-obsidian-core border border-ui-border-soft rounded-lg text-ash-light placeholder-ui-text-dim focus:outline-none focus:ring-2 focus:ring-system-focus focus:border-system-focus"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-ash-light mb-1">
-                  Пароль
-                </label>
-                <input
-                  id="password"
+              {success && (
+                <div className="bg-obsidian-core border border-sage-green/30 text-sage-green px-4 py-3 rounded">
+                  {success}
+                </div>
+              )}
+              <Field label="Текущий пароль" htmlFor="currentPassword" required>
+                <Input
+                  id="currentPassword"
                   type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder={isLoginMode ? 'Введите пароль' : 'Минимум 8 символов'}
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="Введите текущий пароль"
                   required
-                  minLength={isLoginMode ? undefined : 8}
-                  className="w-full px-3 py-2 bg-obsidian-core border border-ui-border-soft rounded-lg text-ash-light placeholder-ui-text-dim focus:outline-none focus:ring-2 focus:ring-system-focus focus:border-system-focus"
                 />
-              </div>
-
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-obsidian-core border border-system-focus text-system-focus py-2 px-4 rounded-lg hover:border-system-focus/70 hover:bg-graphite-structure transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isLoading ? 'Загрузка...' : isLoginMode ? 'Войти' : 'Зарегистрироваться'}
-              </button>
-
-              <div className="text-center">
-                <button
+              </Field>
+              <Field label="Новый пароль" htmlFor="newPassword" required>
+                <Input
+                  id="newPassword"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Минимум 8 символов"
+                  required
+                  minLength={8}
+                />
+              </Field>
+              <Field label="Подтвердите новый пароль" htmlFor="confirmPassword" required>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Повторите новый пароль"
+                  required
+                  minLength={8}
+                />
+              </Field>
+              <div className="flex gap-2">
+                <Button
                   type="button"
+                  variant="secondary"
+                  block
                   onClick={() => {
-                    setIsLoginMode(!isLoginMode);
+                    setShowChangePassword(false);
                     setError(null);
+                    setSuccess(null);
+                    setCurrentPassword('');
+                    setNewPassword('');
+                    setConfirmPassword('');
                   }}
-                  className="text-system-focus hover:text-system-focus/80 text-sm transition-colors"
                 >
-                  {isLoginMode ? 'Нет аккаунта? Зарегистрироваться' : 'Уже есть аккаунт? Войти'}
-                </button>
+                  Отмена
+                </Button>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  block
+                  loading={isLoading}
+                >
+                  Изменить пароль
+                </Button>
               </div>
             </form>
           )}
-      </div>
-    </div>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <div className="bg-obsidian-core border border-tension-red/30 text-tension-red px-4 py-3 rounded">
+              {error}
+            </div>
+          )}
+
+          <Field label="Telegram username" htmlFor="telegramUsername" required>
+            <Input
+              id="telegramUsername"
+              type="text"
+              value={telegramUsername}
+              onChange={(e) => setTelegramUsername(e.target.value)}
+              placeholder="username"
+              required
+            />
+          </Field>
+
+          <Field label="Пароль" htmlFor="password" required>
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder={isLoginMode ? 'Введите пароль' : 'Минимум 8 символов'}
+              required
+              minLength={isLoginMode ? undefined : 8}
+            />
+          </Field>
+
+          <Button
+            type="submit"
+            variant="primary"
+            block
+            loading={isLoading}
+          >
+            {isLoginMode ? 'Войти' : 'Зарегистрироваться'}
+          </Button>
+
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={() => {
+                setIsLoginMode(!isLoginMode);
+                setError(null);
+              }}
+              className="text-strategic-blue hover:text-strategic-blue/80 text-sm transition-colors"
+            >
+              {isLoginMode ? 'Нет аккаунта? Зарегистрироваться' : 'Уже есть аккаунт? Войти'}
+            </button>
+          </div>
+        </form>
+      )}
+    </Modal>
   );
 }
-
