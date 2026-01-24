@@ -1,33 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../hooks/useAuth';
-
-// Declare Telegram WebApp types
-declare global {
-  interface Window {
-    Telegram?: {
-      WebApp?: {
-        initData: string;
-        initDataUnsafe: {
-          user?: {
-            id: number;
-            first_name: string;
-            last_name?: string;
-            username?: string;
-            photo_url?: string;
-          };
-          auth_date: number;
-          hash: string;
-        };
-        ready: () => void;
-        expand: () => void;
-        close: () => void;
-      };
-    };
-  }
-}
+import { isTelegramWebApp, getTelegramWebApp, initTelegramWebApp } from '../../lib/telegram';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -36,29 +12,10 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [telegramBotId, setTelegramBotId] = useState<string>('');
   const [showFallbackButton, setShowFallbackButton] = useState(false);
-  const [isTelegramMiniApp, setIsTelegramMiniApp] = useState(false);
+  const [isMiniApp, setIsMiniApp] = useState(false);
 
-  useEffect(() => {
-    // Проверяем, авторизован ли пользователь
-    if (isAuthenticated && !isLoading) {
-      router.push('/dashboard');
-    }
-  }, [isAuthenticated, isLoading, router]);
-
-  // Проверяем, запущены ли мы внутри Telegram Mini App
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.Telegram?.WebApp?.initData) {
-      setIsTelegramMiniApp(true);
-      window.Telegram.WebApp.ready();
-      window.Telegram.WebApp.expand();
-      
-      // Автоматически авторизуем через Mini App
-      handleTelegramMiniAppAuth();
-    }
-  }, []);
-
-  const handleTelegramMiniAppAuth = async () => {
-    const tg = window.Telegram?.WebApp;
+  const handleTelegramMiniAppAuth = useCallback(async () => {
+    const tg = getTelegramWebApp();
     if (!tg?.initData) return;
 
     try {
@@ -93,7 +50,25 @@ export default function LoginPage() {
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [router]);
+
+  useEffect(() => {
+    // Проверяем, авторизован ли пользователь
+    if (isAuthenticated && !isLoading) {
+      router.push('/dashboard');
+    }
+  }, [isAuthenticated, isLoading, router]);
+
+  // Проверяем, запущены ли мы внутри Telegram Mini App
+  useEffect(() => {
+    if (isTelegramWebApp()) {
+      setIsMiniApp(true);
+      initTelegramWebApp();
+      
+      // Автоматически авторизуем через Mini App
+      handleTelegramMiniAppAuth();
+    }
+  }, [handleTelegramMiniAppAuth]);
 
   useEffect(() => {
     // Загружаем Telegram Bot ID из переменных окружения
