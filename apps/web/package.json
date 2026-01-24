@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@leadership-architect/ui": "workspace:*",
+    "@monaco-editor/react": "^4.6.0",
     "@payloadcms/db-postgres": "^3.72.0",
     "@payloadcms/next": "^3.72.0",
     "@payloadcms/richtext-lexical": "^3.72.0",

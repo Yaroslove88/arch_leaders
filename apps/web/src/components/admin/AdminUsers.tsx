@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getAdminUsers, getUser360, updateUser, User, User360 } from '../../lib/admin-api';
+import { getAdminUsers, getUser360, updateUser, getUserSubscription, User, User360, UserSubscription } from '../../lib/admin-api';
 import LoadingSpinner from '../LoadingSpinner';
+import { SubscriptionEditor } from './SubscriptionEditor';
+import { ResetUserDataModal } from './modals/ResetUserDataModal';
 
 export function AdminUsers() {
   const [users, setUsers] = useState<User[]>([]);
@@ -11,6 +13,9 @@ export function AdminUsers() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedUser, setSelectedUser] = useState<User360 | null>(null);
+  const [userSubscription, setUserSubscription] = useState<UserSubscription | null>(null);
+  const [showSubscriptionEditor, setShowSubscriptionEditor] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
   const [page, setPage] = useState(1);
   const limit = 20;
 
@@ -38,10 +43,23 @@ export function AdminUsers() {
 
   async function handleViewUser(userId: string) {
     try {
-      const user360 = await getUser360(userId);
+      const [user360, subscription] = await Promise.all([
+        getUser360(userId),
+        getUserSubscription(userId).catch(() => ({ plan: 'free' as const, expires_at: null })),
+      ]);
       setSelectedUser(user360);
+      setUserSubscription(subscription);
     } catch (error) {
       console.error('Failed to load user 360:', error);
+    }
+  }
+
+  async function refreshSubscription(userId: string) {
+    try {
+      const subscription = await getUserSubscription(userId);
+      setUserSubscription(subscription);
+    } catch (error) {
+      console.error('Failed to refresh subscription:', error);
     }
   }
 
@@ -143,7 +161,43 @@ export function AdminUsers() {
           </div>
         </div>
 
-        <div className="bg-graphite-structure border border-ui-border-soft rounded-lg p-6">
+        {/* Subscription Section */}
+        <div className="bg-graphite-structure border border-ui-border-soft rounded-lg p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-ash-light">Подписка</h3>
+            <button
+              onClick={() => setShowSubscriptionEditor(true)}
+              className="px-3 py-1.5 bg-strategic-blue/20 text-strategic-blue rounded-lg hover:bg-strategic-blue/30 transition-colors text-sm"
+            >
+              Изменить
+            </button>
+          </div>
+          <div className="flex items-center gap-6">
+            <div>
+              <div className="text-sm text-ui-text-muted mb-1">План</div>
+              <span className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
+                userSubscription?.plan === 'premium' 
+                  ? 'bg-catalyst-gold/20 text-catalyst-gold' 
+                  : userSubscription?.plan === 'basic'
+                  ? 'bg-strategic-blue/20 text-strategic-blue'
+                  : 'bg-ui-border-soft text-ui-text-muted'
+              }`}>
+                {userSubscription?.plan === 'premium' ? 'Premium' :
+                 userSubscription?.plan === 'basic' ? 'Basic' : 'Free'}
+              </span>
+            </div>
+            <div>
+              <div className="text-sm text-ui-text-muted mb-1">Истекает</div>
+              <div className="text-ash-light">
+                {userSubscription?.expires_at
+                  ? new Date(userSubscription.expires_at).toLocaleDateString('ru-RU')
+                  : 'Бессрочно'}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-graphite-structure border border-ui-border-soft rounded-lg p-6 mb-6">
           <h3 className="text-lg font-semibold text-ash-light mb-4">Действия</h3>
           <div className="flex gap-4">
             <button
@@ -160,6 +214,40 @@ export function AdminUsers() {
             </button>
           </div>
         </div>
+
+        {/* Danger Zone */}
+        <div className="bg-graphite-structure border border-tension-red/30 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-tension-red mb-2">Опасная зона</h3>
+          <p className="text-sm text-ui-text-muted mb-4">
+            Действия в этой секции необратимы. Будьте осторожны.
+          </p>
+          <button
+            onClick={() => setShowResetModal(true)}
+            className="px-4 py-2 bg-tension-red/20 text-tension-red rounded-lg hover:bg-tension-red/30 transition-colors border border-tension-red/30"
+          >
+            Сбросить данные пользователя
+          </button>
+        </div>
+
+        {/* Subscription Editor Modal */}
+        {showSubscriptionEditor && userSubscription && (
+          <SubscriptionEditor
+            userId={displayUser.id}
+            currentSubscription={userSubscription}
+            onClose={() => setShowSubscriptionEditor(false)}
+            onSuccess={() => refreshSubscription(displayUser.id)}
+          />
+        )}
+
+        {/* Reset User Data Modal */}
+        {showResetModal && (
+          <ResetUserDataModal
+            userId={displayUser.id}
+            userName={displayUser.telegramUsername}
+            onClose={() => setShowResetModal(false)}
+            onSuccess={() => handleViewUser(displayUser.id)}
+          />
+        )}
       </div>
     );
   }

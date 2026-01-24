@@ -174,5 +174,117 @@ export class AdminUsersService {
 
     return user;
   }
+
+  async updateSubscription(
+    userId: string,
+    data: { plan: string; expires_at?: string },
+  ) {
+    // Получаем текущую подписку для истории
+    const currentUser = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        subscription_plan: true,
+        subscription_expires_at: true,
+      },
+    });
+
+    if (!currentUser) {
+      throw new NotFoundException('User not found');
+    }
+
+    const oldPlan = currentUser.subscription_plan;
+
+    // Обновляем подписку
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        subscription_plan: data.plan,
+        subscription_expires_at: data.expires_at ? new Date(data.expires_at) : null,
+      },
+      select: {
+        id: true,
+        email: true,
+        telegramUsername: true,
+        subscription_plan: true,
+        subscription_expires_at: true,
+      },
+    });
+
+    return {
+      user,
+      old_plan: oldPlan,
+      new_plan: data.plan,
+    };
+  }
+
+  async getSubscription(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        subscription_plan: true,
+        subscription_expires_at: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return {
+      plan: user.subscription_plan,
+      expires_at: user.subscription_expires_at,
+    };
+  }
+
+  async resetUserData(userId: string, scope: 'progress' | 'tree' | 'all') {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const deletedCounts: Record<string, number> = {};
+
+    // Сбросить прогресс квестов
+    if (scope === 'progress' || scope === 'all') {
+      const questsDeleted = await this.prisma.quest.deleteMany({
+        where: { userId },
+      });
+      deletedCounts.quests = questsDeleted.count;
+    }
+
+    // Сбросить дерево способностей (evidence)
+    if (scope === 'tree' || scope === 'all') {
+      const evidenceDeleted = await this.prisma.evidence.deleteMany({
+        where: { userId },
+      });
+      deletedCounts.evidence = evidenceDeleted.count;
+    }
+
+    // Сбросить все данные
+    if (scope === 'all') {
+      // Удалить сессии
+      const sessionsDeleted = await this.prisma.session.deleteMany({
+        where: { userId },
+      });
+      deletedCounts.sessions = sessionsDeleted.count;
+
+      // Удалить записи (entries)
+      const entriesDeleted = await this.prisma.entry.deleteMany({
+        where: { userId },
+      });
+      deletedCounts.entries = entriesDeleted.count;
+    }
+
+    return {
+      userId,
+      scope,
+      deleted: deletedCounts,
+      timestamp: new Date().toISOString(),
+    };
+  }
 }
 

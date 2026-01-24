@@ -156,6 +156,9 @@ importers:
       '@leadership-architect/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@monaco-editor/react':
+        specifier: ^4.6.0
+        version: 4.7.0(monaco-editor@0.55.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@payloadcms/db-postgres':
         specifier: ^3.72.0
         version: 3.72.0(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0(prisma@5.22.0))(payload@3.72.0(graphql@16.12.0)(typescript@5.9.3))(prisma@5.22.0)

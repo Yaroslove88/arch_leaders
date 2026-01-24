@@ -174,6 +174,62 @@ export async function updateUser(userId: string, data: { status?: string; note?:
   return response.json();
 }
 
+// Subscriptions
+export interface UserSubscription {
+  plan: 'free' | 'basic' | 'premium';
+  expires_at: string | null;
+}
+
+export async function getUserSubscription(userId: string): Promise<UserSubscription> {
+  const response = await fetch(`${API_URL}/admin/v1/users/${userId}/subscription`, {
+    headers: getAuthHeaders(),
+  });
+  if (!response.ok) throw new Error('Failed to fetch subscription');
+  return response.json();
+}
+
+export async function updateUserSubscription(
+  userId: string,
+  data: { plan: 'free' | 'basic' | 'premium'; expires_at?: string; reason: string }
+): Promise<{ user: User; old_plan: string; new_plan: string }> {
+  const response = await fetch(`${API_URL}/admin/v1/users/${userId}/subscription`, {
+    method: 'PATCH',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Failed to update subscription');
+  }
+  return response.json();
+}
+
+// Reset User Data
+export type ResetScope = 'progress' | 'tree' | 'all';
+
+export interface ResetUserDataResult {
+  userId: string;
+  scope: ResetScope;
+  deleted: Record<string, number>;
+  timestamp: string;
+}
+
+export async function resetUserData(
+  userId: string,
+  data: { scope: ResetScope; reason: string }
+): Promise<ResetUserDataResult> {
+  const response = await fetch(`${API_URL}/admin/v1/users/${userId}/reset`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Failed to reset user data');
+  }
+  return response.json();
+}
+
 // Entries
 export async function getUserEntries(userId: string, params?: {
   type?: string;
@@ -400,6 +456,39 @@ export async function getPromptVersions(promptId: string): Promise<Prompt[]> {
   return response.json();
 }
 
+export async function createPromptVersion(
+  promptId: string,
+  data: { template: string; purpose: string; schema?: Record<string, unknown> }
+): Promise<Prompt> {
+  const response = await fetch(`${API_URL}/admin/v1/prompts/${promptId}/versions`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Failed to create prompt version');
+  }
+  return response.json();
+}
+
+export async function activatePrompt(
+  promptId: string,
+  version: number,
+  reason: string
+): Promise<Prompt> {
+  const response = await fetch(`${API_URL}/admin/v1/prompts/${promptId}/activate`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ version, reason }),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Failed to activate prompt');
+  }
+  return response.json();
+}
+
 export async function getConfigSets(): Promise<ConfigSet[]> {
   const response = await fetch(`${API_URL}/admin/v1/config-sets`, {
     headers: getAuthHeaders(),
@@ -413,6 +502,39 @@ export async function getConfigVersions(configSetId: string): Promise<ConfigVers
     headers: getAuthHeaders(),
   });
   if (!response.ok) return [];
+  return response.json();
+}
+
+export async function createConfigVersion(
+  configSetId: string,
+  data: { payload: Record<string, unknown>; comment?: string }
+): Promise<ConfigVersion> {
+  const response = await fetch(`${API_URL}/admin/v1/config-sets/${configSetId}/versions`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Failed to create config version');
+  }
+  return response.json();
+}
+
+export async function activateConfigVersion(
+  configSetId: string,
+  version: number,
+  reason: string
+): Promise<ConfigVersion> {
+  const response = await fetch(`${API_URL}/admin/v1/config-sets/${configSetId}/activate`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ version, reason }),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Failed to activate config version');
+  }
   return response.json();
 }
 
@@ -438,6 +560,51 @@ export async function getLlmRuns(params?: {
     runs: Array.isArray(data?.runs) ? data.runs : [],
     total: typeof data?.total === 'number' ? data.total : 0,
   };
+}
+
+// Settings
+export interface SystemSettings {
+  llm: {
+    default_provider: string;
+    openai_configured: boolean;
+    anthropic_configured: boolean;
+  };
+  telegram: {
+    bot_configured: boolean;
+    webhook_url: string | null;
+  };
+  features: {
+    tree_auto_sync_disabled: boolean;
+  };
+}
+
+export interface ApiKeyInfo {
+  id: string;
+  name: string;
+  key_masked: string;
+  provider: string;
+  created_at: string;
+  last_used_at?: string;
+}
+
+export async function getSystemSettings(): Promise<SystemSettings> {
+  const response = await fetch(`${API_URL}/admin/v1/settings`, {
+    headers: getAuthHeaders(),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to fetch system settings');
+  }
+  return response.json();
+}
+
+export async function getApiKeys(): Promise<ApiKeyInfo[]> {
+  const response = await fetch(`${API_URL}/admin/v1/settings/api-keys`, {
+    headers: getAuthHeaders(),
+  });
+  if (!response.ok) {
+    return [];
+  }
+  return response.json();
 }
 
 // Audit

@@ -11,15 +11,34 @@ import { AdminContent } from '../../components/admin/AdminContent';
 import { AdminAI } from '../../components/admin/AdminAI';
 import { AdminJobs } from '../../components/admin/AdminJobs';
 import { AdminAudit } from '../../components/admin/AdminAudit';
-import { adminLogin, getAdminMe } from '../../lib/admin-api';const tabs = [
-  { id: 'overview', label: 'Обзор', icon: '📊' },
-  { id: 'users', label: 'Пользователи', icon: '👥' },
-  { id: 'analytics', label: 'Аналитика', icon: '📈' },
-  { id: 'content', label: 'Контент', icon: '📝' },
-  { id: 'ai', label: 'AI & Pipeline', icon: '🤖' },
-  { id: 'jobs', label: 'Задачи', icon: '⚙️' },
-  { id: 'audit', label: 'Аудит', icon: '🔒' },
+import { ApiKeyManager } from '../../components/admin/ApiKeyManager';
+import { adminLogin, getAdminMe, AdminUser } from '../../lib/admin-api';
+
+type AdminRole = 'super_admin' | 'operator' | 'analyst';
+
+const allTabs = [
+  { id: 'overview', label: 'Обзор', icon: '📊', roles: ['super_admin', 'operator', 'analyst'] as AdminRole[] },
+  { id: 'users', label: 'Пользователи', icon: '👥', roles: ['super_admin', 'operator'] as AdminRole[] },
+  { id: 'analytics', label: 'Аналитика', icon: '📈', roles: ['super_admin', 'operator', 'analyst'] as AdminRole[] },
+  { id: 'content', label: 'Контент', icon: '📝', roles: ['super_admin', 'operator'] as AdminRole[] },
+  { id: 'ai', label: 'AI & Pipeline', icon: '🤖', roles: ['super_admin', 'operator'] as AdminRole[] },
+  { id: 'jobs', label: 'Задачи', icon: '⚙️', roles: ['super_admin', 'operator'] as AdminRole[] },
+  { id: 'audit', label: 'Аудит', icon: '🔒', roles: ['super_admin'] as AdminRole[] },
+  { id: 'settings', label: 'Настройки', icon: '⚙️', roles: ['super_admin'] as AdminRole[] },
 ];
+
+const getRoleBadge = (role: AdminRole) => {
+  switch (role) {
+    case 'super_admin':
+      return { label: 'Super Admin', color: 'bg-tension-red/20 text-tension-red' };
+    case 'operator':
+      return { label: 'Operator', color: 'bg-strategic-blue/20 text-strategic-blue' };
+    case 'analyst':
+      return { label: 'Analyst', color: 'bg-sage-green/20 text-sage-green' };
+    default:
+      return { label: role, color: 'bg-ui-border-soft text-ui-text-muted' };
+  }
+};
 
 const ADMIN_TOKEN_STORAGE_KEY = 'admin_token';
 
@@ -29,9 +48,15 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState('overview');
   const [adminAuthLoading, setAdminAuthLoading] = useState(true);
   const [isAdminAuthed, setIsAdminAuthed] = useState(false);
+  const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
   const [adminLoginForm, setAdminLoginForm] = useState({ telegramUsername: '', password: '' });
   const [adminLoginError, setAdminLoginError] = useState<string | null>(null);
   const [adminLoginSubmitting, setAdminLoginSubmitting] = useState(false);
+
+  // Filter tabs based on admin role
+  const tabs = adminUser 
+    ? allTabs.filter(tab => tab.roles.includes(adminUser.role))
+    : allTabs;
 
   useEffect(() => {
     if (!authLoading && (!isAuthenticated || user?.role !== 'admin')) {
@@ -53,14 +78,20 @@ export default function AdminPage() {
           return;
         }
 
-        await getAdminMe();
-        if (!cancelled) setIsAdminAuthed(true);
+        const admin = await getAdminMe();
+        if (!cancelled) {
+          setIsAdminAuthed(true);
+          setAdminUser(admin);
+        }
       } catch {
         // Токен есть, но невалиден — сбрасываем, чтобы не ловить циклы 401
         if (typeof window !== 'undefined') {
           localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
         }
-        if (!cancelled) setIsAdminAuthed(false);
+        if (!cancelled) {
+          setIsAdminAuthed(false);
+          setAdminUser(null);
+        }
       } finally {
         if (!cancelled) setAdminAuthLoading(false);
       }
@@ -82,13 +113,25 @@ export default function AdminPage() {
       if (typeof window !== 'undefined') {
         localStorage.setItem(ADMIN_TOKEN_STORAGE_KEY, res.access_token);
       }
+      // Fetch admin user data after login
+      const admin = await getAdminMe();
+      setAdminUser(admin);
       setIsAdminAuthed(true);
     } catch (err: any) {
       setAdminLoginError(err?.message || 'Не удалось войти в админку');
       setIsAdminAuthed(false);
+      setAdminUser(null);
     } finally {
       setAdminLoginSubmitting(false);
     }
+  }
+
+  function handleLogout() {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
+    }
+    setIsAdminAuthed(false);
+    setAdminUser(null);
   }
 
   if (authLoading) {
@@ -160,12 +203,19 @@ export default function AdminPage() {
     <div className="min-h-screen bg-bg-canvas">
       <div className="flex">
         {/* Sidebar */}
-        <aside className="w-64 bg-graphite-structure border-r border-ui-border-soft min-h-screen">
+        <aside className="w-64 bg-graphite-structure border-r border-ui-border-soft min-h-screen flex flex-col">
           <div className="p-6 border-b border-ui-border-soft">
             <h1 className="text-xl font-bold text-ash-light">Админ-панель</h1>
             <p className="text-sm text-ui-text-muted mt-1">Leadership Architect</p>
+            {adminUser && (
+              <div className="mt-3 flex items-center gap-2">
+                <span className={`px-2 py-1 rounded text-xs ${getRoleBadge(adminUser.role).color}`}>
+                  {getRoleBadge(adminUser.role).label}
+                </span>
+              </div>
+            )}
           </div>
-          <nav className="p-4">
+          <nav className="p-4 flex-1">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
@@ -181,6 +231,16 @@ export default function AdminPage() {
               </button>
             ))}
           </nav>
+          {/* Logout */}
+          <div className="p-4 border-t border-ui-border-soft">
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-tension-red hover:bg-tension-red/10 transition-colors"
+            >
+              <span className="text-xl">🚪</span>
+              <span className="font-medium">Выйти</span>
+            </button>
+          </div>
         </aside>
 
         {/* Main Content */}
@@ -192,6 +252,7 @@ export default function AdminPage() {
           {activeTab === 'ai' && <AdminAI />}
           {activeTab === 'jobs' && <AdminJobs />}
           {activeTab === 'audit' && <AdminAudit />}
+          {activeTab === 'settings' && <ApiKeyManager />}
         </main>
       </div>
     </div>

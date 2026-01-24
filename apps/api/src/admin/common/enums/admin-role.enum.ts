@@ -8,6 +8,8 @@ export enum AdminAction {
   // User actions
   VIEW_USER = 'view_user',
   UPDATE_USER_STATUS = 'update_user_status',
+  UPDATE_SUBSCRIPTION = 'update_subscription',
+  RESET_USER_DATA = 'reset_user_data',
   VIEW_FULL_ENTRY = 'view_full_entry',
   VIEW_MASKED_ENTRY = 'view_masked_entry',
   

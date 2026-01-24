@@ -10,6 +10,9 @@ import {
   LlmRun
 } from '../../lib/admin-api';
 import LoadingSpinner from '../LoadingSpinner';
+import { CreatePromptVersionModal } from './modals/CreatePromptVersionModal';
+import { ConfirmActivationModal } from './modals/ConfirmActivationModal';
+import { ConfigEditor } from './ConfigEditor';
 
 type ActiveSection = 'prompts' | 'configs' | 'llm-runs';
 
@@ -21,6 +24,9 @@ export function AdminAI() {
   const [llmRunsTotal, setLlmRunsTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null);
+  const [promptToCreateVersion, setPromptToCreateVersion] = useState<Prompt | null>(null);
+  const [promptToActivate, setPromptToActivate] = useState<Prompt | null>(null);
+  const [selectedConfig, setSelectedConfig] = useState<ConfigSet | null>(null);
   const [llmStatusFilter, setLlmStatusFilter] = useState<string>('all');
   const [llmPage, setLlmPage] = useState(1);
   const llmLimit = 50;
@@ -138,12 +144,28 @@ export function AdminAI() {
                             {new Date(prompt.created_at).toLocaleDateString('ru-RU')}
                           </td>
                           <td className="px-6 py-4">
-                            <button
-                              onClick={() => setSelectedPrompt(prompt)}
-                              className="text-strategic-blue hover:text-strategic-blue/80 text-sm"
-                            >
-                              Просмотр
-                            </button>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => setSelectedPrompt(prompt)}
+                                className="text-strategic-blue hover:text-strategic-blue/80 text-sm"
+                              >
+                                Просмотр
+                              </button>
+                              <button
+                                onClick={() => setPromptToCreateVersion(prompt)}
+                                className="text-catalyst-gold hover:text-catalyst-gold/80 text-sm"
+                              >
+                                + Версия
+                              </button>
+                              {prompt.status !== 'active' && (
+                                <button
+                                  onClick={() => setPromptToActivate(prompt)}
+                                  className="text-sage-green hover:text-sage-green/80 text-sm"
+                                >
+                                  Активировать
+                                </button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -187,16 +209,58 @@ export function AdminAI() {
                       </div>
 
                       {selectedPrompt.schema && (
-                        <div>
+                        <div className="mb-4">
                           <h4 className="font-semibold text-ash-light mb-2">Ожидаемая схема</h4>
                           <pre className="bg-obsidian-core p-4 rounded text-sm text-ash-light overflow-x-auto">
                             {JSON.stringify(selectedPrompt.schema, null, 2)}
                           </pre>
                         </div>
                       )}
+
+                      {/* Actions */}
+                      <div className="flex gap-3 pt-4 border-t border-ui-border-soft">
+                        <button
+                          onClick={() => {
+                            setPromptToCreateVersion(selectedPrompt);
+                            setSelectedPrompt(null);
+                          }}
+                          className="px-4 py-2 bg-catalyst-gold/20 text-catalyst-gold rounded-lg hover:bg-catalyst-gold/30 transition-colors"
+                        >
+                          Создать версию
+                        </button>
+                        {selectedPrompt.status !== 'active' && (
+                          <button
+                            onClick={() => {
+                              setPromptToActivate(selectedPrompt);
+                              setSelectedPrompt(null);
+                            }}
+                            className="px-4 py-2 bg-sage-green/20 text-sage-green rounded-lg hover:bg-sage-green/30 transition-colors"
+                          >
+                            Активировать
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
+              )}
+
+              {/* Create Version Modal */}
+              {promptToCreateVersion && (
+                <CreatePromptVersionModal
+                  prompt={promptToCreateVersion}
+                  onClose={() => setPromptToCreateVersion(null)}
+                  onSuccess={() => loadData()}
+                />
+              )}
+
+              {/* Activate Version Modal */}
+              {promptToActivate && (
+                <ConfirmActivationModal
+                  prompt={promptToActivate}
+                  onClose={() => setPromptToActivate(null)}
+                  onSuccess={() => loadData()}
+                />
               )}
             </div>
           )}
@@ -207,9 +271,10 @@ export function AdminAI() {
               {configSets.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {configSets.map((config) => (
-                    <div
+                    <button
                       key={config.id}
-                      className="bg-graphite-structure border border-ui-border-soft rounded-lg p-4"
+                      onClick={() => setSelectedConfig(config)}
+                      className="bg-graphite-structure border border-ui-border-soft rounded-lg p-4 text-left hover:border-strategic-blue transition-colors"
                     >
                       <div className="flex justify-between items-start mb-2">
                         <h4 className="font-semibold text-ash-light">{config.name}</h4>
@@ -226,7 +291,7 @@ export function AdminAI() {
                           Версий: {config.versions.length}
                         </p>
                       )}
-                    </div>
+                    </button>
                   ))}
                 </div>
               ) : (
@@ -236,6 +301,15 @@ export function AdminAI() {
                     Данные появятся после добавления записей в таблицу config_sets
                   </p>
                 </div>
+              )}
+
+              {/* Config Editor Modal */}
+              {selectedConfig && (
+                <ConfigEditor
+                  configSet={selectedConfig}
+                  onClose={() => setSelectedConfig(null)}
+                  onSuccess={() => loadData()}
+                />
               )}
             </div>
           )}
