@@ -17,6 +17,7 @@ import { createEvidence } from '../../lib/api';
 import { useToast } from '../../components/ToastProvider';
 import { StreakIndicator, AchievementPopup } from '../../components/gamification';
 import { Achievement, ACHIEVEMENTS } from '../../lib/gamification';
+import { OnboardingTooltips } from '../../components/OnboardingTooltips';
 
 interface NodeChange {
   nodeId: string;
@@ -582,6 +583,9 @@ function DashboardContent() {
         achievement={newAchievement}
         onClose={() => setNewAchievement(null)}
       />
+
+      {/* Подсказки для новых пользователей */}
+      <OnboardingTooltips />
     </main>
   );
 }

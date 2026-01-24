@@ -24,6 +24,10 @@ model User {
   subscription_plan       String    @default("free") // free, basic, premium
   subscription_expires_at DateTime? // Дата истечения подписки
   is_verified             Boolean   @default(false) // Верифицирован ли пользователь
+  
+  // Поля онбординга
+  onboarding_completed    Boolean   @default(false) // Прошёл ли пользователь онбординг
+  onboarding_completed_at DateTime? // Когда завершил онбординг
 
   entries        Entry[]
   sessions       Session[]

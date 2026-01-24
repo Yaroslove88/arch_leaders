@@ -300,6 +300,57 @@ export class AuthService {
   }
 
   /**
+   * Отметить завершение онбординга для пользователя
+   * Также автоматически активирует первый квест из backlog
+   */
+  async completeOnboarding(userId: string): Promise<{ message: string; onboarding_completed: boolean; onboarding_completed_at: Date; activated_quest_id?: string }> {
+    const now = new Date();
+    
+    // Обновляем статус онбординга
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { 
+        onboarding_completed: true,
+        onboarding_completed_at: now,
+      },
+    });
+
+    // Автоматически активируем первый квест из backlog
+    let activatedQuestId: string | undefined;
+    try {
+      const firstQuest = await this.prisma.quest.findFirst({
+        where: { 
+          userId,
+          status: 'backlog',
+        },
+        orderBy: { created_at: 'asc' },
+      });
+
+      if (firstQuest) {
+        await this.prisma.quest.update({
+          where: { id: firstQuest.id },
+          data: { 
+            status: 'active',
+            activated_at: now,
+          },
+        });
+        activatedQuestId = firstQuest.id;
+        this.logger.log(`✅ Auto-activated quest ${firstQuest.id} for user ${userId} after onboarding`);
+      }
+    } catch (error) {
+      this.logger.error(`Failed to auto-activate quest for user ${userId}:`, error);
+      // Не блокируем завершение онбординга при ошибке активации квеста
+    }
+
+    return { 
+      message: activatedQuestId ? 'Онбординг завершён, первый квест активирован' : 'Онбординг завершён',
+      onboarding_completed: true,
+      onboarding_completed_at: now,
+      activated_quest_id: activatedQuestId,
+    };
+  }
+
+  /**
    * Верификация hash от Telegram Login Widget
    * Алгоритм: https://core.telegram.org/widgets/login#checking-authorization
    */

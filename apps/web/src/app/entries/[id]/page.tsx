@@ -2,20 +2,27 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getEntry, analyzeEntry, getSessions, getQuests, getSemanticTree } from '@/lib/api';
+import { getEntry, analyzeEntry, getSessions, getQuests, getSemanticTree, deleteEntry } from '@/lib/api';
 import { Entry, Session } from '@/lib/api';
 import Link from 'next/link';
 import { useToast } from '@/components/ToastProvider';
 import { useQuery } from '@tanstack/react-query';
+import { useTelegramNavigation } from '@/hooks/useTelegramNavigation';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 export default function EntryPage() {
   const params = useParams();
   const router = useRouter();
   const toast = useToast();
   const entryId = params.id as string;
+  
+  // Telegram BackButton integration
+  useTelegramNavigation('/traces', { hapticFeedback: true });
   const [entry, setEntry] = useState<Entry | null>(null);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Получаем связанную сессию
   const { data: sessionsData } = useQuery({
@@ -133,28 +140,43 @@ export default function EntryPage() {
     }
   }
 
+  async function handleDelete() {
+    if (!entry) return;
+    setIsDeleting(true);
+    try {
+      await deleteEntry(entry.id);
+      toast.showToast('Запись удалена', 'success');
+      router.push('/traces');
+    } catch (error: any) {
+      toast.showToast(error?.message || 'Ошибка при удалении', 'error');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  }
+
   if (loading) {
     return (
-      <main className="min-h-screen bg-obsidian-core p-4 md:p-8">
+      <div className="min-h-screen bg-obsidian-core p-4 md:p-8">
         <div className="max-w-4xl mx-auto">
           <div className="text-center text-ui-text-muted">Загрузка...</div>
         </div>
-      </main>
+      </div>
     );
   }
 
   if (!entry) {
     return (
-      <main className="min-h-screen bg-obsidian-core p-4 md:p-8">
+      <div className="min-h-screen bg-obsidian-core p-4 md:p-8">
         <div className="max-w-4xl mx-auto">
           <div className="text-center text-tension-red">Запись не найдена</div>
         </div>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-obsidian-core p-4 md:p-8">
+    <div className="min-h-screen bg-obsidian-core p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
         {/* Навигация */}
         <Link href="/traces" className="text-sm text-strategic-blue hover:underline mb-4 inline-block">
@@ -163,12 +185,29 @@ export default function EntryPage() {
 
         {/* Заголовок */}
         <div className="mb-6">
-          <div className="flex items-center gap-3 mb-2">
-            <span className="text-xl">📝</span>
-            <h1 className="text-xl font-bold text-ash-light">Ситуация</h1>
-            <span className="text-sm text-ui-text-muted">
-              {new Date(entry.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}
-            </span>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-3">
+              <span className="text-xl">📝</span>
+              <h1 className="text-xl font-bold text-ash-light">Ситуация</h1>
+              <span className="text-sm text-ui-text-muted">
+                {new Date(entry.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}
+              </span>
+            </div>
+            {/* Кнопки действий */}
+            <div className="flex items-center gap-2">
+              <Link
+                href={`/entries/${entryId}/edit`}
+                className="px-3 py-1.5 bg-obsidian-core border border-ui-border-soft text-ui-text-muted rounded text-sm hover:border-strategic-blue hover:text-strategic-blue transition-colors"
+              >
+                ✏️ Редактировать
+              </Link>
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="px-3 py-1.5 bg-obsidian-core border border-ui-border-soft text-ui-text-muted rounded text-sm hover:border-tension-red hover:text-tension-red transition-colors"
+              >
+                🗑️ Удалить
+              </button>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             {session ? (
@@ -411,6 +450,18 @@ export default function EntryPage() {
           </div>
         </div>
       </div>
-    </main>
+
+      {/* Диалог подтверждения удаления */}
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        title="Удалить запись?"
+        message="Это действие необратимо. Запись и все связанные с ней анализы будут удалены."
+        confirmText={isDeleting ? 'Удаление...' : 'Удалить'}
+        cancelText="Отмена"
+        onConfirm={handleDelete}
+        onCancel={() => setShowDeleteConfirm(false)}
+        variant="danger"
+      />
+    </div>
   );
 }

@@ -140,6 +140,35 @@ export async function createEntry(data: {
   return response.json();
 }
 
+export async function updateEntry(id: string, data: {
+  type?: string;
+  text?: string;
+  participants?: string[];
+  tags?: string[];
+}): Promise<Entry> {
+  const response = await fetch(`${API_URL}/entries/${id}`, {
+    method: 'PATCH',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to update entry' }));
+    throw new Error(error.message || 'Failed to update entry');
+  }
+  return response.json();
+}
+
+export async function deleteEntry(id: string): Promise<void> {
+  const response = await fetch(`${API_URL}/entries/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to delete entry' }));
+    throw new Error(error.message || 'Failed to delete entry');
+  }
+}
+
 /**
  * Sessions API
  */
@@ -1125,6 +1154,52 @@ export async function changePassword(data: ChangePasswordDto): Promise<{ message
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Failed to change password' }));
     throw new Error(error.message || 'Failed to change password');
+  }
+
+  return response.json();
+}
+
+export async function deleteAccount(): Promise<{ message: string }> {
+  const token = getToken();
+  if (!token) {
+    throw new Error('Not authenticated');
+  }
+
+  const response = await fetch(`${API_URL}/auth/me`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to delete account' }));
+    throw new Error(error.message || 'Failed to delete account');
+  }
+
+  // Clear local storage after successful deletion
+  removeToken();
+  removeUser();
+
+  return response.json();
+}
+
+export async function completeOnboarding(): Promise<{ message: string; onboarding_completed: boolean; onboarding_completed_at: string }> {
+  const token = getToken();
+  if (!token) {
+    throw new Error('Not authenticated');
+  }
+
+  const response = await fetch(`${API_URL}/auth/me/onboarding`, {
+    method: 'PATCH',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to complete onboarding' }));
+    throw new Error(error.message || 'Failed to complete onboarding');
   }
 
   return response.json();

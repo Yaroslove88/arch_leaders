@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { completeOnboarding, getToken } from '@/lib/api';
+import { useToast } from '@/components/ToastProvider';
 
 // Компонент индикатора прогресса
 function ProgressIndicator({ currentStep, totalSteps }: { currentStep: number; totalSteps: number }) {
@@ -212,21 +214,44 @@ function Step5() {
 
 export default function IntroducePage() {
   const router = useRouter();
+  const toast = useToast();
   const [currentStep, setCurrentStep] = useState(0);
+  const [isCompleting, setIsCompleting] = useState(false);
   const totalSteps = 5;
 
   const steps = [Step1, Step2, Step3, Step4, Step5];
   const CurrentStepComponent = steps[currentStep];
+
+  // Функция завершения онбординга (сохраняет в БД и localStorage)
+  const finishOnboarding = async () => {
+    // Всегда сохраняем в localStorage для backward compatibility
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('hasSeenIntroduce', 'true');
+    }
+    
+    // Если пользователь авторизован, сохраняем в БД
+    const token = getToken();
+    if (token) {
+      setIsCompleting(true);
+      try {
+        await completeOnboarding();
+      } catch (error) {
+        // Если API вызов не удался, не блокируем — localStorage уже сохранён
+        console.warn('Failed to save onboarding status to DB:', error);
+      } finally {
+        setIsCompleting(false);
+      }
+    }
+    
+    router.push('/dashboard');
+  };
 
   const handleNext = () => {
     if (currentStep < totalSteps - 1) {
       setCurrentStep(currentStep + 1);
     } else {
       // Последний шаг - завершаем онбординг
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('hasSeenIntroduce', 'true');
-      }
-      router.push('/dashboard');
+      finishOnboarding();
     }
   };
 
@@ -237,15 +262,12 @@ export default function IntroducePage() {
   };
 
   const handleSkip = () => {
-    // Сохраняем флаг, что пользователь видел онбординг
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('hasSeenIntroduce', 'true');
-    }
-    router.push('/dashboard');
+    // Завершаем онбординг при пропуске
+    finishOnboarding();
   };
 
   return (
-    <main className="min-h-screen bg-bg-main flex flex-col">
+    <div className="min-h-screen bg-bg-main flex flex-col">
       <div className="flex-1 flex items-center justify-center p-4">
         <div className="w-full max-w-2xl">
           {/* Заголовок шага и кнопка пропуска */}
@@ -255,9 +277,10 @@ export default function IntroducePage() {
             </span>
             <button
               onClick={handleSkip}
-              className="text-sm text-ui-text-dim hover:text-ui-text-muted transition-colors"
+              disabled={isCompleting}
+              className="text-sm text-ui-text-dim hover:text-ui-text-muted transition-colors disabled:opacity-50"
             >
-              Пропустить
+              {isCompleting ? 'Сохранение...' : 'Пропустить'}
             </button>
           </div>
 
@@ -273,7 +296,8 @@ export default function IntroducePage() {
               {currentStep > 0 && (
                 <button
                   onClick={handlePrev}
-                  className="flex-1 py-3 px-6 border border-ui-border-soft rounded-lg text-ash-light hover:bg-obsidian-core transition-colors"
+                  disabled={isCompleting}
+                  className="flex-1 py-3 px-6 border border-ui-border-soft rounded-lg text-ash-light hover:bg-obsidian-core transition-colors disabled:opacity-50"
                 >
                   ← Назад
                 </button>
@@ -288,9 +312,10 @@ export default function IntroducePage() {
               ) : (
                 <button
                   onClick={handleNext}
-                  className="flex-1 py-3 px-6 bg-strategic-blue hover:bg-strategic-blue/90 text-white rounded-lg font-medium transition-colors"
+                  disabled={isCompleting}
+                  className="flex-1 py-3 px-6 bg-strategic-blue hover:bg-strategic-blue/90 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
                 >
-                  Начать →
+                  {isCompleting ? 'Сохранение...' : 'Начать →'}
                 </button>
               )}
             </div>
@@ -300,6 +325,6 @@ export default function IntroducePage() {
           </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

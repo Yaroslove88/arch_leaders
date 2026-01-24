@@ -317,5 +317,27 @@ export class AuthController {
   async deleteMyAccount(@CurrentUser() user: { sub: string }) {
     return this.authService.deleteUser(user.sub);
   }
+
+  @Patch('me/onboarding')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Отметить завершение онбординга' })
+  @ApiResponse({
+    status: 200,
+    description: 'Статус онбординга обновлен',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string', example: 'Онбординг завершён' },
+        onboarding_completed: { type: 'boolean', example: true },
+        onboarding_completed_at: { type: 'string', format: 'date-time' },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: 'Не авторизован' })
+  async completeOnboarding(@CurrentUser() user: { sub: string }) {
+    return this.authService.completeOnboarding(user.sub);
+  }
 }
 

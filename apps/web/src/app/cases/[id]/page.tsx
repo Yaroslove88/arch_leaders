@@ -7,6 +7,7 @@ import { getNodeName } from '@/lib/node-translations';
 import { useToast } from '@/components/ToastProvider';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
+import { useTelegramNavigation } from '@/hooks/useTelegramNavigation';
 import { ReflectionModal } from '@/components/modals';
 import { CaseDetailCardV2 } from '@/components/cards';
 import { adaptCaseToV2, isCaseV2Compatible } from '@/lib/case-adapter';
@@ -17,6 +18,9 @@ export default function CasePage() {
   const toast = useToast();
   const { user } = useAuth();
   const userId = user?.id;
+  
+  // Telegram BackButton integration
+  useTelegramNavigation('/experiments?tab=cases', { hapticFeedback: true });
   
   const [case_, setCase] = useState<InteractiveCase | null>(null);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
@@ -102,23 +106,23 @@ export default function CasePage() {
   // Loading
   if (loading) {
     return (
-      <main className="min-h-screen bg-obsidian-core p-4 md:p-8">
+      <div className="min-h-screen bg-obsidian-core p-4 md:p-8">
         <div className="max-w-3xl mx-auto text-center text-ui-text-main">Загрузка...</div>
-      </main>
+      </div>
     );
   }
 
   // Not found
   if (!case_ || !case_.options?.length) {
     return (
-      <main className="min-h-screen bg-obsidian-core p-4 md:p-8">
+      <div className="min-h-screen bg-obsidian-core p-4 md:p-8">
         <div className="max-w-3xl mx-auto">
-          <button onClick={() => router.back()} className="text-strategic-blue mb-4">← Назад</button>
+          <button onClick={() => router.push('/experiments?tab=cases')} className="text-strategic-blue mb-4">← Назад</button>
           <div className="bg-graphite-structure border border-ui-border-soft rounded-lg p-6 text-center">
             <p className="text-ui-text-main">Кейс не найден или в разработке</p>
           </div>
         </div>
-      </main>
+      </div>
     );
   }
 
@@ -127,7 +131,7 @@ export default function CasePage() {
   const nodeName = case_.node_id ? getNodeName(case_.node_id, nodeDescriptions) : undefined;
 
   return (
-    <main className="min-h-screen bg-obsidian-core p-4 md:p-8">
+    <div className="min-h-screen bg-obsidian-core p-4 md:p-8">
       <div className="max-w-3xl mx-auto">
         {caseDataV2 ? (
           <>
@@ -204,6 +208,6 @@ export default function CasePage() {
           onSkip={() => setShowReflectionModal(false)}
         />
       </div>
-    </main>
+    </div>
   );
 }

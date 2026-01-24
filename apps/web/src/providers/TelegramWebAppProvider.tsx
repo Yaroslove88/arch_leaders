@@ -1,7 +1,8 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { setToken, setUser } from '../lib/api';
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import { setToken, setUser, getToken } from '../lib/api';
 
 interface TelegramUser {
   id: number;
@@ -37,6 +38,11 @@ interface TelegramWebApp {
     hide: () => void;
     onClick: (callback: () => void) => void;
   };
+  HapticFeedback?: {
+    impactOccurred: (style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => void;
+    notificationOccurred: (type: 'error' | 'success' | 'warning') => void;
+    selectionChanged: () => void;
+  };
   themeParams: {
     bg_color?: string;
     text_color?: string;
@@ -56,6 +62,8 @@ interface TelegramWebAppContextType {
   user: TelegramUser | null;
   isInTelegram: boolean;
   isReady: boolean;
+  authError: string | null;
+  clearAuthError: () => void;
 }
 
 const TelegramWebAppContext = createContext<TelegramWebAppContextType>({
@@ -63,6 +71,8 @@ const TelegramWebAppContext = createContext<TelegramWebAppContextType>({
   user: null,
   isInTelegram: false,
   isReady: false,
+  authError: null,
+  clearAuthError: () => {},
 });
 
 export function useTelegramWebApp() {
@@ -74,10 +84,17 @@ interface Props {
 }
 
 export function TelegramWebAppProvider({ children }: Props) {
+  const router = useRouter();
+  const pathname = usePathname();
   const [webApp, setWebApp] = useState<TelegramWebApp | null>(null);
   const [user, setTgUser] = useState<TelegramUser | null>(null);
   const [isInTelegram, setIsInTelegram] = useState(false);
   const [isReady, setIsReady] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+
+  const clearAuthError = useCallback(() => {
+    setAuthError(null);
+  }, []);
 
   useEffect(() => {
     // Проверяем, запущено ли приложение в Telegram
@@ -98,6 +115,13 @@ export function TelegramWebAppProvider({ children }: Props) {
       // Раскрываем на весь экран
       tg.expand();
 
+      // Проверяем, есть ли уже токен (уже авторизован)
+      const existingToken = getToken();
+      if (existingToken) {
+        setIsReady(true);
+        return;
+      }
+
       // Автоматическая авторизация через API
       const autoAuth = async () => {
         try {
@@ -115,12 +139,43 @@ export function TelegramWebAppProvider({ children }: Props) {
             // Сохраняем токен и пользователя
             setToken(data.access_token);
             setUser(data.user);
-            console.log('✅ Telegram WebApp auth success:', data.user.telegramUsername);
+            
+            // Haptic feedback при успешной авторизации
+            try {
+              tg.HapticFeedback?.notificationOccurred('success');
+            } catch {
+              // HapticFeedback might not be available
+            }
+            
+            // Редирект на dashboard после успешной авторизации
+            // Только если мы на странице логина или корневой странице
+            if (pathname === '/login' || pathname === '/') {
+              router.push('/dashboard');
+            }
           } else {
-            console.error('❌ Telegram WebApp auth failed:', await response.text());
+            const errorText = await response.text();
+            const errorMessage = `Ошибка авторизации: ${response.status}`;
+            setAuthError(errorMessage);
+            
+            // Haptic feedback при ошибке
+            try {
+              tg.HapticFeedback?.notificationOccurred('error');
+            } catch {
+              // HapticFeedback might not be available
+            }
           }
         } catch (error) {
-          console.error('❌ Telegram WebApp auth error:', error);
+          const errorMessage = error instanceof Error 
+            ? `Ошибка сети: ${error.message}` 
+            : 'Не удалось подключиться к серверу';
+          setAuthError(errorMessage);
+          
+          // Haptic feedback при ошибке
+          try {
+            tg.HapticFeedback?.notificationOccurred('error');
+          } catch {
+            // HapticFeedback might not be available
+          }
         } finally {
           setIsReady(true);
         }
@@ -131,11 +186,23 @@ export function TelegramWebAppProvider({ children }: Props) {
       // Не в Telegram - обычный режим
       setIsReady(true);
     }
-  }, []);
+  }, [pathname, router]);
 
   return (
-    <TelegramWebAppContext.Provider value={{ webApp, user, isInTelegram, isReady }}>
+    <TelegramWebAppContext.Provider value={{ webApp, user, isInTelegram, isReady, authError, clearAuthError }}>
       {children}
+      {/* Показываем ошибку авторизации как toast/banner */}
+      {authError && isInTelegram && (
+        <div className="fixed bottom-4 left-4 right-4 z-50 bg-tension-red/90 text-white px-4 py-3 rounded-lg shadow-lg flex items-center justify-between">
+          <span className="text-sm">{authError}</span>
+          <button 
+            onClick={clearAuthError}
+            className="ml-2 text-white/80 hover:text-white"
+          >
+            ✕
+          </button>
+        </div>
+      )}
     </TelegramWebAppContext.Provider>
   );
 }

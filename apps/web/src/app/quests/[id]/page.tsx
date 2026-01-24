@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { isUserAdmin, isAdminDebugMode } from '@/lib/admin';
 import { AdminDebugPanel, AdminLabel } from '@/components/AdminDebugPanel';
 import { useAuth } from '@/hooks/useAuth';
+import { useTelegramNavigation } from '@/hooks/useTelegramNavigation';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { useToast } from '@/components/ToastProvider';
 import { QuestDetailCard, type QuestStep, type QuestType, type QuestDifficulty } from '@/components/cards';
@@ -18,6 +19,9 @@ export default function QuestDetailPage() {
   const router = useRouter();
   const toast = useToast();
   const questId = params.id as string;
+  
+  // Telegram BackButton integration
+  useTelegramNavigation('/experiments', { hapticFeedback: true });
   const [quest, setQuest] = useState<Quest | null>(null);
   const [evidence, setEvidence] = useState<Evidence[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,15 +88,15 @@ export default function QuestDetailPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-obsidian-core p-4 md:p-8">
+      <div className="min-h-screen bg-obsidian-core p-4 md:p-8">
         <div className="max-w-3xl mx-auto text-center text-ui-text-muted">Загрузка...</div>
-      </main>
+      </div>
     );
   }
 
   if (error || !quest) {
     return (
-      <main className="min-h-screen bg-obsidian-core p-4 md:p-8">
+      <div className="min-h-screen bg-obsidian-core p-4 md:p-8">
         <div className="max-w-3xl mx-auto bg-graphite-structure border border-tension-red rounded-lg p-6">
           <h2 className="text-xl font-semibold text-tension-red mb-2">Ошибка</h2>
           <p className="text-ash-light">{error || 'Квест не найден'}</p>
@@ -105,7 +109,7 @@ export default function QuestDetailPage() {
             </Link>
           </div>
         </div>
-      </main>
+      </div>
     );
   }
 
@@ -200,7 +204,7 @@ export default function QuestDetailPage() {
         variant="default"
       />
 
-      <main className="min-h-screen bg-obsidian-core p-4 md:p-8">
+      <div className="min-h-screen bg-obsidian-core p-4 md:p-8">
         <div className="max-w-3xl mx-auto">
           {/* Навигация + Активация */}
           <div className="flex items-center justify-between mb-4">
@@ -299,7 +303,7 @@ export default function QuestDetailPage() {
             />
           )}
         </div>
-      </main>
+      </div>
     </>
   );
 }
