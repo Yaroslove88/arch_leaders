@@ -1,3 +1,4 @@
+// Login page - Telegram types from lib/telegram.ts
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
