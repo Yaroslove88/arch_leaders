@@ -39,7 +39,7 @@ import { RolesGuard } from './guards/roles.guard';
   // Важно: providers должны быть перед controllers для правильного порядка инициализации
   providers: [AuthService, JwtStrategy, JwtAuthGuard, RolesGuard],
   controllers: [AuthController],
-  exports: [AuthService, JwtAuthGuard, RolesGuard],
+  exports: [AuthService, JwtAuthGuard, RolesGuard, JwtModule],
 })
 export class AuthModule {}
 
