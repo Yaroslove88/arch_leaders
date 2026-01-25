@@ -12,9 +12,9 @@ import type { LLMCallResult, LLMParseError } from './llm-call-result';
 @Injectable()
 export class LLMService {
   private readonly logger = new Logger(LLMService.name);
-  private readonly openaiApiKey?: string;
-  private readonly anthropicApiKey?: string;
-  private readonly provider: 'openai' | 'anthropic' | 'none';
+  private openaiApiKey?: string;
+  private anthropicApiKey?: string;
+  private provider: 'openai' | 'anthropic' | 'none' = 'none';
   private readonly analysisPromptId = 'analysis_situation';
   private readonly questTheoryPromptId = 'quest_theory';
   
