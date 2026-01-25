@@ -33,20 +33,72 @@ export class LLMService {
       throw new Error('ConfigService must be injected. Check that ConfigModule is properly imported.');
     }
 
+    // Инициализация ключей (из БД или env)
+    this.initializeApiKeys();
+    this.logger.log('✅ LLMService initialized successfully');
+  }
+
+  /**
+   * Инициализация API ключей из env переменных (синхронно)
+   * БД ключи загружаются динамически при первом использовании
+   */
+  private initializeApiKeys(): void {
+    // Сначала загружаем из env (синхронно)
     this.openaiApiKey = this.configService.get<string>('OPENAI_API_KEY');
     this.anthropicApiKey = this.configService.get<string>('ANTHROPIC_API_KEY');
 
+    // Определяем провайдера по env ключам
     if (this.openaiApiKey) {
       this.provider = 'openai';
-      this.logger.log('✅ Using OpenAI API');
+      this.logger.log('✅ Using OpenAI API key from ENV (will check DB on first use)');
     } else if (this.anthropicApiKey) {
       this.provider = 'anthropic';
-      this.logger.log('✅ Using Anthropic API');
+      this.logger.log('✅ Using Anthropic API key from ENV (will check DB on first use)');
     } else {
       this.provider = 'none';
-      this.logger.warn('⚠️ No LLM API key found. Analysis will use mock data.');
+      this.logger.warn('⚠️ No LLM API key found in ENV. Will check DB on first use.');
     }
-    this.logger.log('✅ LLMService initialized successfully');
+  }
+
+  /**
+   * Получить текущий API ключ для провайдера (из БД или env)
+   * Используется для динамического обновления ключей без перезапуска сервиса
+   */
+  private async getApiKeyForProvider(provider: 'openai' | 'anthropic'): Promise<string | undefined> {
+    try {
+      const dbKey = await this.prisma.apiKey.findFirst({
+        where: {
+          provider,
+          is_active: true,
+        },
+        orderBy: [
+          { is_default: 'desc' },
+          { created_at: 'desc' },
+        ],
+      });
+
+      if (dbKey) {
+        // Обновляем статистику использования
+        await this.prisma.apiKey.update({
+          where: { id: dbKey.id },
+          data: {
+            last_used_at: new Date(),
+            usage_count: { increment: 1 },
+          },
+        });
+
+        return dbKey.api_key;
+      }
+    } catch (error) {
+      this.logger.warn(`Failed to get ${provider} key from DB:`, error);
+    }
+
+    // Fallback на env или уже загруженные ключи
+    if (provider === 'openai') {
+      return this.openaiApiKey || this.configService.get<string>('OPENAI_API_KEY');
+    } else {
+      return this.anthropicApiKey || this.configService.get<string>('ANTHROPIC_API_KEY');
+    }
   }
 
   /**
@@ -263,11 +315,17 @@ export class LLMService {
         const startTime = Date.now();
         const model = 'gpt-4o-mini';
 
+        // Получаем актуальный ключ из БД или используем закэшированный
+        const apiKey = await this.getApiKeyForProvider('openai');
+        if (!apiKey) {
+          throw new Error('OpenAI API key not found');
+        }
+
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${this.openaiApiKey}`,
+            'Authorization': `Bearer ${apiKey}`,
           },
           body: JSON.stringify({
             model,
@@ -372,6 +430,12 @@ export class LLMService {
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
+        // Получаем актуальный ключ из БД или используем закэшированный
+        const apiKey = await this.getApiKeyForProvider('anthropic');
+        if (!apiKey) {
+          throw new Error('Anthropic API key not found');
+        }
+
         const startTime = Date.now();
         const model = 'claude-3-5-sonnet-20241022';
 
@@ -379,7 +443,7 @@ export class LLMService {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'x-api-key': this.anthropicApiKey!,
+            'x-api-key': apiKey,
             'anthropic-version': '2023-06-01',
           },
           body: JSON.stringify({
@@ -606,11 +670,17 @@ export class LLMService {
    * Вызов Anthropic API для генерации текста (не JSON)
    */
   private async callAnthropicText(prompt: string): Promise<string> {
+    // Получаем актуальный ключ из БД или используем закэшированный
+    const apiKey = await this.getApiKeyForProvider('anthropic');
+    if (!apiKey) {
+      throw new Error('Anthropic API key not found');
+    }
+
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': this.anthropicApiKey!,
+        'x-api-key': apiKey,
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({

@@ -594,3 +594,23 @@ model UserRetention {
   @@index([last_activity_at(sort: Desc)])
   @@map("user_retention")
 }
+
+// ApiKey - API ключи для ИИ сервисов и внешних интеграций
+model ApiKey {
+  id           String    @id @default(uuid())
+  name         String
+  provider     String // openai, anthropic, telegram, other
+  api_key      String    @db.Text // Сам ключ (в production рекомендуется шифрование)
+  is_active    Boolean   @default(true)
+  is_default   Boolean   @default(false) // По умолчанию для провайдера
+  last_used_at DateTime?
+  usage_count  Int       @default(0)
+  notes        String?   @db.Text
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+
+  @@index([provider, is_default])
+  @@index([provider, is_active])
+  @@index([is_active])
+  @@map("api_keys")
+}
