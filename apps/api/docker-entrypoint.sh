@@ -126,6 +126,17 @@ CREATE INDEX IF NOT EXISTS "case_progress_user_id_completed_at_idx" ON "case_pro
 CREATE INDEX IF NOT EXISTS "case_progress_user_id_node_id_idx" ON "case_progress"("user_id", "node_id");
 CREATE INDEX IF NOT EXISTS "case_progress_node_id_idx" ON "case_progress"("node_id");
 
+-- PayloadCMS: users_sessions table (for auth sessions)
+CREATE TABLE IF NOT EXISTS "users_sessions" (
+    "id" SERIAL PRIMARY KEY,
+    "_order" INTEGER NOT NULL DEFAULT 0,
+    "_parent_id" TEXT NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "expires_at" TIMESTAMP(3)
+);
+CREATE INDEX IF NOT EXISTS "users_sessions_parent_id_idx" ON "users_sessions"("_parent_id");
+CREATE INDEX IF NOT EXISTS "users_sessions_order_idx" ON "users_sessions"("_order");
+
 -- Add foreign keys for new tables (ignore if already exist)
 DO $$ BEGIN
   ALTER TABLE "user_achievements" ADD CONSTRAINT "user_achievements_user_id_fkey" 
