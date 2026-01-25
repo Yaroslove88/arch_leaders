@@ -1,5 +1,5 @@
 /* THIS FILE WAS GENERATED AUTOMATICALLY BY PAYLOAD. */
-/* MODIFIED: Fixed async params/searchParams for Next.js 15 */
+/* MODIFIED FOR NEXT.JS 15 COMPATIBILITY - params/searchParams are now Promises */
 import type { Metadata } from 'next'
 
 import config from '@payload-config'
@@ -16,15 +16,17 @@ type Args = {
 }
 
 export const generateMetadata = async ({ params, searchParams }: Args): Promise<Metadata> => {
-  const resolvedParams = await params;
-  const resolvedSearchParams = await searchParams;
-  return generatePageMetadata({ config, params: resolvedParams, searchParams: resolvedSearchParams });
+  const resolvedParams = await params
+  const resolvedSearchParams = await searchParams
+  // Type assertion needed: Payload types don't match Next.js 15 Promise-based params yet
+  return generatePageMetadata({ config, params: resolvedParams as any, searchParams: resolvedSearchParams as any })
 }
 
 const Page = async ({ params, searchParams }: Args) => {
-  const resolvedParams = await params;
-  const resolvedSearchParams = await searchParams;
-  return RootPage({ config, importMap, params: resolvedParams, searchParams: resolvedSearchParams });
+  const resolvedParams = await params
+  const resolvedSearchParams = await searchParams
+  // Type assertion needed: Payload types don't match Next.js 15 Promise-based params yet
+  return RootPage({ config, importMap, params: resolvedParams as any, searchParams: resolvedSearchParams as any })
 }
 
 export default Page
