@@ -83,57 +83,8 @@ export class AdminUsersController {
     });
   }
 
-  @Get(':user_id')
-  @ApiBearerAuth()
-  @AdminRoles(AdminRole.SUPER_ADMIN, AdminRole.OPERATOR)
-  @ApiOperation({ summary: 'Получить пользователя по ID' })
-  @ApiParam({ name: 'user_id', type: String, description: 'ID пользователя' })
-  @ApiResponse({ status: 200, description: 'Пользователь найден' })
-  @ApiResponse({ status: 404, description: 'Пользователь не найден' })
-  @ApiResponse({ status: 401, description: 'Не авторизован' })
-  async getUserById(@Param('user_id') userId: string) {
-    return this.adminUsersService.getUserById(userId);
-  }
-
-  @Patch(':user_id')
-  @ApiBearerAuth()
-  @AdminRoles(AdminRole.SUPER_ADMIN)
-  @RequiresReason()
-  @ApiOperation({ summary: 'Обновить статус пользователя' })
-  @ApiParam({ name: 'user_id', type: String, description: 'ID пользователя' })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        status: { type: 'string' },
-        note: { type: 'string' },
-        reason: { type: 'string' },
-      },
-      required: ['reason'],
-    },
-  })
-  @ApiResponse({ status: 200, description: 'Пользователь обновлен' })
-  @ApiResponse({ status: 404, description: 'Пользователь не найден' })
-  @ApiResponse({ status: 401, description: 'Не авторизован' })
-  @ApiResponse({ status: 400, description: 'Требуется причина' })
-  async updateUser(
-    @Param('user_id') userId: string,
-    @Body() body: { status?: string; note?: string; reason: string },
-    @CurrentAdmin() admin: CurrentAdminType,
-    @Req() req: Request,
-  ) {
-    await this.auditService.log({
-      adminUserId: admin.id,
-      action: AdminAction.UPDATE_USER_STATUS,
-      targetType: TargetType.USER,
-      targetId: userId,
-      reason: body.reason,
-      metadata: { changes: body },
-      ip: req.ip,
-    });
-
-    return this.adminUsersService.updateUser(userId, body);
-  }
+  // ВАЖНО: Специфичные роуты должны быть ПЕРЕД общими роутами
+  // Иначе NestJS может неправильно маршрутизировать запросы
 
   @Get(':user_id/subscription')
   @ApiBearerAuth()
@@ -216,6 +167,61 @@ export class AdminUsersController {
     });
 
     return result;
+  }
+
+  @Get(':user_id')
+  @ApiBearerAuth()
+  @AdminRoles(AdminRole.SUPER_ADMIN, AdminRole.OPERATOR)
+  @ApiOperation({ summary: 'Получить пользователя по ID' })
+  @ApiParam({ name: 'user_id', type: String, description: 'ID пользователя' })
+  @ApiResponse({ status: 200, description: 'Пользователь найден' })
+  @ApiResponse({ status: 404, description: 'Пользователь не найден' })
+  @ApiResponse({ status: 401, description: 'Не авторизован' })
+  async getUserById(@Param('user_id') userId: string) {
+    return this.adminUsersService.getUserById(userId);
+  }
+
+  @Patch(':user_id')
+  @ApiBearerAuth()
+  @AdminRoles(AdminRole.SUPER_ADMIN)
+  @RequiresReason()
+  @ApiOperation({ summary: 'Обновить пользователя' })
+  @ApiParam({ name: 'user_id', type: String, description: 'ID пользователя' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        status: { type: 'string' },
+        email: { type: 'string' },
+        telegramUsername: { type: 'string' },
+        role: { type: 'string' },
+        note: { type: 'string' },
+        reason: { type: 'string' },
+      },
+      required: ['reason'],
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Пользователь обновлен' })
+  @ApiResponse({ status: 404, description: 'Пользователь не найден' })
+  @ApiResponse({ status: 401, description: 'Не авторизован' })
+  @ApiResponse({ status: 400, description: 'Требуется причина' })
+  async updateUser(
+    @Param('user_id') userId: string,
+    @Body() body: { status?: string; email?: string; telegramUsername?: string; role?: string; note?: string; reason: string },
+    @CurrentAdmin() admin: CurrentAdminType,
+    @Req() req: Request,
+  ) {
+    await this.auditService.log({
+      adminUserId: admin.id,
+      action: AdminAction.UPDATE_USER_STATUS,
+      targetType: TargetType.USER,
+      targetId: userId,
+      reason: body.reason,
+      metadata: { changes: body },
+      ip: req.ip,
+    });
+
+    return this.adminUsersService.updateUser(userId, body);
   }
 }
 

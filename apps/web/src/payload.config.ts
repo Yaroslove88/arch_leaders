@@ -36,8 +36,8 @@ export default buildConfig({
           path: '/ability-tree',
         },
       },
-      // Навигация в админке
-      afterNavLinks: ['@/components/admin/AbilityTreeNavLink#AbilityTreeNavLink'],
+      // Навигация в админке - единая навигация для всех разделов
+      afterNavLinks: ['@/components/admin/UnifiedAdminNavLink#UnifiedAdminNavLink'],
     },
   },
   

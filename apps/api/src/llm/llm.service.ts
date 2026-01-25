@@ -1,11 +1,13 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { PrismaService } from '../prisma/prisma.service';
 import { AnalysisResponseSchema, type AnalysisResponse } from './llm-response.schema';
 import type { LLMCallResult, LLMParseError } from './llm-call-result';
 
 /**
  * Сервис для работы с LLM API
  * Поддерживает OpenAI и Anthropic
+ * Загружает промпты из prompt_registry
  */
 @Injectable()
 export class LLMService {
@@ -14,12 +16,15 @@ export class LLMService {
   private readonly anthropicApiKey?: string;
   private readonly provider: 'openai' | 'anthropic' | 'none';
   private readonly analysisPromptId = 'analysis_situation';
-  private readonly analysisPromptVersion = 1;
   private readonly questTheoryPromptId = 'quest_theory';
-  private readonly questTheoryPromptVersion = 1;
+  
+  // Кэш для промптов (загружаются при первом использовании)
+  private analysisPromptCache: { template: string; version: number } | null = null;
+  private questTheoryPromptCache: { template: string; version: number } | null = null;
 
   constructor(
     @Inject(ConfigService) private readonly configService: ConfigService,
+    @Inject(PrismaService) private readonly prisma: PrismaService,
   ) {
     this.logger.log('🔍 LLMService constructor called');
     this.logger.log(`🔍 ConfigService: ${this.configService ? 'available' : 'NOT available'}`);
@@ -73,7 +78,7 @@ export class LLMService {
       return this.generateMockAnalysis(entry);
     }
 
-    const prompt = this.buildAnalysisPrompt(entry);
+    const prompt = await this.buildAnalysisPrompt(entry);
 
     try {
       let result: LLMCallResult<AnalysisResponse>;
@@ -107,7 +112,7 @@ export class LLMService {
         ability_signals: result.data.ability_signals,
         __meta: {
           prompt_id: this.analysisPromptId,
-          prompt_version: this.analysisPromptVersion,
+          prompt_version: this.analysisPromptCache?.version || 0,
           model: result.model,
         },
       };
@@ -119,26 +124,48 @@ export class LLMService {
   }
 
   /**
-   * Построить промпт для анализа ситуации
+   * Загрузить промпт из prompt_registry
    */
-  private buildAnalysisPrompt(entry: {
-    text: string;
-    type: string;
-    participants?: string[];
-    context_json?: any;
-  }): string {
-    const participants = entry.participants?.join(', ') || 'не указаны';
-    const context = entry.context_json
-      ? JSON.stringify(entry.context_json, null, 2)
-      : 'не указан';
+  private async loadPrompt(promptId: string): Promise<{ template: string; version: number }> {
+    try {
+      // Ищем активную версию промпта
+      const prompt = await this.prisma.promptRegistry.findFirst({
+        where: {
+          prompt_id: promptId,
+          status: 'active',
+        },
+        orderBy: {
+          version: 'desc',
+        },
+      });
 
-    return `Проанализируй управленческую ситуацию и извлеки структурированные данные.
+      if (prompt) {
+        this.logger.log(`✅ Загружен промпт ${promptId} v${prompt.version} из prompt_registry`);
+        return { template: prompt.template, version: prompt.version };
+      }
+
+      // Fallback на хардкод, если промпт не найден в БД
+      this.logger.warn(`⚠️ Промпт ${promptId} не найден в prompt_registry, используется fallback`);
+      return this.getFallbackPrompt(promptId);
+    } catch (error) {
+      this.logger.error(`❌ Ошибка загрузки промпта ${promptId}:`, error);
+      return this.getFallbackPrompt(promptId);
+    }
+  }
+
+  /**
+   * Fallback промпты (если не найдены в БД)
+   */
+  private getFallbackPrompt(promptId: string): { template: string; version: number } {
+    if (promptId === 'analysis_situation') {
+      return {
+        template: `Проанализируй управленческую ситуацию и извлеки структурированные данные.
 
 Ситуация:
-${entry.text}
+{{entry.text}}
 
-Участники: ${participants}
-Контекст: ${context}
+Участники: {{entry.participants}}
+Контекст: {{entry.context_json}}
 
 Извлеки:
 1. **Темы** - повторяющиеся мотивы (массив строк)
@@ -157,7 +184,67 @@ ${entry.text}
   "ability_signals": [{"node_id": "node_id", "signal": "описание"}],
   "insights": [{"title": "заголовок", "description": "описание"}],
   "focus": [{"area": "область", "priority": "high|medium|low"}]
-}`;
+}`,
+        version: 0, // Fallback версия
+      };
+    }
+    
+    if (promptId === 'quest_theory') {
+      return {
+        template: `Ты — эксперт по лидерству и развитию способностей. Создай подробное описание теории и примеров для квеста.
+
+КОНТЕКСТ КВЕСТА:
+- Название: {{quest.title}}
+- Описание: {{quest.description}}
+- Тип: {{quest.type}}
+- Связанные способности: {{quest.linked_nodes}}
+- Шаги: {{quest.steps}}
+- Критерии: {{quest.criteria}}
+
+КОНТЕКСТ СПОСОБНОСТИ:
+{{abilityNode.name}} - {{abilityNode.full_description}}
+Практическое значение: {{abilityNode.practical_meaning}}
+
+Создай раздел "Подробнее" включающий:
+1. Теоретическое объяснение способности
+2. Что это значит на практике
+3. Конкретные примеры применения
+4. Практические советы
+5. Как интегрировать в ежедневную практику
+
+Формат: Markdown (800-1200 слов)`,
+        version: 0, // Fallback версия
+      };
+    }
+
+    throw new Error(`Unknown prompt ID: ${promptId}`);
+  }
+
+  /**
+   * Построить промпт для анализа ситуации (загружает из prompt_registry)
+   */
+  private async buildAnalysisPrompt(entry: {
+    text: string;
+    type: string;
+    participants?: string[];
+    context_json?: any;
+  }): Promise<string> {
+    // Загружаем промпт из БД или используем кэш
+    if (!this.analysisPromptCache) {
+      this.analysisPromptCache = await this.loadPrompt(this.analysisPromptId);
+    }
+
+    const template = this.analysisPromptCache.template;
+    const participants = entry.participants?.join(', ') || 'не указаны';
+    const context = entry.context_json
+      ? JSON.stringify(entry.context_json, null, 2)
+      : 'не указан';
+
+    // Простая замена переменных (можно улучшить используя шаблонизатор)
+    return template
+      .replace(/\{\{entry\.text\}\}/g, entry.text)
+      .replace(/\{\{entry\.participants\}\}/g, participants)
+      .replace(/\{\{entry\.context_json\}\}/g, context);
   }
 
   /**
@@ -401,9 +488,10 @@ ${entry.text}
       return this.generateMockQuestTheory(quest, abilityNode);
     }
 
-    const prompt = this.buildQuestTheoryPrompt(quest, abilityNode);
+    const prompt = await this.buildQuestTheoryPrompt(quest, abilityNode);
+    const promptVersion = this.questTheoryPromptCache?.version || 0;
     this.logger.log(
-      `[Prompt] ${this.questTheoryPromptId}_v${this.questTheoryPromptVersion} provider=${this.provider}`,
+      `[Prompt] ${this.questTheoryPromptId}_v${promptVersion} provider=${this.provider}`,
     );
 
     try {
@@ -422,9 +510,9 @@ ${entry.text}
   }
 
   /**
-   * Построить промпт для генерации теории квеста
+   * Построить промпт для генерации теории квеста (загружает из prompt_registry)
    */
-  private buildQuestTheoryPrompt(quest: {
+  private async buildQuestTheoryPrompt(quest: {
     title: string;
     description: string;
     type: string;
@@ -437,7 +525,13 @@ ${entry.text}
     full_description?: string;
     practical_meaning?: string;
     examples?: string[];
-  }): string {
+  }): Promise<string> {
+    // Загружаем промпт из БД или используем кэш
+    if (!this.questTheoryPromptCache) {
+      this.questTheoryPromptCache = await this.loadPrompt(this.questTheoryPromptId);
+    }
+
+    const template = this.questTheoryPromptCache.template;
     const stepsText = quest.steps?.map((s, i) => `${i + 1}. ${typeof s === 'string' ? s : s.description || s.text || JSON.stringify(s)}`).join('\n') || 'не указаны';
     const criteriaText = typeof quest.criteria === 'string' 
       ? quest.criteria 
@@ -452,64 +546,20 @@ ${entry.text}
 `
       : '';
 
-    return `Ты — эксперт по лидерству и развитию способностей. Твоя задача — создать подробное описание теории и примеров для квеста, 
-который поможет пользователю развить конкретную способность через практику.
-
-КОНТЕКСТ КВЕСТА:
-- Название: ${quest.title}
-- Описание: ${quest.description}
-- Тип: ${quest.type} (micro/weekly/story/in-person)
-- Связанные способности: ${quest.linked_nodes?.join(', ') || 'не указаны'}
-- Шаги выполнения:
-${stepsText}
-- Критерии успеха: ${criteriaText}
-${abilityInfo}
-ЗАДАЧА:
-Создай раздел "Подробнее" (теория и примеры) для этого квеста. Раздел должен включать:
-
-1. **Теоретическое объяснение способности**
-   - Что это за способность и почему она важна для лидерства
-   - Как она связана с другими способностями
-   - Какое место занимает в развитии лидера
-
-2. **Что это значит на практике**
-   - Конкретное объяснение, как эта способность проявляется в реальных ситуациях
-   - Что нужно делать, а чего избегать
-   - Какие ошибки часто делают при развитии этой способности
-
-3. **Конкретные примеры применения**
-   - 2-3 реальных примера ситуаций, где можно применить эту способность
-   - Примеры того, как это выглядит "хорошо" и "плохо"
-   - Примеры из разных контекстов (работа, команда, личное развитие)
-
-4. **Практические советы**
-   - Как начать практиковать эту способность
-   - С чего начать, если это новая способность
-   - Как заметить прогресс
-   - Что делать, если не получается
-
-5. **Как интегрировать в ежедневную практику**
-   - Как сделать эту способность частью своей практики
-   - Когда и где можно практиковать
-   - Как отслеживать применение
-
-СТИЛЬ:
-- Пиши на русском языке
-- Используй простой, понятный язык
-- Будь конкретным, избегай абстракций
-- Используй примеры из реальной жизни
-- Будь поддерживающим и мотивирующим
-- Структурируй текст с помощью заголовков (##, ###) и списков
-
-ФОРМАТ ВЫВОДА:
-Верни текст в формате Markdown, готовый для отображения на странице квеста. 
-Текст должен быть структурированным и легко читаемым. Используй заголовки ## и ### для структуры.
-
-ВАЖНО:
-- Фокус на практическом применении, а не на теории
-- Примеры должны быть релевантными для реальных ситуаций лидерства
-- Текст должен мотивировать к действию
-- Учитывай тип квеста (micro квесты требуют более конкретных примеров, story квесты — более глубокого объяснения)`;
+    // Простая замена переменных (можно улучшить используя шаблонизатор)
+    return template
+      .replace(/\{\{quest\.title\}\}/g, quest.title)
+      .replace(/\{\{quest\.description\}\}/g, quest.description)
+      .replace(/\{\{quest\.type\}\}/g, quest.type)
+      .replace(/\{\{quest\.linked_nodes\}\}/g, quest.linked_nodes?.join(', ') || 'не указаны')
+      .replace(/\{\{quest\.steps\}\}/g, stepsText)
+      .replace(/\{\{quest\.criteria\}\}/g, criteriaText)
+      .replace(/\{\{abilityNode\.name\}\}/g, abilityNode?.name || 'не указано')
+      .replace(/\{\{abilityNode\.full_description\}\}/g, abilityNode?.full_description || 'не указано')
+      .replace(/\{\{abilityNode\.practical_meaning\}\}/g, abilityNode?.practical_meaning || 'не указано')
+      .replace(/\{\{abilityNode\.examples\}\}/g, abilityNode?.examples?.join(', ') || 'не указаны')
+      .replace(/\{\{#if abilityNode\}\}([\s\S]*?)\{\{\/if\}\}/g, abilityNode ? '$1' : '')
+      .replace(/\{\{abilityInfo\}\}/g, abilityInfo);
   }
 
   /**
@@ -708,7 +758,7 @@ ${quest.description}
       ],
       __meta: {
         prompt_id: this.analysisPromptId,
-        prompt_version: this.analysisPromptVersion,
+        prompt_version: this.analysisPromptCache?.version || 0,
         model: 'mock',
       },
     };
