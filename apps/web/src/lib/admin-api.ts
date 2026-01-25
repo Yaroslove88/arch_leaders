@@ -15,15 +15,35 @@ function getAdminToken(): string | null {
 
 /**
  * Определить, нужно ли использовать прокси для админ-запросов
- * Прокси используется когда находимся в админке Payload (/admin)
+ * Прокси используется ТОЛЬКО для Payload CMS админки (/admin без дополнительных сегментов)
+ * Кастомная админка (/admin/overview, /admin/users-management и т.д.) использует JWT напрямую
  */
 function shouldUseProxy(): boolean {
   if (typeof window === 'undefined') {
-    // На сервере всегда используем прокси для админ-запросов
-    return true;
+    // На сервере не используем прокси — Payload может быть недоступен
+    return false;
   }
-  // В браузере используем прокси если находимся в админке Payload
-  return window.location.pathname.startsWith('/admin');
+  
+  const pathname = window.location.pathname;
+  
+  // Кастомные админ-страницы используют JWT напрямую
+  const customAdminPaths = [
+    '/admin/overview',
+    '/admin/users-management',
+    '/admin/jobs',
+    '/admin/ai-pipeline',
+    '/admin/analytics',
+    '/admin/audit',
+    '/admin/content-management',
+    '/admin/settings',
+  ];
+  
+  if (customAdminPaths.some(p => pathname.startsWith(p))) {
+    return false;
+  }
+  
+  // Только для чистого /admin (Payload CMS) используем прокси
+  return pathname === '/admin' || pathname === '/admin/';
 }
 
 /**
