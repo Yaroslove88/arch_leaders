@@ -13,6 +13,24 @@
  */
 
 import { PrismaClient } from '@prisma/client';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+
+// Загружаем .env файл
+const envPaths = [
+  path.resolve(__dirname, '../../.env'),
+  path.resolve(__dirname, '../../../.env'),
+  path.resolve(process.cwd(), '.env'),
+  path.resolve(process.cwd(), 'apps/api/.env'),
+];
+
+for (const envPath of envPaths) {
+  try {
+    dotenv.config({ path: envPath });
+  } catch {
+    // Игнорируем ошибки загрузки .env
+  }
+}
 
 const prisma = new PrismaClient();
 

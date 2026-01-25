@@ -1,5 +1,7 @@
 /**
  * API клиент для админ-панели
+ * 
+ * Использует прокси через /api/admin-proxy для интеграции с Payload CMS авторизацией
  */
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -12,12 +14,40 @@ function getAdminToken(): string | null {
 }
 
 /**
+ * Определить, нужно ли использовать прокси для админ-запросов
+ * Прокси используется когда находимся в админке Payload (/admin)
+ */
+function shouldUseProxy(): boolean {
+  if (typeof window === 'undefined') {
+    // На сервере всегда используем прокси для админ-запросов
+    return true;
+  }
+  // В браузере используем прокси если находимся в админке Payload
+  return window.location.pathname.startsWith('/admin');
+}
+
+/**
+ * Получить URL для админ-запроса (с прокси или напрямую)
+ */
+function getAdminApiUrl(path: string): string {
+  if (shouldUseProxy()) {
+    return `/api/admin-proxy/admin/v1/${path}`;
+  }
+  return `${API_URL}/admin/v1/${path}`;
+}
+
+/**
  * Получить заголовки с токеном аутентификации
  */
 function getAuthHeaders(): HeadersInit {
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
   };
+  
+  // Если используем прокси - заголовки не нужны (прокси сам добавит токен)
+  if (shouldUseProxy()) {
+    return headers;
+  }
   
   // Админ-эндпоинты требуют токен из `/admin/v1/auth/login`.
   // Для fail-safe совместимости оставляем fallback на `auth_token`,
@@ -126,7 +156,7 @@ export async function adminLogin(telegramUsername: string, password: string) {
 }
 
 export async function getAdminMe(): Promise<AdminUser> {
-  const response = await fetch(`${API_URL}/admin/v1/auth/me`, {
+  const response = await fetch(getAdminApiUrl('auth/me'), {
     headers: getAuthHeaders(),
   });
   if (!response.ok) throw new Error('Failed to fetch admin user');
@@ -146,7 +176,7 @@ export async function getAdminUsers(params?: {
   if (params?.limit) query.append('limit', params.limit.toString());
   if (params?.offset) query.append('offset', params.offset.toString());
 
-  const response = await fetch(`${API_URL}/admin/v1/users?${query}`, {
+  const response = await fetch(`${getAdminApiUrl('users')}?${query}`, {
     headers: getAuthHeaders(),
   });
   if (!response.ok) {
@@ -157,7 +187,7 @@ export async function getAdminUsers(params?: {
 }
 
 export async function getUser360(userId: string): Promise<User360> {
-  const response = await fetch(`${API_URL}/admin/v1/users/${userId}`, {
+  const response = await fetch(getAdminApiUrl(`users/${userId}`), {
     headers: getAuthHeaders(),
   });
   if (!response.ok) throw new Error('Failed to fetch user 360');
@@ -165,7 +195,7 @@ export async function getUser360(userId: string): Promise<User360> {
 }
 
 export async function updateUser(userId: string, data: { status?: string; note?: string }, reason: string) {
-  const response = await fetch(`${API_URL}/admin/v1/users/${userId}`, {
+  const response = await fetch(getAdminApiUrl(`users/${userId}`), {
     method: 'PATCH',
     headers: getAuthHeaders(),
     body: JSON.stringify({ ...data, reason }),
@@ -181,7 +211,7 @@ export interface UserSubscription {
 }
 
 export async function getUserSubscription(userId: string): Promise<UserSubscription> {
-  const response = await fetch(`${API_URL}/admin/v1/users/${userId}/subscription`, {
+  const response = await fetch(getAdminApiUrl(`users/${userId}/subscription`), {
     headers: getAuthHeaders(),
   });
   if (!response.ok) throw new Error('Failed to fetch subscription');
@@ -192,7 +222,7 @@ export async function updateUserSubscription(
   userId: string,
   data: { plan: 'free' | 'basic' | 'premium'; expires_at?: string; reason: string }
 ): Promise<{ user: User; old_plan: string; new_plan: string }> {
-  const response = await fetch(`${API_URL}/admin/v1/users/${userId}/subscription`, {
+  const response = await fetch(getAdminApiUrl(`users/${userId}/subscription`), {
     method: 'PATCH',
     headers: getAuthHeaders(),
     body: JSON.stringify(data),
@@ -218,7 +248,7 @@ export async function resetUserData(
   userId: string,
   data: { scope: ResetScope; reason: string }
 ): Promise<ResetUserDataResult> {
-  const response = await fetch(`${API_URL}/admin/v1/users/${userId}/reset`, {
+  const response = await fetch(getAdminApiUrl(`users/${userId}/reset`), {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify(data),
@@ -243,7 +273,7 @@ export async function getUserEntries(userId: string, params?: {
   if (params?.limit) query.append('limit', params.limit.toString());
   if (params?.offset) query.append('offset', params.offset.toString());
 
-  const response = await fetch(`${API_URL}/admin/v1/users/${userId}/entries?${query}`, {
+  const response = await fetch(`${getAdminApiUrl(`users/${userId}/entries`)}?${query}`, {
     headers: getAuthHeaders(),
   });
   if (!response.ok) throw new Error('Failed to fetch entries');
@@ -255,7 +285,7 @@ export async function getEntry(entryId: string, view: 'masked' | 'full', reason?
   query.append('view', view);
   if (reason) query.append('reason', reason);
 
-  const response = await fetch(`${API_URL}/admin/v1/entries/${entryId}?${query}`, {
+  const response = await fetch(`${getAdminApiUrl(`entries/${entryId}`)}?${query}`, {
     headers: getAuthHeaders(),
   });
   if (!response.ok) throw new Error('Failed to fetch entry');
@@ -273,7 +303,7 @@ export async function getUserSessions(userId: string, params?: {
   if (params?.limit) query.append('limit', params.limit.toString());
   if (params?.offset) query.append('offset', params.offset.toString());
 
-  const response = await fetch(`${API_URL}/admin/v1/users/${userId}/sessions?${query}`, {
+  const response = await fetch(`${getAdminApiUrl(`users/${userId}/sessions`)}?${query}`, {
     headers: getAuthHeaders(),
   });
   if (!response.ok) throw new Error('Failed to fetch sessions');
@@ -293,7 +323,7 @@ export async function getUserQuests(userId: string, params?: {
   if (params?.limit) query.append('limit', params.limit.toString());
   if (params?.offset) query.append('offset', params.offset.toString());
 
-  const response = await fetch(`${API_URL}/admin/v1/users/${userId}/quests?${query}`, {
+  const response = await fetch(`${getAdminApiUrl(`users/${userId}/quests`)}?${query}`, {
     headers: getAuthHeaders(),
   });
   if (!response.ok) throw new Error('Failed to fetch quests');
@@ -313,7 +343,7 @@ export async function getJobs(params?: {
   if (params?.limit) query.append('limit', params.limit.toString());
   if (params?.offset) query.append('offset', params.offset.toString());
 
-  const response = await fetch(`${API_URL}/admin/v1/jobs?${query}`, {
+  const response = await fetch(`${getAdminApiUrl('jobs')}?${query}`, {
     headers: getAuthHeaders(),
   });
   if (!response.ok) {
@@ -354,7 +384,7 @@ export interface UserActivityStats {
 }
 
 export async function getAnalyticsOverview(): Promise<AnalyticsOverview> {
-  const response = await fetch(`${API_URL}/admin/v1/analytics/overview`, {
+  const response = await fetch(getAdminApiUrl('analytics/overview'), {
     headers: getAuthHeaders(),
   });
   if (!response.ok) {
@@ -376,7 +406,7 @@ export async function getAnalyticsOverview(): Promise<AnalyticsOverview> {
 }
 
 export async function getDailyStats(days: number = 30): Promise<DailyStats[]> {
-  const response = await fetch(`${API_URL}/admin/v1/analytics/daily?days=${days}`, {
+  const response = await fetch(`${getAdminApiUrl('analytics/daily')}?days=${days}`, {
     headers: getAuthHeaders(),
   });
   if (!response.ok) {
@@ -387,7 +417,7 @@ export async function getDailyStats(days: number = 30): Promise<DailyStats[]> {
 }
 
 export async function getTopActiveUsers(limit: number = 10): Promise<UserActivityStats[]> {
-  const response = await fetch(`${API_URL}/admin/v1/analytics/top-users?limit=${limit}`, {
+  const response = await fetch(`${getAdminApiUrl('analytics/top-users')}?limit=${limit}`, {
     headers: getAuthHeaders(),
   });
   if (!response.ok) {
@@ -441,7 +471,7 @@ export interface LlmRun {
 }
 
 export async function getPrompts(): Promise<Prompt[]> {
-  const response = await fetch(`${API_URL}/admin/v1/prompts`, {
+  const response = await fetch(getAdminApiUrl('prompts'), {
     headers: getAuthHeaders(),
   });
   if (!response.ok) return [];
@@ -449,7 +479,7 @@ export async function getPrompts(): Promise<Prompt[]> {
 }
 
 export async function getPromptVersions(promptId: string): Promise<Prompt[]> {
-  const response = await fetch(`${API_URL}/admin/v1/prompts/${promptId}/versions`, {
+  const response = await fetch(getAdminApiUrl(`prompts/${promptId}/versions`), {
     headers: getAuthHeaders(),
   });
   if (!response.ok) return [];
@@ -460,7 +490,7 @@ export async function createPromptVersion(
   promptId: string,
   data: { template: string; purpose: string; schema?: Record<string, unknown> }
 ): Promise<Prompt> {
-  const response = await fetch(`${API_URL}/admin/v1/prompts/${promptId}/versions`, {
+  const response = await fetch(getAdminApiUrl(`prompts/${promptId}/versions`), {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify(data),
@@ -477,7 +507,7 @@ export async function activatePrompt(
   version: number,
   reason: string
 ): Promise<Prompt> {
-  const response = await fetch(`${API_URL}/admin/v1/prompts/${promptId}/activate`, {
+  const response = await fetch(getAdminApiUrl(`prompts/${promptId}/activate`), {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify({ version, reason }),
@@ -490,7 +520,7 @@ export async function activatePrompt(
 }
 
 export async function getConfigSets(): Promise<ConfigSet[]> {
-  const response = await fetch(`${API_URL}/admin/v1/config-sets`, {
+  const response = await fetch(getAdminApiUrl('config-sets'), {
     headers: getAuthHeaders(),
   });
   if (!response.ok) return [];
@@ -498,7 +528,7 @@ export async function getConfigSets(): Promise<ConfigSet[]> {
 }
 
 export async function getConfigVersions(configSetId: string): Promise<ConfigVersion[]> {
-  const response = await fetch(`${API_URL}/admin/v1/config-sets/${configSetId}/versions`, {
+  const response = await fetch(getAdminApiUrl(`config-sets/${configSetId}/versions`), {
     headers: getAuthHeaders(),
   });
   if (!response.ok) return [];
@@ -509,7 +539,7 @@ export async function createConfigVersion(
   configSetId: string,
   data: { payload: Record<string, unknown>; comment?: string }
 ): Promise<ConfigVersion> {
-  const response = await fetch(`${API_URL}/admin/v1/config-sets/${configSetId}/versions`, {
+  const response = await fetch(getAdminApiUrl(`config-sets/${configSetId}/versions`), {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify(data),
@@ -526,7 +556,7 @@ export async function activateConfigVersion(
   version: number,
   reason: string
 ): Promise<ConfigVersion> {
-  const response = await fetch(`${API_URL}/admin/v1/config-sets/${configSetId}/activate`, {
+  const response = await fetch(getAdminApiUrl(`config-sets/${configSetId}/activate`), {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify({ version, reason }),
@@ -550,7 +580,7 @@ export async function getLlmRuns(params?: {
   if (params?.limit) query.append('limit', params.limit.toString());
   if (params?.offset) query.append('offset', params.offset.toString());
 
-  const response = await fetch(`${API_URL}/admin/v1/prompts/llm-runs?${query}`, {
+  const response = await fetch(`${getAdminApiUrl('prompts/llm-runs')}?${query}`, {
     headers: getAuthHeaders(),
   });
   if (!response.ok) return { runs: [], total: 0 };
@@ -588,7 +618,7 @@ export interface ApiKeyInfo {
 }
 
 export async function getSystemSettings(): Promise<SystemSettings> {
-  const response = await fetch(`${API_URL}/admin/v1/settings`, {
+  const response = await fetch(getAdminApiUrl('settings'), {
     headers: getAuthHeaders(),
   });
   if (!response.ok) {
@@ -598,7 +628,7 @@ export async function getSystemSettings(): Promise<SystemSettings> {
 }
 
 export async function getApiKeys(): Promise<ApiKeyInfo[]> {
-  const response = await fetch(`${API_URL}/admin/v1/settings/api-keys`, {
+  const response = await fetch(getAdminApiUrl('settings/api-keys'), {
     headers: getAuthHeaders(),
   });
   if (!response.ok) {
@@ -622,7 +652,7 @@ export async function getAuditLog(params?: {
   if (params?.limit) query.append('limit', params.limit.toString());
   if (params?.offset) query.append('offset', params.offset.toString());
 
-  const response = await fetch(`${API_URL}/admin/v1/audit-log?${query}`, {
+  const response = await fetch(`${getAdminApiUrl('audit-log')}?${query}`, {
     headers: getAuthHeaders(),
   });
   if (!response.ok) {
