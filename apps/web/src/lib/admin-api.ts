@@ -15,35 +15,13 @@ function getAdminToken(): string | null {
 
 /**
  * Определить, нужно ли использовать прокси для админ-запросов
- * Прокси используется ТОЛЬКО для Payload CMS админки (/admin без дополнительных сегментов)
- * Кастомная админка (/admin/overview, /admin/users-management и т.д.) использует JWT напрямую
+ * 
+ * ОТКЛЮЧЕНО: Прокси требует Payload CMS авторизацию, которая отделена от основной JWT авторизации.
+ * Все админ-запросы теперь идут напрямую к NestJS API с JWT токеном.
  */
 function shouldUseProxy(): boolean {
-  if (typeof window === 'undefined') {
-    // На сервере не используем прокси — Payload может быть недоступен
-    return false;
-  }
-  
-  const pathname = window.location.pathname;
-  
-  // Кастомные админ-страницы используют JWT напрямую
-  const customAdminPaths = [
-    '/admin/overview',
-    '/admin/users-management',
-    '/admin/jobs',
-    '/admin/ai-pipeline',
-    '/admin/analytics',
-    '/admin/audit',
-    '/admin/content-management',
-    '/admin/settings',
-  ];
-  
-  if (customAdminPaths.some(p => pathname.startsWith(p))) {
-    return false;
-  }
-  
-  // Только для чистого /admin (Payload CMS) используем прокси
-  return pathname === '/admin' || pathname === '/admin/';
+  // Прокси полностью отключён — используем прямой доступ к API с JWT
+  return false;
 }
 
 /**
