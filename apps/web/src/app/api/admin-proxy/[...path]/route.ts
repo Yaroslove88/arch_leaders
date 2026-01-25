@@ -63,11 +63,12 @@ async function handleProxyRequest(
       
       if (token) {
         try {
+          // Create new Headers object with cookie
+          const headersWithCookie = new Headers(request.headers);
+          headersWithCookie.set('cookie', `payload-token=${token}`);
+          
           const userResult = await payload.auth({
-            headers: {
-              ...request.headers,
-              cookie: `payload-token=${token}`,
-            },
+            headers: headersWithCookie,
           });
           payloadUser = userResult?.user;
         } catch {
