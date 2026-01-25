@@ -48,19 +48,42 @@ async function handleProxyRequest(
   try {
     // Проверяем авторизацию Payload
     const payload = await getPayload({ config });
-    const user = await payload.auth({
-      headers: request.headers,
-    });
+    
+    // Получаем пользователя из Payload сессии
+    let payloadUser: any = null;
+    try {
+      const authResult = await payload.auth({
+        headers: request.headers,
+      });
+      payloadUser = authResult?.user;
+    } catch (error) {
+      // Если авторизация не удалась, пробуем получить из cookies
+      const cookies = request.cookies;
+      const token = cookies.get('payload-token')?.value;
+      
+      if (token) {
+        try {
+          const userResult = await payload.auth({
+            headers: {
+              ...request.headers,
+              cookie: `payload-token=${token}`,
+            },
+          });
+          payloadUser = userResult?.user;
+        } catch {
+          // Игнорируем ошибки
+        }
+      }
+    }
 
-    if (!user || !user.user) {
+    if (!payloadUser) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Unauthorized: Payload authentication required' },
         { status: 401 }
       );
     }
 
     // Проверяем роль пользователя
-    const payloadUser = user.user as any;
     if (payloadUser.role !== 'admin') {
       return NextResponse.json(
         { error: 'Forbidden: Admin access required' },
