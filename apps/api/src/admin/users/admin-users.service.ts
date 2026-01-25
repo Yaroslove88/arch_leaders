@@ -152,27 +152,63 @@ export class AdminUsersService {
     };
   }
 
-  async updateUser(userId: string, data: { status?: string; note?: string }) {
-    const updateData: any = {};
-
-    if (data.status) {
-      updateData.status = data.status;
-    }
-
-    const user = await this.prisma.user.update({
+  async updateUser(userId: string, data: { status?: string; note?: string; email?: string; telegramUsername?: string; role?: string; [key: string]: any }) {
+    // Проверяем существование пользователя
+    const existingUser = await this.prisma.user.findUnique({
       where: { id: userId },
-      data: updateData,
-      select: {
-        id: true,
-        email: true,
-        telegramUsername: true,
-        status: true,
-        role: true,
-        created_at: true,
-      },
+      select: { id: true },
     });
 
-    return user;
+    if (!existingUser) {
+      throw new NotFoundException(`User ${userId} not found`);
+    }
+
+    const updateData: any = {};
+
+    // Разрешенные поля для обновления
+    if (data.status !== undefined) {
+      updateData.status = data.status;
+    }
+    if (data.email !== undefined) {
+      updateData.email = data.email || null; // Разрешаем null для email
+    }
+    if (data.telegramUsername !== undefined) {
+      updateData.telegramUsername = data.telegramUsername;
+    }
+    if (data.role !== undefined) {
+      updateData.role = data.role;
+    }
+    // note не сохраняется в БД, используется только для аудита
+
+    // Если нет полей для обновления, возвращаем текущего пользователя
+    if (Object.keys(updateData).length === 0) {
+      return this.getUserById(userId);
+    }
+
+    try {
+      const user = await this.prisma.user.update({
+        where: { id: userId },
+        data: updateData,
+        select: {
+          id: true,
+          email: true,
+          telegramUsername: true,
+          status: true,
+          role: true,
+          created_at: true,
+          last_seen_at: true,
+        },
+      });
+
+      return user;
+    } catch (error: any) {
+      // Обработка ошибок уникальности (email, telegramUsername)
+      if (error.code === 'P2002') {
+        const field = error.meta?.target?.[0];
+        throw new NotFoundException(`User with this ${field} already exists`);
+      }
+      throw error;
+    }
   }
 
   async updateSubscription(
