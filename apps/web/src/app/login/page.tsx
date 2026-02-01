@@ -5,10 +5,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../hooks/useAuth';
 import { isTelegramWebApp, getTelegramWebApp, initTelegramWebApp } from '../../lib/telegram';
+import { useTelegramWebApp } from '../../providers/TelegramWebAppProvider';
 
 export default function LoginPage() {
   const router = useRouter();
   const { isAuthenticated, isLoading } = useAuth();
+  const { webApp, isInTelegram } = useTelegramWebApp();
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [telegramBotId, setTelegramBotId] = useState<string>('');
@@ -43,15 +45,11 @@ export default function LoginPage() {
         throw new Error(errorData.message || `Ошибка ${response.status}`);
       }
 
-      const data = await response.json();
-      
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('auth_token', data.access_token);
-        localStorage.setItem('auth_user', JSON.stringify(data.user));
-      }
-      
+      await response.json();
+      webApp?.HapticFeedback?.notificationOccurred('success');
       router.push('/dashboard');
     } catch (err: any) {
+      webApp?.HapticFeedback?.notificationOccurred('error');
       setError(err.message || 'Ошибка входа');
     } finally {
       setIsSubmitting(false);
@@ -78,23 +76,20 @@ export default function LoginPage() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: 'Ошибка входа через Telegram' }));
+        webApp?.HapticFeedback?.notificationOccurred('error');
         throw new Error(errorData.message || 'Ошибка входа через Telegram');
       }
 
-      const data = await response.json();
-      
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('auth_token', data.access_token);
-        localStorage.setItem('auth_user', JSON.stringify(data.user));
-      }
-      
+      await response.json();
+      webApp?.HapticFeedback?.notificationOccurred('success');
       router.push('/dashboard');
     } catch (err: any) {
+      webApp?.HapticFeedback?.notificationOccurred('error');
       setError(err.message || 'Ошибка входа через Telegram Mini App');
     } finally {
       setIsSubmitting(false);
     }
-  }, [router]);
+  }, [router, webApp]);
 
   useEffect(() => {
     // Проверяем, авторизован ли пользователь
@@ -113,6 +108,30 @@ export default function LoginPage() {
       handleTelegramMiniAppAuth();
     }
   }, [handleTelegramMiniAppAuth]);
+
+  // Telegram BackButton/MainButton + haptics
+  useEffect(() => {
+    if (!isInTelegram || !webApp) return;
+
+    webApp.BackButton.show();
+    webApp.BackButton.onClick(() => {
+      webApp.close?.();
+      router.back();
+    });
+
+    webApp.MainButton.text = isSubmitting ? 'Входим...' : 'Войти';
+    webApp.MainButton.isActive = !isSubmitting;
+    webApp.MainButton.show();
+    webApp.MainButton.onClick(() => {
+      webApp.HapticFeedback?.impactOccurred('medium');
+      handleTelegramMiniAppAuth();
+    });
+
+    return () => {
+      webApp.BackButton.hide();
+      webApp.MainButton.hide();
+    };
+  }, [isInTelegram, webApp, isSubmitting, handleTelegramMiniAppAuth, router]);
 
   useEffect(() => {
     // Загружаем Telegram Bot ID из переменных окружения
@@ -163,13 +182,7 @@ export default function LoginPage() {
           }
 
           const data = await response.json();
-          
-          // Сохраняем токен и пользователя
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('auth_token', data.access_token);
-            localStorage.setItem('auth_user', JSON.stringify(data.user));
-          }
-          
+
           // Перенаправляем на дашборд
           router.push('/dashboard');
         } catch (err: any) {
@@ -463,4 +476,3 @@ export default function LoginPage() {
     </div>
   );
 }
-

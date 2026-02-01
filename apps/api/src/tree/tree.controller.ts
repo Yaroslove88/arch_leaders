@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Param, Body, Query, Inject, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Param, Body, Query, Inject, UseGuards, UseInterceptors, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { TreeService } from './tree.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -130,7 +130,20 @@ export class TreeController {
     if (body.xpDelta !== undefined) {
       return this.treeService.updateNodeProgress(nodeId, body.xpDelta, user.sub);
     }
-    // TODO: Реализовать обновление через applyChange
-    throw new Error('Not implemented');
+    if (body.patch && Object.keys(body.patch).length > 0) {
+      return this.treeService.applyChange({
+        ops: [
+          {
+            op: 'node.update',
+            node_id: nodeId,
+            patch: body.patch,
+          },
+        ],
+        rationale: `Manual node patch for ${nodeId}`,
+        actor: user.sub,
+        userId: user.sub,
+      });
+    }
+    throw new BadRequestException('Provide xpDelta or patch to update node');
   }
 }

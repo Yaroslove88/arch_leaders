@@ -7,6 +7,7 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as net from 'net';
+import * as cookieParser from 'cookie-parser';
 
 // Sentry инициализация (опционально, только если SENTRY_DSN установлен)
 let Sentry: any = null;
@@ -85,6 +86,7 @@ async function bootstrap() {
 
   // Глобальный логирование
   app.useGlobalInterceptors(new LoggingInterceptor());
+  app.use(cookieParser());
 
   // CORS настройка с белым списком
   // По умолчанию Next.js может работать на разных портах (3000, 3001, 3002...)
@@ -226,4 +228,3 @@ async function bootstrap() {
   }
 }
 bootstrap();
-

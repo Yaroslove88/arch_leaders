@@ -117,24 +117,24 @@ export class JobsWorkerService implements OnModuleInit, OnModuleDestroy {
         break;
 
       case 'recompute_user':
-        // TODO: реализовать в PR8
-        throw new Error('recompute_user handler not implemented yet');
+        await this.handleRecomputeUser(job);
+        break;
 
       case 'reembed_entry':
-        // TODO: реализовать позже
-        throw new Error('reembed_entry handler not implemented yet');
+        await this.handleReembedEntry(job);
+        break;
 
       case 'regenerate_quests':
-        // TODO: реализовать позже
-        throw new Error('regenerate_quests handler not implemented yet');
+        await this.handleRegenerateQuests(job);
+        break;
 
       case 'send_telegram':
-        // TODO: реализовать позже
-        throw new Error('send_telegram handler not implemented yet');
+        await this.handleSendTelegram(job);
+        break;
 
       case 'backfill':
-        // TODO: реализовать позже
-        throw new Error('backfill handler not implemented yet');
+        await this.handleBackfill(job);
+        break;
 
       case 'degrade_experience':
         await this.degradeExperienceHandler.handle();
@@ -144,5 +144,35 @@ export class JobsWorkerService implements OnModuleInit, OnModuleDestroy {
         throw new Error(`Unknown job type: ${job.jobType}`);
     }
   }
-}
 
+  /**
+   * Временный обработчик send_telegram
+   * Пока нет полноценной интеграции, просто логируем и помечаем задачу успешной,
+   * чтобы очередь не застревала.
+   */
+  private async handleSendTelegram(job: ClaimedJob): Promise<void> {
+    this.logger.warn(`send_telegram handler is stubbed; job ${job.id} will be marked as succeeded`);
+    // В дальнейшем здесь можно вызвать Telegram сервис/бот
+    return;
+  }
+
+  private async handleRecomputeUser(job: ClaimedJob): Promise<void> {
+    this.logger.warn(`recompute_user handler stubbed; job ${job.id} skipped`);
+    return;
+  }
+
+  private async handleReembedEntry(job: ClaimedJob): Promise<void> {
+    this.logger.warn(`reembed_entry handler stubbed; job ${job.id} skipped`);
+    return;
+  }
+
+  private async handleRegenerateQuests(job: ClaimedJob): Promise<void> {
+    this.logger.warn(`regenerate_quests handler stubbed; job ${job.id} skipped`);
+    return;
+  }
+
+  private async handleBackfill(job: ClaimedJob): Promise<void> {
+    this.logger.warn(`backfill handler stubbed; job ${job.id} skipped`);
+    return;
+  }
+}

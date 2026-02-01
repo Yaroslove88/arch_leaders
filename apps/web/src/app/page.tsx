@@ -7,17 +7,18 @@ import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function Home() {
   const router = useRouter();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
     if (!isLoading) {
       if (isAuthenticated) {
         // Проверяем, прошел ли пользователь онбординг
-        const hasSeenIntroduce = typeof window !== 'undefined' 
-          ? localStorage.getItem('hasSeenIntroduce') 
+        const onboardingDone = user?.onboarding_completed;
+        const hasSeenIntroduce = typeof window !== 'undefined'
+          ? localStorage.getItem('hasSeenIntroduce')
           : null;
-        
-        if (!hasSeenIntroduce) {
+
+        if (!onboardingDone && !hasSeenIntroduce) {
           // Первый вход - редиректим на страницу онбординга
           router.push('/introduce');
         } else {
@@ -31,4 +32,3 @@ export default function Home() {
 
   return <LoadingSpinner fullScreen text="Загрузка..." />;
 }
-

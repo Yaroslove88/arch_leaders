@@ -1,5 +1,6 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, BadRequestException, Inject, Patch, Get, Delete, Param, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, BadRequestException, Inject, Patch, Get, Delete, Param, UseGuards, Res } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -48,8 +49,10 @@ export class AuthController {
   })
   @ApiResponse({ status: 400, description: 'Неверные данные запроса' })
   @ApiResponse({ status: 409, description: 'Пользователь уже существует' })
-  async register(@Body() registerDto: RegisterDto) {
-    return this.authService.register(registerDto);
+  async register(@Body() registerDto: RegisterDto, @Res({ passthrough: true }) res: Response) {
+    const result = await this.authService.register(registerDto);
+    this.setAuthCookie(res, result.access_token);
+    return result;
   }
 
   @Post('login')
@@ -93,7 +96,7 @@ export class AuthController {
   })
   @ApiResponse({ status: 400, description: 'Неверные данные запроса' })
   @ApiResponse({ status: 401, description: 'Неверные учетные данные' })
-  async login(@Body() loginDto: LoginDto) {
+  async login(@Body() loginDto: LoginDto, @Res({ passthrough: true }) res: Response) {
     if (!loginDto) {
       throw new BadRequestException('Request body is missing');
     }
@@ -103,7 +106,9 @@ export class AuthController {
       throw new BadRequestException('Необходимо указать либо apiKey, либо telegramUsername и password');
     }
     
-    return this.authService.login(loginDto);
+    const result = await this.authService.login(loginDto);
+    this.setAuthCookie(res, result.access_token);
+    return result;
   }
 
   @Patch('change-password')
@@ -233,12 +238,14 @@ export class AuthController {
   })
   @ApiResponse({ status: 400, description: 'Неверные данные запроса' })
   @ApiResponse({ status: 401, description: 'Неверные данные Telegram или устаревшая подпись' })
-  async loginWithTelegram(@Body() telegramAuthDto: TelegramAuthDto) {
+  async loginWithTelegram(@Body() telegramAuthDto: TelegramAuthDto, @Res({ passthrough: true }) res: Response) {
     if (!telegramAuthDto) {
       throw new BadRequestException('Request body is missing');
     }
     
-    return this.authService.loginWithTelegram(telegramAuthDto);
+    const result = await this.authService.loginWithTelegram(telegramAuthDto);
+    this.setAuthCookie(res, result.access_token);
+    return result;
   }
 
   @Post('telegram-webapp')
@@ -269,12 +276,22 @@ export class AuthController {
   })
   @ApiResponse({ status: 400, description: 'Неверные данные запроса' })
   @ApiResponse({ status: 401, description: 'Неверная подпись initData' })
-  async loginWithTelegramWebApp(@Body() webAppDto: TelegramWebAppDto) {
+  async loginWithTelegramWebApp(@Body() webAppDto: TelegramWebAppDto, @Res({ passthrough: true }) res: Response) {
     if (!webAppDto || !webAppDto.initData) {
       throw new BadRequestException('initData is required');
     }
     
-    return this.authService.loginWithTelegramWebApp(webAppDto);
+    const result = await this.authService.loginWithTelegramWebApp(webAppDto);
+    this.setAuthCookie(res, result.access_token);
+    return result;
+  }
+
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Выйти и очистить cookie' })
+  async logout(@Res({ passthrough: true }) res: Response) {
+    res.clearCookie('auth_token');
+    return { message: 'Logged out' };
   }
 
   @Get('me')
@@ -339,5 +356,15 @@ export class AuthController {
   async completeOnboarding(@CurrentUser() user: { sub: string }) {
     return this.authService.completeOnboarding(user.sub);
   }
-}
 
+  private setAuthCookie(res: Response, token: string) {
+    const isProd = process.env.NODE_ENV === 'production';
+    res.cookie('auth_token', token, {
+      httpOnly: true,
+      sameSite: isProd ? 'lax' : 'lax',
+      secure: isProd,
+      maxAge: 1000 * 60 * 60 * 24 * 7,
+      path: '/',
+    });
+  }
+}

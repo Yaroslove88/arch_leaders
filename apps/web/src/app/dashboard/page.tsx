@@ -7,7 +7,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useQuests } from '../../hooks/useQuests';
 import { useSessions } from '../../hooks/useSessions';
 import { useEntries } from '../../hooks/useEntries';
-import { getSemanticTree, getCurrentBuild, getToken, getCaseProgress, CaseProgress, getUserRetention, UserRetention, recordActivity, checkStreakRisk, createEntry, getUserAchievements, UserAchievement } from '../../lib/api';
+import { getSemanticTree, getCurrentBuild, getCaseProgress, CaseProgress, getUserRetention, UserRetention, recordActivity, checkStreakRisk, createEntry, getUserAchievements, UserAchievement } from '../../lib/api';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { ProtectedRoute } from '../../components/ProtectedRoute';
@@ -27,7 +27,6 @@ interface NodeChange {
 }
 
 function DashboardContent() {
-  const [token, setToken] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const [recentChanges, setRecentChanges] = useState<NodeChange[]>([]);
   const [isEntryModalOpen, setIsEntryModalOpen] = useState(false);
@@ -93,13 +92,9 @@ function DashboardContent() {
     
     try {
       setMounted(true);
-      const currentToken = getToken();
-      setToken(currentToken);
-      
-      // Проверяем, прошел ли пользователь онбординг
+      // Проверяем, прошел ли пользователь онбординг (предпочитаем серверное поле)
       const hasSeenIntroduce = localStorage.getItem('hasSeenIntroduce');
-      if (!hasSeenIntroduce && currentToken) {
-        // Первый вход - редиректим на страницу онбординга
+      if (user && user.onboarding_completed === false && !hasSeenIntroduce) {
         router.push('/introduce');
         return;
       }
@@ -118,7 +113,7 @@ function DashboardContent() {
     } catch (error) {
       console.error('Error initializing dashboard:', error);
     }
-  }, [router]);
+  }, [router, user]);
 
   const { data: questsData, isLoading: questsLoading } = useQuests('active');
   const { data: sessionsData, isLoading: sessionsLoading } = useSessions({ status: 'done' });
@@ -126,19 +121,19 @@ function DashboardContent() {
   const { data: tree, isLoading: treeLoading } = useQuery({
     queryKey: ['tree', 'semantic'],
     queryFn: getSemanticTree,
-    enabled: !!token && mounted,
+    enabled: mounted,
     retry: false,
   });
   const { data: currentBuilds, isLoading: buildsLoading } = useQuery({
     queryKey: ['builds', 'current'],
     queryFn: getCurrentBuild,
-    enabled: !!token && mounted,
+    enabled: mounted,
     retry: false,
   });
   const { data: caseProgress } = useQuery({
     queryKey: ['caseProgress'],
     queryFn: getCaseProgress,
-    enabled: !!token && mounted,
+    enabled: mounted,
   });
   const { data: retention } = useQuery({
     queryKey: ['retention', userId],

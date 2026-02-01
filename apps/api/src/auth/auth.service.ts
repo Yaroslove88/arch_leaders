@@ -48,7 +48,8 @@ export class AuthService {
   async validateApiKey(apiKey: string): Promise<boolean> {
     const validApiKey = this.configService.get<string>('API_KEY');
     if (!validApiKey) {
-      return true;
+      this.logger.warn('API_KEY is not set; API key authentication is disabled');
+      return false;
     }
     return apiKey === validApiKey;
   }
@@ -209,6 +210,9 @@ export class AuthService {
         telegramUsername: true,
         role: true,
         created_at: true,
+        onboarding_completed: true,
+        onboarding_completed_at: true,
+        status: true,
       },
     });
   }
@@ -356,9 +360,23 @@ export class AuthService {
    */
   private verifyTelegramHash(data: TelegramAuthDto): boolean {
     const botToken = this.configService.get<string>('TELEGRAM_BOT_TOKEN');
+    const isProd = this.configService.get<string>('NODE_ENV') === 'production';
     if (!botToken) {
-      // Если токен не настроен, пропускаем проверку (для разработки)
-      // В production это должно быть обязательно
+      // Без токена в продакшене нельзя доверять данным
+      if (isProd) {
+        this.logger.error('TELEGRAM_BOT_TOKEN is not set in production');
+        return false;
+      }
+      this.logger.warn('TELEGRAM_BOT_TOKEN not set; skipping Telegram hash validation (development only)');
+      return true;
+    }
+
+    const skipValidation = this.configService.get<string>('SKIP_TELEGRAM_VALIDATION') === 'true';
+    if (skipValidation && isProd) {
+      this.logger.error('SKIP_TELEGRAM_VALIDATION=true in production — validation blocked');
+      return false;
+    } else if (skipValidation) {
+      this.logger.warn('SKIP_TELEGRAM_VALIDATION enabled; skipping Telegram hash validation');
       return true;
     }
 
@@ -394,6 +412,7 @@ export class AuthService {
   private verifyTelegramWebAppData(initData: string): { isValid: boolean; user?: any; error?: string } {
     const botToken = this.configService.get<string>('TELEGRAM_BOT_TOKEN');
     const skipValidation = this.configService.get<string>('SKIP_TELEGRAM_VALIDATION') === 'true';
+    const isProd = this.configService.get<string>('NODE_ENV') === 'production';
     
     // Парсим параметры сразу
     const params = new URLSearchParams(initData);
@@ -409,6 +428,11 @@ export class AuthService {
     
     // Пропускаем проверку если нет токена или включён SKIP_TELEGRAM_VALIDATION
     if (!botToken || skipValidation) {
+      if (isProd) {
+        const reason = !botToken ? 'TELEGRAM_BOT_TOKEN is not set' : 'SKIP_TELEGRAM_VALIDATION=true';
+        this.logger.error(`Telegram WebApp validation blocked in production: ${reason}`);
+        return { isValid: false, error: 'Telegram validation disabled in production. Configure TELEGRAM_BOT_TOKEN.' };
+      }
       this.logger.warn(`Telegram validation skipped: botToken=${!!botToken}, skipValidation=${skipValidation}`);
       return { isValid: true, user };
     }
@@ -597,4 +621,3 @@ export class AuthService {
     };
   }
 }
-
