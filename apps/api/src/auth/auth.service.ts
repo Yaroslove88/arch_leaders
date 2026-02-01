@@ -444,13 +444,16 @@ export class AuthService {
       return { isValid: false, error: 'No hash in initData' };
     }
 
-    // В 2024 Telegram добавил поле signature для верификации без bot token.
-    // Для классической проверки по bot token это поле нужно исключать, иначе hash не совпадёт.
-    params.delete('hash');
-    params.delete('signature');
-    const dataCheckString = Array.from(params.entries())
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([key, value]) => `${key}=${value}`)
+    // Верификацию нужно делать на «сырых» парах, без URL-decode.
+    // URLSearchParams декодирует значения и ломает hash.
+    const dataCheckString = initData
+      .split('&')
+      .filter(Boolean)
+      .filter((pair) => {
+        const key = pair.split('=')[0];
+        return key !== 'hash' && key !== 'signature';
+      })
+      .sort((a, b) => a.localeCompare(b))
       .join('\n');
 
     // WebApp secret: HMAC_SHA256("WebAppData", bot_token)
