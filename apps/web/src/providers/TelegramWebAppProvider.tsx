@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { setToken, setUser, getToken } from '../lib/api';
+import { setUser } from '../lib/api';
 import { initTelegramDevMock, isTelegramDevMock } from '../lib/telegram-dev-mock';
 
 interface TelegramUser {
@@ -122,13 +122,6 @@ export function TelegramWebAppProvider({ children }: Props) {
       // Раскрываем на весь экран
       tg.expand();
 
-      // Проверяем, есть ли уже токен (уже авторизован)
-      const existingToken = getToken();
-      if (existingToken) {
-        setIsReady(true);
-        return;
-      }
-
       // Автоматическая авторизация через API
       const autoAuth = async () => {
         try {
@@ -144,7 +137,6 @@ export function TelegramWebAppProvider({ children }: Props) {
           if (response.ok) {
             const data = await response.json();
             // Сохраняем токен и пользователя
-            setToken(data.access_token);
             setUser(data.user);
             
             // Haptic feedback при успешной авторизации

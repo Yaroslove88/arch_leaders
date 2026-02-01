@@ -61,8 +61,9 @@ export default buildConfig({
     pool: {
       connectionString: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/leadership_architect',
     },
-    // Не использовать push для автоматической миграции (безопаснее)
-    push: false,
+    // push: true создаёт таблицы автоматически при первом запуске
+    // Payload создаст users_sessions и другие системные таблицы
+    push: true,
   }),
   
   // Секретный ключ для JWT

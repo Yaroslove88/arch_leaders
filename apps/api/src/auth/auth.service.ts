@@ -48,7 +48,8 @@ export class AuthService {
   async validateApiKey(apiKey: string): Promise<boolean> {
     const validApiKey = this.configService.get<string>('API_KEY');
     if (!validApiKey) {
-      return true;
+      this.logger.warn('API_KEY is not set; API key authentication is disabled');
+      return false;
     }
     return apiKey === validApiKey;
   }
@@ -209,6 +210,9 @@ export class AuthService {
         telegramUsername: true,
         role: true,
         created_at: true,
+        onboarding_completed: true,
+        onboarding_completed_at: true,
+        status: true,
       },
     });
   }
@@ -356,9 +360,23 @@ export class AuthService {
    */
   private verifyTelegramHash(data: TelegramAuthDto): boolean {
     const botToken = this.configService.get<string>('TELEGRAM_BOT_TOKEN');
+    const isProd = this.configService.get<string>('NODE_ENV') === 'production';
+    const allowUnverified = this.configService.get<string>('TELEGRAM_ALLOW_UNVERIFIED') === 'true';
     if (!botToken) {
-      // Если токен не настроен, пропускаем проверку (для разработки)
-      // В production это должно быть обязательно
+      if (!allowUnverified && isProd) {
+        this.logger.error('TELEGRAM_BOT_TOKEN is not set in production');
+        return false;
+      }
+      this.logger.warn('TELEGRAM_BOT_TOKEN not set; skipping Telegram hash validation');
+      return true;
+    }
+
+    const skipValidation = this.configService.get<string>('SKIP_TELEGRAM_VALIDATION') === 'true';
+    if (skipValidation && isProd && !allowUnverified) {
+      this.logger.error('SKIP_TELEGRAM_VALIDATION=true in production — validation blocked (set TELEGRAM_ALLOW_UNVERIFIED=true to override temporarily)');
+      return false;
+    } else if (skipValidation || allowUnverified) {
+      this.logger.warn('SKIP_TELEGRAM_VALIDATION enabled; skipping Telegram hash validation');
       return true;
     }
 
@@ -394,6 +412,9 @@ export class AuthService {
   private verifyTelegramWebAppData(initData: string): { isValid: boolean; user?: any; error?: string } {
     const botToken = this.configService.get<string>('TELEGRAM_BOT_TOKEN');
     const skipValidation = this.configService.get<string>('SKIP_TELEGRAM_VALIDATION') === 'true';
+    const isProd = this.configService.get<string>('NODE_ENV') === 'production';
+    const allowUnverified = this.configService.get<string>('TELEGRAM_ALLOW_UNVERIFIED') === 'true';
+    const acceptHashMismatch = this.configService.get<string>('TELEGRAM_ACCEPT_HASH_MISMATCH') === 'true';
     
     // Парсим параметры сразу
     const params = new URLSearchParams(initData);
@@ -408,8 +429,12 @@ export class AuthService {
     }
     
     // Пропускаем проверку если нет токена или включён SKIP_TELEGRAM_VALIDATION
-    if (!botToken || skipValidation) {
-      this.logger.warn(`Telegram validation skipped: botToken=${!!botToken}, skipValidation=${skipValidation}`);
+    if (!botToken || skipValidation || allowUnverified) {
+      if (isProd && !allowUnverified && !skipValidation) {
+        this.logger.error('Telegram WebApp validation blocked in production: TELEGRAM_BOT_TOKEN is not set');
+        return { isValid: false, error: 'Telegram validation disabled in production. Configure TELEGRAM_BOT_TOKEN.' };
+      }
+      this.logger.warn(`Telegram validation skipped: botToken=${!!botToken}, skipValidation=${skipValidation}, allowUnverified=${allowUnverified}`);
       return { isValid: true, user };
     }
 
@@ -443,6 +468,10 @@ export class AuthService {
     if (!isValid) {
       this.logger.error(`Hash mismatch: expected=${hash.substring(0, 16)}..., got=${calculatedHash.substring(0, 16)}...`);
       this.logger.debug(`dataCheckString: ${dataCheckString.substring(0, 100)}...`);
+      if (allowUnverified || acceptHashMismatch) {
+        this.logger.warn('Hash mismatch ignored due to TELEGRAM_ALLOW_UNVERIFIED/TELEGRAM_ACCEPT_HASH_MISMATCH');
+        return { isValid: true, user };
+      }
       return { isValid: false, error: 'Hash mismatch - check TELEGRAM_BOT_TOKEN' };
     }
 
@@ -597,4 +626,3 @@ export class AuthService {
     };
   }
 }
-

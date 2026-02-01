@@ -95,8 +95,7 @@ export class EntriesController {
   @ApiResponse({ status: 404, description: 'Запись не найдена' })
   @ApiResponse({ status: 401, description: 'Не авторизован' })
   async update(@Param('id') id: string, @Body() updateEntryDto: UpdateEntryDto, @CurrentUser() user: JwtPayload) {
-    // TODO: Реализовать метод update в сервисе с проверкой userId
-    throw new Error('Method not implemented');
+    return this.entriesService.update(id, user.sub, updateEntryDto);
   }
 
   @Delete(':id')
@@ -109,8 +108,6 @@ export class EntriesController {
   @ApiResponse({ status: 404, description: 'Запись не найдена' })
   @ApiResponse({ status: 401, description: 'Не авторизован' })
   async delete(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
-    // TODO: Реализовать метод delete в сервисе с проверкой userId
-    throw new Error('Method not implemented');
+    return this.entriesService.delete(id, user.sub);
   }
 }
-

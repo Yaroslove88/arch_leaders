@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { completeOnboarding, getToken } from '@/lib/api';
+import { completeOnboarding, setUser, getUser } from '@/lib/api';
 import { useToast } from '@/components/ToastProvider';
+import { useTelegramWebApp } from '@/providers/TelegramWebAppProvider';
 
 // Компонент индикатора прогресса
 function ProgressIndicator({ currentStep, totalSteps }: { currentStep: number; totalSteps: number }) {
@@ -215,6 +216,7 @@ function Step5() {
 export default function IntroducePage() {
   const router = useRouter();
   const toast = useToast();
+  const { webApp, isInTelegram } = useTelegramWebApp();
   const [currentStep, setCurrentStep] = useState(0);
   const [isCompleting, setIsCompleting] = useState(false);
   const totalSteps = 5;
@@ -230,17 +232,23 @@ export default function IntroducePage() {
     }
     
     // Если пользователь авторизован, сохраняем в БД
-    const token = getToken();
-    if (token) {
-      setIsCompleting(true);
-      try {
-        await completeOnboarding();
-      } catch (error) {
-        // Если API вызов не удался, не блокируем — localStorage уже сохранён
-        console.warn('Failed to save onboarding status to DB:', error);
-      } finally {
-        setIsCompleting(false);
+    setIsCompleting(true);
+    try {
+      const result = await completeOnboarding();
+      // Обновляем пользователя в localStorage, если он есть
+      const currentUser = getUser();
+      if (currentUser) {
+        setUser({
+          ...currentUser,
+          onboarding_completed: result.onboarding_completed,
+          onboarding_completed_at: result.onboarding_completed_at,
+        });
       }
+    } catch (error) {
+      // Если API вызов не удался, не блокируем — localStorage уже сохранён
+      console.warn('Failed to save onboarding status to DB:', error);
+    } finally {
+      setIsCompleting(false);
     }
     
     router.push('/dashboard');
@@ -249,6 +257,7 @@ export default function IntroducePage() {
   const handleNext = () => {
     if (currentStep < totalSteps - 1) {
       setCurrentStep(currentStep + 1);
+      webApp?.HapticFeedback?.selectionChanged();
     } else {
       // Последний шаг - завершаем онбординг
       finishOnboarding();
@@ -258,6 +267,7 @@ export default function IntroducePage() {
   const handlePrev = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
+      webApp?.HapticFeedback?.selectionChanged();
     }
   };
 
@@ -265,6 +275,28 @@ export default function IntroducePage() {
     // Завершаем онбординг при пропуске
     finishOnboarding();
   };
+
+  // Telegram BackButton/MainButton интеграция
+  useEffect(() => {
+    if (!isInTelegram || !webApp) return;
+
+    webApp.BackButton.show();
+    webApp.BackButton.onClick(() => {
+      router.push('/dashboard');
+    });
+
+    const mainLabel = currentStep === totalSteps - 1 ? 'Готово' : 'Далее';
+    webApp.MainButton.text = mainLabel;
+    webApp.MainButton.color = '#1F3A5F';
+    webApp.MainButton.textColor = '#FFFFFF';
+    webApp.MainButton.show();
+    webApp.MainButton.onClick(handleNext);
+
+    return () => {
+      webApp.BackButton.hide();
+      webApp.MainButton.hide();
+    };
+  }, [isInTelegram, webApp, currentStep]);
 
   return (
     <div className="min-h-screen bg-bg-main flex flex-col">

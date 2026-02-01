@@ -371,9 +371,43 @@ export class AbilityEngine {
 
     // Если есть условия в nodeInfo.conditions (legacy), проверяем их
     if (nodeInfo.conditions) {
-      // TODO: Реализовать проверку условий из conditions
-      // Пока возвращаем true если прогресс достаточен
-      return displayedProgress >= 0.1;
+      const conditions = nodeInfo.conditions as any;
+
+      // Поддерживаем два формата:
+      // 1) Объект: { min_progress?: number }
+      // 2) Массив условий вида { type: 'progress'|'state', node_id?: string, min?: number, equals?: string }
+      const checkSingleCondition = (cond: any): boolean => {
+        if (!cond || typeof cond !== 'object') return true;
+
+        // Условие по прогрессу текущего узла
+        if (cond.type === 'progress' || cond.min_progress !== undefined) {
+          const min = cond.min_progress ?? cond.min ?? 0.1;
+          return displayedProgress >= min;
+        }
+
+        // Условие по состоянию другого узла
+        if (cond.type === 'state' && cond.node_id) {
+          const target = allStates.get(cond.node_id);
+          if (!target) return false;
+          if (cond.equals) {
+            return target.state === cond.equals;
+          }
+          if (cond.min_progress !== undefined) {
+            return (target.internalProgress ?? target.progress) >= cond.min_progress;
+          }
+        }
+
+        // Fallback: пропускаем неизвестные
+        return true;
+      };
+
+      if (Array.isArray(conditions)) {
+        return conditions.every(checkSingleCondition);
+      }
+
+      if (typeof conditions === 'object') {
+        return checkSingleCondition(conditions);
+      }
     }
 
     // По умолчанию: базовые узлы разблокируются легко, продвинутые требуют больше
@@ -650,4 +684,3 @@ export class AbilityEngine {
     return { change: null };
   }
 }
-

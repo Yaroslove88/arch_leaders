@@ -1,28 +1,46 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { login, register, getToken, setToken, getUser, setUser, removeToken, removeUser, type User, type LoginDto, type RegisterDto } from '../lib/api';
+import { login, register, getUser, setUser, removeUser, getMe, type User, type LoginDto, type RegisterDto, logout as apiLogout } from '../lib/api';
 
 export function useAuth() {
   const [user, setUserState] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Загружаем пользователя из localStorage при монтировании
-    const token = getToken();
-    const userData = getUser();
-    if (token && userData) {
-      setUserState(userData);
-    }
-    setIsLoading(false);
+    const bootstrap = async () => {
+      // Пытаемся получить свежие данные профиля с сервера
+      try {
+        const freshUser = await getMe();
+        setUser(freshUser);
+        setUserState(freshUser);
+      } catch (error) {
+        // Если запрос не удался, откатываемся к localStorage
+        const cached = getUser();
+        if (cached) {
+          setUserState(cached);
+        } else {
+          removeUser();
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    bootstrap();
   }, []);
 
   const handleLogin = useCallback(async (data: LoginDto) => {
     try {
       const response = await login(data);
-      setToken(response.access_token);
-      setUser(response.user);
-      setUserState(response.user);
+      // Обновляем профиль свежими данными (онбординг/статус)
+      try {
+        const freshUser = await getMe();
+        setUser(freshUser);
+        setUserState(freshUser);
+      } catch {
+        setUserState(response.user);
+      }
       return response;
     } catch (error) {
       throw error;
@@ -32,19 +50,28 @@ export function useAuth() {
   const handleRegister = useCallback(async (data: RegisterDto) => {
     try {
       const response = await register(data);
-      setToken(response.access_token);
-      setUser(response.user);
-      setUserState(response.user);
+      try {
+        const freshUser = await getMe();
+        setUser(freshUser);
+        setUserState(freshUser);
+      } catch {
+        setUserState(response.user);
+      }
       return response;
     } catch (error) {
       throw error;
     }
   }, []);
 
-  const handleLogout = useCallback(() => {
-    removeToken();
-    removeUser();
-    setUserState(null);
+  const handleLogout = useCallback(async () => {
+    try {
+      await apiLogout();
+    } catch {
+      // ignore
+    } finally {
+      removeUser();
+      setUserState(null);
+    }
   }, []);
 
   return {
@@ -56,4 +83,3 @@ export function useAuth() {
     logout: handleLogout,
   };
 }
-

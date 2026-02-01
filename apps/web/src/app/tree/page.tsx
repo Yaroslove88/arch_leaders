@@ -141,9 +141,20 @@ export default function TreePage() {
 
   const branches = tree.branches || [];
   const nodes = tree.nodes || [];
+  
+  // Фильтруем узлы: показываем только доступные (не заблокированные)
+  // Заблокированные узлы не должны быть видны с нуля
+  const availableNodes = nodes.filter((n: any) => {
+    // В режиме viewAll показываем все (для админа)
+    if (viewAllMode) return true;
+    
+    // Показываем только узлы которые не заблокированы
+    return n.state !== 'locked';
+  });
+  
   const filteredNodes = selectedBranch
-    ? nodes.filter((n: any) => n.branch_id === selectedBranch)
-    : nodes;
+    ? availableNodes.filter((n: any) => n.branch_id === selectedBranch)
+    : availableNodes;
 
   async function handleNodeClick(nodeId: string) {
     setSelectedNode(nodeId);
@@ -276,7 +287,7 @@ export default function TreePage() {
             <h2 className="text-xl font-semibold text-ash-light">
               Узлы {selectedBranch ? `(${branches.find((b: any) => b.branch_id === selectedBranch)?.name})` : '(Все)'}
               <span className="ml-2 text-sm text-ui-text-muted font-normal">
-                ({filteredNodes.length} из {nodes.length})
+                ({filteredNodes.length} из {availableNodes.length} доступных)
               </span>
             </h2>
             {selectedBranch && (
@@ -289,15 +300,15 @@ export default function TreePage() {
             )}
           </div>
 
-          {filteredNodes.length === 0 && nodes.length > 0 && (
+          {filteredNodes.length === 0 && availableNodes.length > 0 && (
             <div className="bg-graphite-structure border border-catalyst-gold/30 rounded-lg p-4 mb-4 shadow-panel">
               <p className="text-catalyst-gold">
-                Нет узлов в выбранной ветке. Всего узлов в дереве: {nodes.length}
+                Нет доступных узлов в выбранной ветке. Всего доступных узлов: {availableNodes.length}
               </p>
             </div>
           )}
 
-          {nodes.length === 0 && (
+          {availableNodes.length === 0 && (
             <div className="bg-graphite-structure border border-tension-red/30 rounded-lg p-4 mb-4 shadow-panel">
               <p className="text-tension-red">
                 Дерево пустое. Проверьте, что API сервер запущен и seed файл загружен.

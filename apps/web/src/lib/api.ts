@@ -10,6 +10,13 @@
 // API всегда на порту 3001
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
+// Глобально добавляем credentials для работы с HttpOnly cookie
+const originalFetch = globalThis.fetch;
+globalThis.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
+  const finalInit: RequestInit = { credentials: 'include', ...init };
+  return originalFetch(input as any, finalInit);
+}) as any;
+
 /**
  * Auth types and interfaces
  * @deprecated Use User from @leadership-architect/shared instead
@@ -18,6 +25,9 @@ export interface User {
   id: string;
   telegramUsername: string;
   role: string;
+  onboarding_completed?: boolean;
+  onboarding_completed_at?: string | null;
+  status?: string;
 }
 
 /**
@@ -27,12 +37,7 @@ function getAuthHeaders(): HeadersInit {
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
   };
-  
-  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-  
+
   return headers;
 }
 
@@ -343,7 +348,6 @@ export interface NodeAbilityState {
 }
 
 export async function getUserAbilityStates(userId?: string): Promise<Record<string, NodeAbilityState>> {
-  const token = getToken();
   const headers = getAuthHeaders();
   
   const url = userId 
@@ -392,7 +396,6 @@ export interface UserAchievement {
 }
 
 export async function getUserAchievements(userId?: string): Promise<UserAchievement[]> {
-  const token = getToken();
   const headers = getAuthHeaders();
   
   const url = userId 
@@ -405,11 +408,6 @@ export async function getUserAchievements(userId?: string): Promise<UserAchievem
 }
 
 export async function getNodeAchievements(nodeId: string, userId?: string): Promise<Achievement[]> {
-  const token = getToken();
-  if (!token) {
-    return []; // Если нет токена, возвращаем пустой массив
-  }
-  
   const headers = getAuthHeaders();
   
   const url = userId 
@@ -1017,6 +1015,18 @@ export interface LoginDto {
   password: string;
 }
 
+export async function getMe(): Promise<User> {
+  const response = await fetch(`${API_URL}/auth/me`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to fetch profile' }));
+    throw new Error(error.message || 'Failed to fetch profile');
+  }
+  return response.json();
+}
+
 export async function register(data: RegisterDto): Promise<LoginResponse> {
   const response = await fetch(`${API_URL}/auth/register`, {
     method: 'POST',
@@ -1044,12 +1054,8 @@ export async function login(data: LoginDto): Promise<LoginResponse> {
 }
 
 export function getToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    return localStorage.getItem('auth_token');
-  } catch {
-    return null;
-  }
+  // Токен хранится в HttpOnly cookie, недоступен из JS
+  return null;
 }
 
 /**
@@ -1133,14 +1139,12 @@ export async function getAdminOverviewStats(): Promise<AdminOverviewStats> {
   };
 }
 
-export function setToken(token: string): void {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem('auth_token', token);
+export function setToken(_token: string): void {
+  // noop: token записывается сервером в HttpOnly cookie
 }
 
 export function removeToken(): void {
-  if (typeof window === 'undefined') return;
-  localStorage.removeItem('auth_token');
+  // noop: используйте /auth/logout для очистки cookie
 }
 
 export interface ChangePasswordDto {
@@ -1153,17 +1157,9 @@ export interface UserWithDate extends User {
 }
 
 export async function changePassword(data: ChangePasswordDto): Promise<{ message: string }> {
-  const token = getToken();
-  if (!token) {
-    throw new Error('Not authenticated');
-  }
-
   const response = await fetch(`${API_URL}/auth/change-password`, {
     method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
+    headers: getAuthHeaders(),
     body: JSON.stringify(data),
   });
 
@@ -1176,16 +1172,9 @@ export async function changePassword(data: ChangePasswordDto): Promise<{ message
 }
 
 export async function deleteAccount(): Promise<{ message: string }> {
-  const token = getToken();
-  if (!token) {
-    throw new Error('Not authenticated');
-  }
-
   const response = await fetch(`${API_URL}/auth/me`, {
     method: 'DELETE',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
+    headers: getAuthHeaders(),
   });
 
   if (!response.ok) {
@@ -1193,24 +1182,13 @@ export async function deleteAccount(): Promise<{ message: string }> {
     throw new Error(error.message || 'Failed to delete account');
   }
 
-  // Clear local storage after successful deletion
-  removeToken();
-  removeUser();
-
   return response.json();
 }
 
 export async function completeOnboarding(): Promise<{ message: string; onboarding_completed: boolean; onboarding_completed_at: string }> {
-  const token = getToken();
-  if (!token) {
-    throw new Error('Not authenticated');
-  }
-
   const response = await fetch(`${API_URL}/auth/me/onboarding`, {
     method: 'PATCH',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
+    headers: getAuthHeaders(),
   });
 
   if (!response.ok) {
@@ -1221,17 +1199,18 @@ export async function completeOnboarding(): Promise<{ message: string; onboardin
   return response.json();
 }
 
-export async function getAllUsers(): Promise<UserWithDate[]> {
-  const token = getToken();
-  if (!token) {
-    throw new Error('Not authenticated');
-  }
+export async function logout(): Promise<void> {
+  await fetch(`${API_URL}/auth/logout`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+  }).catch(() => undefined);
+  removeUser();
+}
 
+export async function getAllUsers(): Promise<UserWithDate[]> {
   const response = await fetch(`${API_URL}/auth/users`, {
     method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
+    headers: getAuthHeaders(),
   });
 
   if (!response.ok) {
@@ -1243,17 +1222,9 @@ export async function getAllUsers(): Promise<UserWithDate[]> {
 }
 
 export async function updateUserRole(userId: string, role: string): Promise<{ message: string; user: UserWithDate }> {
-  const token = getToken();
-  if (!token) {
-    throw new Error('Not authenticated');
-  }
-
   const response = await fetch(`${API_URL}/auth/users/${userId}/role`, {
     method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
+    headers: getAuthHeaders(),
     body: JSON.stringify({ role }),
   });
 
@@ -1266,16 +1237,9 @@ export async function updateUserRole(userId: string, role: string): Promise<{ me
 }
 
 export async function deleteUser(userId: string): Promise<{ message: string }> {
-  const token = getToken();
-  if (!token) {
-    throw new Error('Not authenticated');
-  }
-
   const response = await fetch(`${API_URL}/auth/users/${userId}`, {
     method: 'DELETE',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
+    headers: getAuthHeaders(),
   });
 
   if (!response.ok) {
@@ -1309,7 +1273,7 @@ export function removeUser(): void {
 
 export function isAuthenticated(): boolean {
   if (typeof window === 'undefined') return false;
-  return getToken() !== null;
+  return !!getUser();
 }
 
 /**
@@ -1502,4 +1466,3 @@ export async function completeCoreLoop(
 
   return response.json();
 }
-

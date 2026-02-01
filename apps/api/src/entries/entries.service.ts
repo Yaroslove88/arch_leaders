@@ -145,4 +145,85 @@ export class EntriesService {
       throw new BadRequestException(`Failed to create entry: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
+
+  /**
+   * Обновить запись (только владелец)
+   */
+  async update(
+    id: string,
+    userId: string,
+    data: {
+      type?: string;
+      source?: string;
+      text?: string;
+      participants?: string[];
+      context_json?: any;
+      file_ref?: string;
+      tags?: string[];
+    },
+  ) {
+    const entry = await this.prisma.entry.findUnique({ where: { id } });
+    if (!entry || entry.userId !== userId) {
+      throw new NotFoundException(`Entry with ID ${id} not found`);
+    }
+
+    const updateData: Record<string, any> = {};
+
+    if (data.type !== undefined) {
+      const validTypes = ['situation', 'reflection', 'feedback', 'voice', 'import'];
+      if (!validTypes.includes(data.type)) {
+        throw new BadRequestException(`Invalid type. Must be one of: ${validTypes.join(', ')}`);
+      }
+      updateData.type = data.type;
+    }
+
+    if (data.source !== undefined) {
+      const validSources = ['file', 'telegram', 'web'];
+      if (!validSources.includes(data.source)) {
+        throw new BadRequestException(`Invalid source. Must be one of: ${validSources.join(', ')}`);
+      }
+      updateData.source = data.source;
+    }
+
+    if (data.text !== undefined) {
+      if (!data.text.trim()) {
+        throw new BadRequestException('Text cannot be empty');
+      }
+      updateData.text = data.text;
+    }
+
+    if (data.participants !== undefined) {
+      updateData.participants = data.participants;
+    }
+
+    if (data.context_json !== undefined) {
+      updateData.context_json = data.context_json;
+    }
+
+    if (data.file_ref !== undefined) {
+      updateData.file_ref = data.file_ref;
+    }
+
+    if (data.tags !== undefined) {
+      updateData.tags = data.tags;
+    }
+
+    return this.prisma.entry.update({
+      where: { id },
+      data: updateData,
+    });
+  }
+
+  /**
+   * Удалить запись (только владелец)
+   */
+  async delete(id: string, userId: string) {
+    const entry = await this.prisma.entry.findUnique({ where: { id } });
+    if (!entry || entry.userId !== userId) {
+      throw new NotFoundException(`Entry with ID ${id} not found`);
+    }
+
+    await this.prisma.entry.delete({ where: { id } });
+    return { message: 'Entry deleted' };
+  }
 }
