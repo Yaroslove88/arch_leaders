@@ -100,14 +100,13 @@ export default function LoginPage() {
 
   // Проверяем, запущены ли мы внутри Telegram Mini App
   useEffect(() => {
-    if (isTelegramWebApp()) {
+    // isInTelegram берём из провайдера, чтобы не триггерить вне мини-аппа
+    if (isInTelegram && webApp?.initData) {
       setIsMiniApp(true);
       initTelegramWebApp();
-      
-      // Автоматически авторизуем через Mini App
       handleTelegramMiniAppAuth();
     }
-  }, [handleTelegramMiniAppAuth]);
+  }, [handleTelegramMiniAppAuth, isInTelegram, webApp]);
 
   // Telegram BackButton/MainButton + haptics
   useEffect(() => {
