@@ -10,7 +10,7 @@
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
 │   Frontend      │────▶│    Backend      │────▶│   PostgreSQL    │
 │   (Next.js)     │     │    (NestJS)     │     │   (Managed DB)  │
-│   Dockerfile.web│     │   Dockerfile.api│     │   Timeweb DBaaS │
+│   Dockerfile    │     │   Dockerfile    │     │   Timeweb DBaaS │
 │   Branch: web   │     │   Branch: main  │     │                 │
 └─────────────────┘     └─────────────────┘     └─────────────────┘
         ↓                       ↓
@@ -18,8 +18,8 @@
 ```
 
 **Деплоим 2 отдельных приложения** в App Platform с разных веток:
-- **API (NestJS)**: ветка `main`, использует `Dockerfile.api`
-- **WEB (Next.js)**: ветка `web`, использует `Dockerfile.web` (переименован в `Dockerfile`)
+- **API (NestJS)**: ветка `main`, использует корневой `Dockerfile`
+- **WEB (Next.js)**: ветка `web`, использует корневой `Dockerfile`
 
 ---
 
@@ -280,4 +280,3 @@ pnpm --filter @leadership-architect/api build
 
 - `DATABASE_URL` и любые секреты — только через Env Variables в Timeweb, не коммитить.
 - `NEXT_PUBLIC_*` попадает в клиентский бандл — не класть туда секреты.
-
