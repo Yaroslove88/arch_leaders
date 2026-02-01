@@ -414,6 +414,7 @@ export class AuthService {
     const skipValidation = this.configService.get<string>('SKIP_TELEGRAM_VALIDATION') === 'true';
     const isProd = this.configService.get<string>('NODE_ENV') === 'production';
     const allowUnverified = this.configService.get<string>('TELEGRAM_ALLOW_UNVERIFIED') === 'true';
+    const acceptHashMismatch = this.configService.get<string>('TELEGRAM_ACCEPT_HASH_MISMATCH') === 'true';
     
     // Парсим параметры сразу
     const params = new URLSearchParams(initData);
@@ -467,6 +468,10 @@ export class AuthService {
     if (!isValid) {
       this.logger.error(`Hash mismatch: expected=${hash.substring(0, 16)}..., got=${calculatedHash.substring(0, 16)}...`);
       this.logger.debug(`dataCheckString: ${dataCheckString.substring(0, 100)}...`);
+      if (allowUnverified || acceptHashMismatch) {
+        this.logger.warn('Hash mismatch ignored due to TELEGRAM_ALLOW_UNVERIFIED/TELEGRAM_ACCEPT_HASH_MISMATCH');
+        return { isValid: true, user };
+      }
       return { isValid: false, error: 'Hash mismatch - check TELEGRAM_BOT_TOKEN' };
     }
 
