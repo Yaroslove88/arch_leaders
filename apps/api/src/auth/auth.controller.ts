@@ -361,8 +361,8 @@ export class AuthController {
     const isProd = process.env.NODE_ENV === 'production';
     res.cookie('auth_token', token, {
       httpOnly: true,
-      sameSite: isProd ? 'lax' : 'lax',
-      secure: isProd,
+      sameSite: isProd ? 'none' : 'lax', // none нужен для кросс-доменного mini-app
+      secure: isProd, // для sameSite=none требуется secure
       maxAge: 1000 * 60 * 60 * 24 * 7,
       path: '/',
     });

@@ -134,12 +134,12 @@ export default function LoginPage() {
   }, [isInTelegram, webApp, isSubmitting, handleTelegramMiniAppAuth, router]);
 
   useEffect(() => {
-    // Загружаем Telegram Bot ID из переменных окружения
-    // В Telegram Login Widget параметр data-telegram-login ожидает username бота (без @).
-    // Поддерживаем оба названия env для обратной совместимости.
+    // Загружаем Telegram Bot ID/username из переменных окружения
+    // data-telegram-login ожидает username бота (без @).
     const botId =
       process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME ||
       process.env.NEXT_PUBLIC_TELEGRAM_BOT_ID ||
+      process.env.TELEGRAM_BOT_USERNAME || // fallback, если собрали с серверной переменной
       '';
     
     // Debug: логируем в консоль для проверки (только в development)
@@ -203,13 +203,15 @@ export default function LoginPage() {
       script.async = true;
       
       script.onerror = () => {
-        setError('Не удалось загрузить виджет Telegram. Проверьте подключение к интернету.');
+        setError('Не удалось загрузить виджет Telegram. Проверьте подключение к интернету или переменную бота.');
         setShowFallbackButton(true);
       };
       
       const container = document.getElementById('telegram-login-container');
       if (container) {
         container.appendChild(script);
+      } else {
+        setShowFallbackButton(true);
       }
       
       // Fallback: если виджет не загрузился за 3 секунды, показываем кнопку

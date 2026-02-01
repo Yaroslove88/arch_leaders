@@ -90,8 +90,14 @@ async function bootstrap() {
 
   // CORS настройка с белым списком
   // По умолчанию Next.js может работать на разных портах (3000, 3001, 3002...)
-  const webUrl = configService.get<string>('WEB_URL') || 'https://yaroslove88-arch-leaders-3cd4.twc1.net';
-  const allowedOrigins = [webUrl];
+  const webUrlsRaw =
+    configService.get<string>('WEB_URLS') ||
+    configService.get<string>('WEB_URL') ||
+    'https://yaroslove88-arch-leaders-3cd4.twc1.net';
+  const allowedOrigins = webUrlsRaw
+    .split(',')
+    .map((url) => url.trim())
+    .filter(Boolean);
   
   // В development добавляем дополнительные origins для удобства разработки
   // Next.js может запускаться на разных портах (3000, 3001, 3002, ...)
@@ -104,16 +110,9 @@ async function bootstrap() {
 
   app.enableCors({
     origin: (origin, callback) => {
-      // Разрешаем запросы без origin (например, Postman, curl)
-      if (!origin) {
-        return callback(null, true);
-      }
-      
-      if (allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      callback(new Error(`Not allowed by CORS: ${origin}`));
     },
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT', 'OPTIONS'],

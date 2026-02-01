@@ -361,21 +361,21 @@ export class AuthService {
   private verifyTelegramHash(data: TelegramAuthDto): boolean {
     const botToken = this.configService.get<string>('TELEGRAM_BOT_TOKEN');
     const isProd = this.configService.get<string>('NODE_ENV') === 'production';
+    const allowUnverified = this.configService.get<string>('TELEGRAM_ALLOW_UNVERIFIED') === 'true';
     if (!botToken) {
-      // Без токена в продакшене нельзя доверять данным
-      if (isProd) {
+      if (!allowUnverified && isProd) {
         this.logger.error('TELEGRAM_BOT_TOKEN is not set in production');
         return false;
       }
-      this.logger.warn('TELEGRAM_BOT_TOKEN not set; skipping Telegram hash validation (development only)');
+      this.logger.warn('TELEGRAM_BOT_TOKEN not set; skipping Telegram hash validation');
       return true;
     }
 
     const skipValidation = this.configService.get<string>('SKIP_TELEGRAM_VALIDATION') === 'true';
-    if (skipValidation && isProd) {
-      this.logger.error('SKIP_TELEGRAM_VALIDATION=true in production — validation blocked');
+    if (skipValidation && isProd && !allowUnverified) {
+      this.logger.error('SKIP_TELEGRAM_VALIDATION=true in production — validation blocked (set TELEGRAM_ALLOW_UNVERIFIED=true to override temporarily)');
       return false;
-    } else if (skipValidation) {
+    } else if (skipValidation || allowUnverified) {
       this.logger.warn('SKIP_TELEGRAM_VALIDATION enabled; skipping Telegram hash validation');
       return true;
     }
@@ -413,6 +413,7 @@ export class AuthService {
     const botToken = this.configService.get<string>('TELEGRAM_BOT_TOKEN');
     const skipValidation = this.configService.get<string>('SKIP_TELEGRAM_VALIDATION') === 'true';
     const isProd = this.configService.get<string>('NODE_ENV') === 'production';
+    const allowUnverified = this.configService.get<string>('TELEGRAM_ALLOW_UNVERIFIED') === 'true';
     
     // Парсим параметры сразу
     const params = new URLSearchParams(initData);
@@ -427,13 +428,12 @@ export class AuthService {
     }
     
     // Пропускаем проверку если нет токена или включён SKIP_TELEGRAM_VALIDATION
-    if (!botToken || skipValidation) {
-      if (isProd) {
-        const reason = !botToken ? 'TELEGRAM_BOT_TOKEN is not set' : 'SKIP_TELEGRAM_VALIDATION=true';
-        this.logger.error(`Telegram WebApp validation blocked in production: ${reason}`);
+    if (!botToken || skipValidation || allowUnverified) {
+      if (isProd && !allowUnverified && !skipValidation) {
+        this.logger.error('Telegram WebApp validation blocked in production: TELEGRAM_BOT_TOKEN is not set');
         return { isValid: false, error: 'Telegram validation disabled in production. Configure TELEGRAM_BOT_TOKEN.' };
       }
-      this.logger.warn(`Telegram validation skipped: botToken=${!!botToken}, skipValidation=${skipValidation}`);
+      this.logger.warn(`Telegram validation skipped: botToken=${!!botToken}, skipValidation=${skipValidation}, allowUnverified=${allowUnverified}`);
       return { isValid: true, user };
     }
 
