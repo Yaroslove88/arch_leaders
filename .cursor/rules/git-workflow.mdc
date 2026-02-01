@@ -1,0 +1,120 @@
+# Git Workflow — Ветки, коммиты, деплой
+
+## Активация
+
+Применяется при любых изменениях кода перед коммитом.
+
+---
+
+## Branch Strategy
+
+```
+apps/web/  → ветка `web`
+apps/api/  → ветка `main`
+```
+
+### КРИТИЧЕСКИ ВАЖНО:
+
+- Изменения в `apps/web/` → пушить в ветку **`web`** (НЕ `main`!)
+- Изменения в `apps/api/` → пушить в ветку **`main`**
+- Если изменил оба → пушить в обе ветки
+
+---
+
+## Commit Workflow
+
+После ЛЮБОГО изменения кода:
+
+```bash
+# Для web
+git checkout web
+git add -A && git commit -m "feat(web): description" && git push origin web
+
+# Для api
+git checkout main
+git add -A && git commit -m "feat(api): description" && git push origin main
+```
+
+---
+
+## Commit Message Format
+
+```
+<type>(<scope>): <description>
+
+[optional body]
+```
+
+### Types:
+- `feat` — новая функциональность
+- `fix` — исправление бага
+- `refactor` — рефакторинг без изменения поведения
+- `docs` — документация
+- `test` — тесты
+- `chore` — прочее (deps, configs)
+
+### Scopes:
+- `web` — frontend
+- `api` — backend
+- `shared` — packages/shared
+- `db` — database/prisma
+
+### Examples:
+```
+feat(api): add quest filtering by status
+fix(web): fix auth redirect loop
+refactor(api): extract user validation to guard
+docs(api): update swagger descriptions
+```
+
+---
+
+## Deployment (Timeweb)
+
+- Push в `web` → автодеплой WEB
+- Push в `main` → автодеплой API
+- Изменения env → ручной redeploy
+
+### ENV переменные на Timeweb:
+- `TELEGRAM_BOT_TOKEN` — токен бота
+- `SKIP_TELEGRAM_VALIDATION` — `true` для обхода проверки hash
+- `NEXT_PUBLIC_API_URL` — URL API
+- `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME` — username бота
+
+---
+
+## Plan Management
+
+### Auto-Save Plans
+
+1. **Always save plans to project directory**: `plans/*.plan.md`
+2. **Format**: `{description}_{id}.plan.md`
+3. **Git tracking**: Plans should be committed to git
+4. **Location**: Save all plans in `plans/` directory
+
+### When AI creates a Plan:
+- ✅ Create file in `plans/` directory
+- ✅ Include plan ID in filename
+- ✅ Use markdown format with clear structure
+- ✅ Add creation date and status tracking
+
+---
+
+## Checklist перед "готово"
+
+- [ ] Код изменён
+- [ ] Linter проверен (`pnpm lint`)
+- [ ] Git add + commit + push выполнен
+- [ ] **ЯВНО УКАЗАНО какой сервис редеплоить: WEB или API или ОБА**
+- [ ] Указано что нужно сделать на Timeweb (env, redeploy)
+
+---
+
+## Anti-Patterns
+
+| Антипаттерн | Почему плохо |
+|-------------|--------------|
+| Пушить web изменения в main | Не задеплоится на Timeweb |
+| Говорить "запушен" без указания ветки | Пользователь не знает куда смотреть |
+| Оставлять изменения без коммита | Пользователь не может задеплоить |
+| Не указывать сервис для редеплоя | Пользователь не знает что делать |

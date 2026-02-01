@@ -1,0 +1,213 @@
+# BMAD Workflow — Правила воркфлоу разработки
+
+## Активация
+
+Применяется при планировании и реализации задач.
+
+---
+
+## Quick Flow vs Full Planning
+
+### Quick Flow (Level 0-1)
+
+Используй для:
+- Bug fixes
+- Small features с понятным scope
+- GAPs с Effort < 1d
+
+```
+/quick-spec → /dev-story → /code-review
+```
+
+### Full Planning (Level 2+)
+
+Используй для:
+- Medium/large features
+- Несколько связанных изменений
+- GAPs с Effort > 1d
+
+```
+/plan → stories → /dev-story (repeat) → /code-review
+```
+
+---
+
+## Scale-Adaptive Levels
+
+| Level | Тип | Effort | Воркфлоу | Документация |
+|-------|-----|--------|----------|--------------|
+| 0 | Bug fix | < 2h | Сразу код | Commit message |
+| 1 | Small feature | 2h-1d | Quick Flow | Tech-spec (short) |
+| 2 | Medium feature | 1d-3d | Full Plan | Tech-spec + Stories |
+| 3 | Epic | 1w-2w | Plan + Architect | Plan + Architecture |
+| 4 | Platform | > 2w | PRD → Arch → Epics | Full documentation |
+
+### Определение Level
+
+**Автоматические индикаторы:**
+
+| Индикатор | Level |
+|-----------|-------|
+| Один файл | 0 |
+| 2-3 файла, один scope | 1 |
+| Несколько файлов, web + api | 2 |
+| Новый модуль | 3 |
+| Изменение schema.prisma + миграция + много файлов | 3-4 |
+| Архитектурные изменения | 4 |
+
+**Маппинг GAP Priority:**
+
+| GAP | Level |
+|-----|-------|
+| LOW | 0-1 |
+| MEDIUM | 1-2 |
+| HIGH | 2-3 |
+
+---
+
+## Story Format
+
+Каждая story должна быть:
+- **Atomic**: 1-4 часа работы
+- **Independent**: минимум зависимостей
+- **Testable**: чёткие acceptance criteria
+
+### Обязательные поля
+
+```markdown
+### STORY-X: [Title]
+
+**Type**: [feature | fix | refactor | test]
+**Effort**: [1h | 2h | 4h | 1d]
+**Scope**: [web | api | both]
+
+**Files**:
+- `path/to/file.ts`
+
+**Acceptance Criteria**:
+- [ ] [criterion]
+```
+
+---
+
+## Dev Story Workflow
+
+```
+PREP → IMPL → TEST → VERIFY → REVIEW
+```
+
+### 1. PREP
+- Прочитать story
+- Проверить зависимости
+- Подтвердить scope
+
+### 2. IMPL
+- Следовать паттернам проекта
+- Минимальное решение первым
+- Проверять linter по ходу
+
+### 3. TEST
+- Unit tests для services
+- Integration tests для critical paths
+- Можно пропустить для Level 0
+
+### 4. VERIFY
+- Пройти по acceptance criteria
+- Manual testing если нужно
+
+### 5. REVIEW
+- Автоматически вызвать `/code-review`
+
+---
+
+## Sprint Cadence
+
+### Sprint Init
+```
+/sprint-init
+
+Goal: [sprint goal]
+Duration: [1w | 2w]
+```
+
+### Sprint Tracking
+- Stories: `docs/sprints/sprint-[N].md`
+- Status: `/sprint-status`
+
+### Sprint Close
+- Ретроспектива
+- Update velocity
+- Plan next sprint
+
+---
+
+## Integration Rules
+
+### С GAP Analysis
+
+1. При работе с GAP всегда указывай ID
+2. После закрытия — обнови `GAP_ANALYSIS_REPORT.md`
+3. HIGH GAPs → Level 2+ planning
+
+### С Agents
+
+| Ситуация | Agent |
+|----------|-------|
+| Level 3+ planning | `@architect` |
+| New feature analysis | `@analyst` |
+| Sprint management | `@scrum-master` |
+| Code quality | `@code-reviewer` |
+| Testing | `@tdd-guide` |
+
+### С Commands
+
+| Задача | Command |
+|--------|---------|
+| Быстрая задача | `/quick-spec` |
+| Реализация story | `/dev-story` |
+| Планирование | `/plan` |
+| Ревью | `/code-review` |
+| Спринт | `/sprint-init`, `/sprint-status` |
+| GAP | `/gap-close` |
+
+---
+
+## Anti-Patterns
+
+### НЕ делай
+
+- Не пропускай Level определение
+- Не начинай Level 3+ без архитектурного анализа
+- Не делай stories > 1d
+- Не пропускай `/code-review`
+- Не забывай обновлять GAP статус
+
+### Делай
+
+- Определяй Level первым делом
+- Используй Quick Flow для простых задач
+- Разбивай на atomic stories
+- Коммить после каждой story
+- Указывай deploy target (WEB/API)
+
+---
+
+## Templates
+
+Шаблоны находятся в `.cursor/templates/`:
+
+| Шаблон | Назначение |
+|--------|------------|
+| `tech-spec.md` | Спецификация для Level 1-2 |
+| `story.md` | Детальная story |
+| `sprint.md` | Sprint tracking |
+
+---
+
+## Checklist перед стартом задачи
+
+- [ ] Level определён?
+- [ ] Правильный воркфлоу выбран?
+- [ ] GAP ID указан (если применимо)?
+- [ ] Dependencies проверены?
+- [ ] Scope понятен (web/api/both)?

@@ -1,0 +1,186 @@
+# Testing Rules — TDD и тестирование
+
+## Активация
+
+Применяется при создании или изменении кода в `apps/api/src/**/*.ts` и `apps/web/src/**/*.tsx`.
+
+---
+
+## TDD Workflow
+
+```
+RED → GREEN → REFACTOR
+```
+
+1. **RED**: Напиши failing test
+2. **GREEN**: Напиши минимальный код для прохождения теста
+3. **REFACTOR**: Улучши код, сохраняя тесты зелёными
+
+---
+
+## Backend Testing (NestJS + Jest)
+
+### Service Test Template
+
+```typescript
+// apps/api/src/quests/quests.service.spec.ts
+import { Test, TestingModule } from '@nestjs/testing';
+import { QuestsService } from './quests.service';
+import { PrismaService } from '../prisma/prisma.service';
+
+describe('QuestsService', () => {
+  let service: QuestsService;
+  let prisma: PrismaService;
+
+  const mockPrisma = {
+    quest: {
+      findMany: jest.fn(),
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    },
+  };
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        QuestsService,
+        { provide: PrismaService, useValue: mockPrisma },
+      ],
+    }).compile();
+
+    service = module.get<QuestsService>(QuestsService);
+    prisma = module.get<PrismaService>(PrismaService);
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('getQuests', () => {
+    it('should return quests filtered by userId', async () => {
+      const userId = 'user-123';
+      const mockQuests = [{ id: '1', title: 'Test', userId }];
+      mockPrisma.quest.findMany.mockResolvedValue(mockQuests);
+
+      const result = await service.getQuests(userId);
+
+      expect(prisma.quest.findMany).toHaveBeenCalledWith({
+        where: { userId },
+      });
+      expect(result).toEqual(mockQuests);
+    });
+  });
+});
+```
+
+### Controller Test Template
+
+```typescript
+// apps/api/src/quests/quests.controller.spec.ts
+import { Test, TestingModule } from '@nestjs/testing';
+import { QuestsController } from './quests.controller';
+import { QuestsService } from './quests.service';
+
+describe('QuestsController', () => {
+  let controller: QuestsController;
+  let service: QuestsService;
+
+  const mockService = {
+    getQuests: jest.fn(),
+  };
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [QuestsController],
+      providers: [{ provide: QuestsService, useValue: mockService }],
+    }).compile();
+
+    controller = module.get<QuestsController>(QuestsController);
+  });
+
+  it('should call service with userId from JWT', async () => {
+    const user = { sub: 'user-123' };
+    mockService.getQuests.mockResolvedValue([]);
+
+    await controller.getQuests(user);
+
+    expect(mockService.getQuests).toHaveBeenCalledWith('user-123');
+  });
+});
+```
+
+---
+
+## Frontend Testing (React Testing Library)
+
+### Component Test Template
+
+```typescript
+// apps/web/src/components/QuestList.test.tsx
+import { render, screen } from '@testing-library/react';
+import { QuestList } from './QuestList';
+import { useQuests } from '@/hooks/useQuests';
+
+jest.mock('@/hooks/useQuests');
+
+describe('QuestList', () => {
+  it('shows loading state', () => {
+    (useQuests as jest.Mock).mockReturnValue({
+      quests: [],
+      isLoading: true,
+    });
+
+    render(<QuestList />);
+
+    expect(screen.getByTestId('skeleton')).toBeInTheDocument();
+  });
+
+  it('renders quests', () => {
+    (useQuests as jest.Mock).mockReturnValue({
+      quests: [{ id: '1', title: 'Test Quest' }],
+      isLoading: false,
+    });
+
+    render(<QuestList />);
+
+    expect(screen.getByText('Test Quest')).toBeInTheDocument();
+  });
+});
+```
+
+---
+
+## Coverage Requirements
+
+- Минимальный coverage: **80%**
+- Critical paths (auth, payments): **95%**
+
+```bash
+# Run tests with coverage
+pnpm test --coverage
+
+# Watch mode
+pnpm test --watch
+```
+
+---
+
+## What to Test
+
+### MUST Test:
+- [ ] Auth guards работают
+- [ ] userId фильтрация работает
+- [ ] Error handling (404, 403)
+- [ ] Input validation (DTOs)
+
+### SHOULD Test:
+- [ ] Happy paths
+- [ ] Edge cases
+- [ ] Integration между modules
+
+### DON'T Test:
+- ❌ Prisma internals
+- ❌ Third-party libraries
+- ❌ Getters/setters

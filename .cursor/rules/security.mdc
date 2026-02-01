@@ -1,0 +1,92 @@
+# Security Rules — Безопасность и аутентификация
+
+## Активация
+
+Применяется ко всем файлам в `apps/api/src/**/*.ts` и `apps/web/src/**/*.ts`.
+
+---
+
+## Authentication Pattern
+
+### Backend
+
+Все user-specific endpoints ОБЯЗАНЫ использовать `@UseGuards(JwtAuthGuard)`:
+
+```typescript
+// ✅ Correct pattern
+@Get('my-data')
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
+async getMyData(@CurrentUser() user: JwtPayload) {
+  return this.service.getData(user.sub);  // user.sub = userId
+}
+
+// ❌ Wrong - no auth guard
+@Get('my-data')
+async getMyData() {
+  return this.service.getData(); // No userId!
+}
+```
+
+### Frontend
+
+Token хранится в localStorage как `auth_token`. API calls используют `getAuthHeaders()`:
+
+```typescript
+// ✅ Correct
+const response = await fetch(url, {
+  headers: getAuthHeaders(),
+});
+
+// ❌ Wrong - missing auth
+const response = await fetch(url);
+```
+
+---
+
+## User Isolation
+
+ВСЕ запросы к user data должны фильтроваться по userId:
+
+```typescript
+// ✅ Correct
+await this.prisma.quest.findMany({
+  where: { userId: userId }
+});
+
+// ❌ WRONG - exposes all users' data
+await this.prisma.quest.findMany();
+```
+
+---
+
+## Anti-Patterns
+
+### НЕ хранить user data в:
+- ❌ localStorage (кроме auth token)
+- ❌ JSON файлах в `data/`
+- ❌ In-memory переменных в services
+
+### НЕ экспозить endpoints без auth:
+- ❌ User-specific data без `JwtAuthGuard`
+- ❌ Забыть передать `userId` в service
+- ❌ Optional `userId` для user data
+
+---
+
+## Security Reminders
+
+- NEVER commit `.env` files
+- NEVER hardcode API keys
+- ALWAYS check user ownership before update/delete
+- ALWAYS use parameterized queries (Prisma handles this)
+- ALWAYS validate input with DTOs
+
+---
+
+## Checklist перед коммитом
+
+1. **Endpoint требует authentication?** → `@UseGuards(JwtAuthGuard)` + `@ApiBearerAuth()`
+2. **User-specific data?** → Filter by `userId` во всех queries
+3. **Breaking change?** → Update all consumers
+4. **Тестировал с auth?** → Check authorized и unauthorized access
