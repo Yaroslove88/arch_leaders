@@ -1,0 +1,118 @@
+# Coding Style — Стиль кода
+
+## Активация
+
+Применяется ко всем файлам `**/*.ts`, `**/*.tsx`.
+
+---
+
+## TypeScript
+
+- Use strict types, avoid `any`
+- Use Zod schemas for validation
+- Export interfaces from `packages/shared`
+
+```typescript
+// ❌ Wrong
+data: any
+
+// ✅ Correct
+data: Record<string, unknown>
+data: UserDto
+```
+
+---
+
+## NestJS (apps/api)
+
+- One controller per resource
+- Business logic in services only
+- Use DTOs for request/response
+- Use Swagger decorators
+
+```typescript
+// Controller pattern
+@Controller('quests')
+@ApiTags('Quests')
+export class QuestsController {
+  
+  @Get()
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get user quests' })
+  @ApiResponse({ status: 200, type: [QuestDto] })
+  async getQuests(@CurrentUser() user: JwtPayload) {
+    return this.service.getQuests(user.sub);
+  }
+}
+```
+
+---
+
+## Next.js (apps/web)
+
+- Use App Router (`app/` directory)
+- Client components: `'use client'` directive
+- API calls through `lib/api.ts`
+- Use TypeScript for all components
+
+```typescript
+// Component pattern
+'use client';
+
+import { useQuests } from '@/hooks/useQuests';
+
+export function QuestList() {
+  const { quests, isLoading } = useQuests();
+  
+  if (isLoading) return <Skeleton />;
+  
+  return (
+    <ul>
+      {quests.map(quest => (
+        <QuestItem key={quest.id} quest={quest} />
+      ))}
+    </ul>
+  );
+}
+```
+
+---
+
+## Error Handling
+
+- НЕ игнорировать ошибки
+- Use `NotFoundException`, `ForbiddenException`, etc.
+- Check ownership before update/delete
+
+```typescript
+// ✅ Correct
+async updateQuest(id: string, userId: string, data: UpdateQuestDto) {
+  const quest = await this.prisma.quest.findUnique({ where: { id } });
+  
+  if (!quest) {
+    throw new NotFoundException('Quest not found');
+  }
+  
+  if (quest.userId !== userId) {
+    throw new ForbiddenException('Not your quest');
+  }
+  
+  return this.prisma.quest.update({ where: { id }, data });
+}
+```
+
+---
+
+## File Organization
+
+| Тип файла | Расположение |
+|-----------|--------------|
+| Controllers | `apps/api/src/*/[name].controller.ts` |
+| Services | `apps/api/src/*/[name].service.ts` |
+| DTOs | `apps/api/src/common/dto/` |
+| Guards | `apps/api/src/common/guards/` |
+| Components | `apps/web/src/components/` |
+| Pages | `apps/web/src/app/` |
+| Hooks | `apps/web/src/hooks/` |
+| API Client | `apps/web/src/lib/api.ts` |

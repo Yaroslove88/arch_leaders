@@ -1,0 +1,160 @@
+# Agents — Когда делегировать агентам
+
+## Активация
+
+Применяется при сложных задачах, требующих специализации.
+
+---
+
+## Доступные агенты
+
+### Core Agents
+
+| Агент | Когда использовать |
+|-------|-------------------|
+| `code-reviewer` | Перед коммитом, проверка качества кода |
+| `tdd-guide` | При написании тестов, TDD workflow |
+| `build-error-resolver` | При ошибках сборки/деплоя |
+| `security-reviewer` | Проверка безопасности, auth |
+| `planner` | Планирование фичи, декомпозиция |
+| `doc-updater` | Синхронизация документации |
+
+### BMAD Agents (новые)
+
+| Агент | Когда использовать |
+|-------|-------------------|
+| `analyst` | Бизнес-анализ, product brief, GAP prioritization |
+| `architect` | Архитектурные решения, schema changes, API design |
+| `scrum-master` | Sprint planning, story preparation, blockers |
+
+---
+
+## Когда делегировать
+
+### code-reviewer
+- Перед коммитом изменений
+- После рефакторинга
+- При ревью PR
+
+### tdd-guide
+- При создании нового модуля
+- При добавлении critical functionality
+- Когда нужен высокий coverage
+
+### build-error-resolver
+- При ошибках `pnpm build`
+- При ошибках деплоя на Timeweb
+- При проблемах с CI/CD
+
+### security-reviewer
+- При изменении auth логики
+- При добавлении новых endpoints
+- При работе с user data
+
+### planner
+- При планировании новой фичи
+- При закрытии гэпов из GAP_ANALYSIS
+- При декомпозиции большой задачи
+
+### doc-updater
+- После изменения API
+- После изменения схемы БД
+- При добавлении новых модулей
+
+### analyst
+- Новые фичи Level 3-4
+- Создание product brief
+- Приоритизация GAPs
+- User journey анализ
+
+### architect
+- Изменения в schema.prisma
+- Новые интеграции
+- API design
+- Performance issues
+- Архитектурные trade-offs
+
+### scrum-master
+- Начало нового спринта
+- Подготовка stories
+- Blocked stories
+- Retrospectives
+
+---
+
+## Формат делегирования
+
+```
+@agent <имя-агента>
+
+<описание задачи>
+```
+
+Пример:
+```
+@agent code-reviewer
+
+Проверь изменения в apps/api/src/quests/:
+- auth guards
+- userId filtering
+- error handling
+```
+
+---
+
+## Правила делегирования
+
+1. **Одна задача — один агент**
+   - НЕ делегируй несколько задач одному агенту
+   - Разбей на подзадачи если нужно
+
+2. **Контекст обязателен**
+   - Укажи файлы для проверки
+   - Укажи конкретную проблему
+   - Укажи ожидаемый результат
+
+3. **Проверяй результат**
+   - Агент может ошибиться
+   - Всегда верифицируй output
+
+---
+
+## Связь с GAP_ANALYSIS
+
+При работе с гэпами из `docs/audit/GAP_ANALYSIS_REPORT.md`:
+
+| Тип гэпа | Агент |
+|----------|-------|
+| Security (auth, userId) | `security-reviewer` |
+| UX/UI | `code-reviewer` |
+| Testing | `tdd-guide` |
+| Build/Deploy | `build-error-resolver` |
+| New feature (Level 1-2) | `planner` |
+| New feature (Level 3-4) | `analyst` → `architect` |
+| Architecture changes | `architect` |
+| Sprint planning | `scrum-master` |
+| Documentation | `doc-updater` |
+
+---
+
+## BMAD Workflow Integration
+
+### Scale-Adaptive по Level
+
+| Level | Агенты |
+|-------|--------|
+| 0 (Bug fix) | Сразу код → `code-reviewer` |
+| 1 (Small) | `/quick-spec` → `/dev-story` |
+| 2 (Medium) | `planner` → `/dev-story` |
+| 3 (Epic) | `analyst` → `architect` → `planner` |
+| 4 (Platform) | `analyst` → `architect` → `scrum-master` |
+
+### Party Mode
+
+Для сложных решений используй `/party-mode`:
+```
+/party-mode
+
+Participants: [@analyst, @architect]
+Topic: [вопрос]
+```

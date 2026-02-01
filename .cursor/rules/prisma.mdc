@@ -1,0 +1,106 @@
+# Prisma Rules — Работа с базой данных
+
+## Активация
+
+Применяется к файлам в `apps/api/src/**/*.service.ts` и при работе с `schema.prisma`.
+
+---
+
+## Source of Truth
+
+**ALWAYS check first**: `apps/api/prisma/schema.prisma`
+- All tables, relations, и indexes определены здесь
+- User data isolation: большинство таблиц имеют `userId` field
+
+---
+
+## User Isolation
+
+ВСЕ запросы к user data должны фильтроваться по userId:
+
+```typescript
+// ✅ Correct
+await this.prisma.quest.findMany({
+  where: { userId: userId }
+});
+
+// ❌ WRONG - exposes all users' data
+await this.prisma.quest.findMany();
+```
+
+---
+
+## Key Tables
+
+| Table | Purpose | Key Fields |
+|-------|---------|------------|
+| `users` | User accounts | `id`, `telegramUsername` |
+| `entries` | Raw user input | `userId`, `type`, `text` |
+| `sessions` | AI analysis | `userId`, `entry_id`, `status` |
+| `quests` | Development tasks | `userId`, `status`, `type` |
+| `user_ability_state` | Skill progress | `user_id`, `node_id`, `progress` |
+| `case_progress` | Case completion | `user_id`, `case_id` |
+| `evidence` | Skill evidence | `userId`, `type`, `text` |
+| `changelog` | Audit trail | `userId`, `action`, `entity_type` |
+
+---
+
+## Best Practices
+
+### Используй `include` для избежания N+1 queries:
+
+```typescript
+// ✅ Correct - single query
+const quest = await this.prisma.quest.findUnique({
+  where: { id },
+  include: { evidence: true }
+});
+
+// ❌ Wrong - N+1 problem
+const quest = await this.prisma.quest.findUnique({ where: { id } });
+const evidence = await this.prisma.evidence.findMany({ where: { questId: id } });
+```
+
+### Handle `null` cases explicitly:
+
+```typescript
+// ✅ Correct
+const quest = await this.prisma.quest.findUnique({ where: { id } });
+if (!quest) {
+  throw new NotFoundException('Quest not found');
+}
+
+// ❌ Wrong - silent null
+const quest = await this.prisma.quest.findUnique({ where: { id } });
+return quest.title; // может быть null!
+```
+
+---
+
+## Schema Changes Workflow
+
+1. Edit `apps/api/prisma/schema.prisma`
+2. Run `npx prisma migrate dev --name description`
+3. Update relevant DTOs в `apps/api/src/common/dto/`
+4. Update service methods
+5. Update shared types в `packages/shared` if needed
+
+---
+
+## Commands
+
+```bash
+cd apps/api
+
+# GUI для database
+npx prisma studio
+
+# Create migration
+npx prisma migrate dev --name <description>
+
+# Regenerate client
+npx prisma generate
+
+# Push schema (dev only)
+npx prisma db push
+```
