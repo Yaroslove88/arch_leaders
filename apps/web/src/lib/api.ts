@@ -1038,15 +1038,33 @@ export async function getMe(): Promise<User> {
 }
 
 export async function register(data: RegisterDto): Promise<LoginResponse> {
-  const response = await fetch(`${API_URL}/auth/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
+  const tryRegister = async (body: any) => {
+    const response = await fetch(`${API_URL}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    return response;
+  };
+
+  let response = await tryRegister(data);
+
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Failed to register' }));
+    const error = await response.json().catch(() => ({ message: 'Failed to register' })) as any;
+    const messages = Array.isArray(error?.message) ? error.message.join(',') : String(error?.message || '');
+
+    if (messages.includes('property login should not exist')) {
+      response = await tryRegister({ telegramUsername: data.login, password: data.password });
+    } else {
+      throw new Error(error.message || 'Failed to register');
+    }
+  }
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to register' })) as any;
     throw new Error(error.message || 'Failed to register');
   }
+
   const payload = await response.json();
   setToken(payload.access_token);
   setUser(payload.user);
@@ -1054,15 +1072,33 @@ export async function register(data: RegisterDto): Promise<LoginResponse> {
 }
 
 export async function login(data: LoginDto): Promise<LoginResponse> {
-  const response = await fetch(`${API_URL}/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
+  const tryLogin = async (body: any) => {
+    const response = await fetch(`${API_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    return response;
+  };
+
+  let response = await tryLogin(data);
+
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Failed to login' }));
+    const error = await response.json().catch(() => ({ message: 'Failed to login' })) as any;
+    const messages = Array.isArray(error?.message) ? error.message.join(',') : String(error?.message || '');
+
+    if (messages.includes('property login should not exist')) {
+      response = await tryLogin({ telegramUsername: data.login, password: data.password });
+    } else {
+      throw new Error(error.message || 'Failed to login');
+    }
+  }
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to login' })) as any;
     throw new Error(error.message || 'Failed to login');
   }
+
   const payload = await response.json();
   setToken(payload.access_token);
   setUser(payload.user);
