@@ -38,6 +38,13 @@ function getAuthHeaders(): HeadersInit {
     'Content-Type': 'application/json',
   };
 
+  if (typeof window !== 'undefined') {
+    const token = getToken();
+    if (token) {
+      (headers as any).Authorization = `Bearer ${token}`;
+    }
+  }
+
   return headers;
 }
 
@@ -1006,13 +1013,16 @@ export interface LoginResponse {
 }
 
 export interface RegisterDto {
-  telegramUsername: string;
+  login: string;
   password: string;
+  telegramUsername?: string;
 }
 
 export interface LoginDto {
-  telegramUsername: string;
+  login: string;
   password: string;
+  telegramUsername?: string;
+  username?: string;
 }
 
 export async function getMe(): Promise<User> {
@@ -1037,7 +1047,10 @@ export async function register(data: RegisterDto): Promise<LoginResponse> {
     const error = await response.json().catch(() => ({ message: 'Failed to register' }));
     throw new Error(error.message || 'Failed to register');
   }
-  return response.json();
+  const payload = await response.json();
+  setToken(payload.access_token);
+  setUser(payload.user);
+  return payload;
 }
 
 export async function login(data: LoginDto): Promise<LoginResponse> {
@@ -1050,12 +1063,25 @@ export async function login(data: LoginDto): Promise<LoginResponse> {
     const error = await response.json().catch(() => ({ message: 'Failed to login' }));
     throw new Error(error.message || 'Failed to login');
   }
-  return response.json();
+  const payload = await response.json();
+  setToken(payload.access_token);
+  setUser(payload.user);
+  return payload;
 }
 
 export function getToken(): string | null {
-  // Токен хранится в HttpOnly cookie, недоступен из JS
-  return null;
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('auth_token');
+}
+
+export function setToken(token: string): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem('auth_token', token);
+}
+
+export function removeToken(): void {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem('auth_token');
 }
 
 /**
@@ -1139,14 +1165,6 @@ export async function getAdminOverviewStats(): Promise<AdminOverviewStats> {
   };
 }
 
-export function setToken(_token: string): void {
-  // noop: token записывается сервером в HttpOnly cookie
-}
-
-export function removeToken(): void {
-  // noop: используйте /auth/logout для очистки cookie
-}
-
 export interface ChangePasswordDto {
   currentPassword: string;
   newPassword: string;
@@ -1204,6 +1222,7 @@ export async function logout(): Promise<void> {
     method: 'POST',
     headers: getAuthHeaders(),
   }).catch(() => undefined);
+  removeToken();
   removeUser();
 }
 

@@ -37,9 +37,9 @@ export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
 
     try {
       if (isLoginMode) {
-        await login({ telegramUsername, password });
+        await login({ login: telegramUsername, password });
       } else {
-        await register({ telegramUsername, password });
+        await register({ login: telegramUsername, password });
       }
       onClose();
       setPassword('');
