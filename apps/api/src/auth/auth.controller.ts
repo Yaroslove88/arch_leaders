@@ -4,8 +4,6 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
-import { TelegramAuthDto } from './dto/telegram-auth.dto';
-import { TelegramWebAppDto } from './dto/telegram-webapp.dto';
 import { Public } from './decorators/public.decorator';
 import { Roles } from './decorators/roles.decorator';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -55,21 +53,8 @@ export class AuthController {
   @Post('login')
   @Public()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Аутентификация через Telegram username и пароль' })
-  @ApiBody({ 
-    type: LoginDto,
-    description: 'Поддерживает apiKey (legacy) или telegramUsername + password',
-    schema: {
-      type: 'object',
-      properties: {
-        apiKey: { type: 'string', description: 'Legacy API key (опционально)' },
-        telegramUsername: { type: 'string', description: 'Telegram username (без @)' },
-        login: { type: 'string', description: 'Алиас для telegramUsername' },
-        username: { type: 'string', description: 'Алиас для telegramUsername' },
-        password: { type: 'string', description: 'Пароль пользователя' },
-      },
-    },
-  })
+  @ApiOperation({ summary: 'Аутентификация по логину и паролю' })
+  @ApiBody({ type: LoginDto })
   @ApiResponse({
     status: 200,
     description: 'Успешная аутентификация',
@@ -97,12 +82,12 @@ export class AuthController {
     if (!loginDto) {
       throw new BadRequestException('Request body is missing');
     }
-    
-    // Валидация: либо apiKey, либо telegramUsername + password
-    if (!loginDto.apiKey && (!loginDto.telegramUsername || !loginDto.password)) {
-      throw new BadRequestException('Необходимо указать либо apiKey, либо telegramUsername и password');
+
+    const login = (loginDto.login || loginDto.telegramUsername || loginDto.username || '').trim();
+    if (!login || !loginDto.password) {
+      throw new BadRequestException('Необходимо указать login и password');
     }
-    
+
     return this.authService.login(loginDto);
   }
 
@@ -205,78 +190,6 @@ export class AuthController {
     return this.authService.deleteUser(userId);
   }
 
-  @Post('telegram')
-  @Public()
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Аутентификация через Telegram OAuth' })
-  @ApiBody({ type: TelegramAuthDto })
-  @ApiResponse({
-    status: 200,
-    description: 'Успешная аутентификация через Telegram',
-    schema: {
-      type: 'object',
-      properties: {
-        access_token: {
-          type: 'string',
-          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-        },
-        user: {
-          type: 'object',
-          properties: {
-            id: { type: 'string' },
-            telegramUsername: { type: 'string' },
-            role: { type: 'string' },
-          },
-        },
-      },
-    },
-  })
-  @ApiResponse({ status: 400, description: 'Неверные данные запроса' })
-  @ApiResponse({ status: 401, description: 'Неверные данные Telegram или устаревшая подпись' })
-  async loginWithTelegram(@Body() telegramAuthDto: TelegramAuthDto) {
-    if (!telegramAuthDto) {
-      throw new BadRequestException('Request body is missing');
-    }
-    
-    return this.authService.loginWithTelegram(telegramAuthDto);
-  }
-
-  @Post('telegram-webapp')
-  @Public()
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Аутентификация через Telegram Mini App (WebApp)' })
-  @ApiBody({ type: TelegramWebAppDto })
-  @ApiResponse({
-    status: 200,
-    description: 'Успешная аутентификация через Telegram Mini App',
-    schema: {
-      type: 'object',
-      properties: {
-        access_token: {
-          type: 'string',
-          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-        },
-        user: {
-          type: 'object',
-          properties: {
-            id: { type: 'string' },
-            telegramUsername: { type: 'string' },
-            role: { type: 'string' },
-          },
-        },
-      },
-    },
-  })
-  @ApiResponse({ status: 400, description: 'Неверные данные запроса' })
-  @ApiResponse({ status: 401, description: 'Неверная подпись initData' })
-  async loginWithTelegramWebApp(@Body() webAppDto: TelegramWebAppDto) {
-    if (!webAppDto || !webAppDto.initData) {
-      throw new BadRequestException('initData is required');
-    }
-    
-    return this.authService.loginWithTelegramWebApp(webAppDto);
-  }
-
   @Get('me')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
@@ -340,4 +253,3 @@ export class AuthController {
     return this.authService.completeOnboarding(user.sub);
   }
 }
-

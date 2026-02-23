@@ -20,11 +20,12 @@
 
 ### 1.1 Текущая реализация
 
+> Обновление: **23.02.2026** — Telegram OAuth и Mini App auto-auth удалены, остался вход по логину/паролю.
+
 | Компонент | Статус | Файл |
 |-----------|--------|------|
 | Страница `/login` | Done | `apps/web/src/app/login/page.tsx` |
-| Telegram OAuth | Done | Backend: `auth.controller.ts`, Frontend: `login/page.tsx` |
-| Telegram Mini App | Done | `TelegramWebAppProvider.tsx`, endpoint `/auth/telegram-webapp` |
+| Логин/пароль | Done | Backend: `auth.controller.ts`, Frontend: `login/page.tsx` |
 | JWT токены | Done | 7-дневный срок жизни |
 | Смена пароля (API) | Done | `PATCH /auth/change-password` |
 | Удаление аккаунта (API) | Done | `DELETE /auth/me` |
@@ -32,11 +33,8 @@
 ### 1.2 Flow авторизации
 
 ```
-Telegram OAuth:
-User → Login Page → Telegram Widget → /auth/telegram → JWT → localStorage → /dashboard
-
-Telegram Mini App:
-User opens Mini App → TelegramWebAppProvider → /auth/telegram-webapp → JWT → Auto-auth
+Login/password:
+User → /login → POST /auth/login → JWT → localStorage → /dashboard
 ```
 
 ### 1.3 Гэпы
@@ -44,12 +42,10 @@ User opens Mini App → TelegramWebAppProvider → /auth/telegram-webapp → JWT
 | # | Гэп | Критичность |
 |---|-----|-------------|
 | A1 | Нет UI для смены пароля | HIGH |
-| A2 | Нет редиректа после Mini App авторизации | HIGH |
-| A3 | Нет обработки ошибок в Mini App (только console.error) | HIGH |
-| A4 | Нет refresh token механизма | MEDIUM |
-| A5 | Нет восстановления пароля | MEDIUM |
-| A6 | Нет email-аутентификации как альтернативы | LOW |
-| A7 | Нет 2FA | LOW |
+| A2 | Нет refresh token механизма | MEDIUM |
+| A3 | Нет восстановления пароля | MEDIUM |
+| A4 | Нет email-аутентификации как альтернативы | LOW |
+| A5 | Нет 2FA | LOW |
 
 ---
 

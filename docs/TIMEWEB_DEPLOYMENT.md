@@ -32,16 +32,16 @@ DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DBNAME?schema=public
 PORT=3001
 NODE_ENV=production
 WEB_URL=https://yaroslove88-arch-leaders-3cd4.twc1.net
-JWT_SECRET=eb9dcb841e6d5b8e0c052e00a035b98b0ad602d1e7198c1fe5e24b5397699849
+JWT_SECRET=your-production-jwt-secret
 JWT_EXPIRES_IN=604800
-TELEGRAM_BOT_TOKEN=8118350067:AAGYxV6LfNYV74tqyHOnVlNyQJ8u7gtLXfY
+# (Опционально) Telegram бот для уведомлений/интеграций
+TELEGRAM_BOT_TOKEN=your_bot_token
 ```
 
 ### WEB (Next.js) — прописать в Timeweb App Platform
 
 ```bash
 NEXT_PUBLIC_API_URL=https://yaroslove88-arch-leaders-12c6.twc1.net
-NEXT_PUBLIC_TELEGRAM_BOT_USERNAME=arhitecture_leaders_bot
 ```
 
 ---
@@ -61,7 +61,7 @@ NEXT_PUBLIC_TELEGRAM_BOT_USERNAME=arhitecture_leaders_bot
 
 ### 2. Результат
 
-После настройки у бота появится кнопка "Открыть" которая запустит сайт как Mini App внутри Telegram с автоматической авторизацией.
+После настройки у бота появится кнопка "Открыть" которая запустит сайт как Mini App внутри Telegram. Вход выполняется через страницу `/login` (логин/пароль).
 
 ---
 

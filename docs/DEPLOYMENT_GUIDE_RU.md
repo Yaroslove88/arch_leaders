@@ -333,39 +333,9 @@ export default function HomePage() {
 }
 ```
 
-### Шаг 5: Авторизация через Telegram
+### Шаг 5: Авторизация
 
-Обновить backend для проверки Telegram initData:
-
-```typescript
-// apps/api/src/auth/telegram-auth.service.ts
-import * as crypto from 'crypto';
-
-export class TelegramAuthService {
-  validateInitData(initData: string, botToken: string): boolean {
-    const urlParams = new URLSearchParams(initData);
-    const hash = urlParams.get('hash');
-    urlParams.delete('hash');
-    
-    const dataCheckString = Array.from(urlParams.entries())
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([key, value]) => `${key}=${value}`)
-      .join('\n');
-    
-    const secretKey = crypto
-      .createHmac('sha256', 'WebAppData')
-      .update(botToken)
-      .digest();
-    
-    const calculatedHash = crypto
-      .createHmac('sha256', secretKey)
-      .update(dataCheckString)
-      .digest('hex');
-    
-    return calculatedHash === hash;
-  }
-}
-```
+С **23.02.2026** Telegram OAuth/Mini App auto-auth удалены из проекта. Используется только вход по логину/паролю через `POST /auth/login`.
 
 ---
 

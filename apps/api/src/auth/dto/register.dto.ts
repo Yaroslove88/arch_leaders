@@ -1,18 +1,27 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, MinLength, Matches } from 'class-validator';
+import { IsString, MinLength, Matches, IsOptional } from 'class-validator';
 
 export class RegisterDto {
   @ApiProperty({
-    description: 'Telegram username (без @)',
-    example: 'username',
+    description: 'Логин',
+    example: 'login',
     minLength: 3,
   })
   @IsString()
   @MinLength(3)
   @Matches(/^[a-zA-Z0-9_]+$/, {
-    message: 'Telegram username может содержать только буквы, цифры и подчеркивания',
+    message: 'Логин может содержать только буквы, цифры и подчеркивания',
   })
-  telegramUsername!: string;
+  login!: string;
+
+  @ApiProperty({
+    description: 'Алиас для login (устаревшее поле)',
+    example: 'login',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  telegramUsername?: string;
 
   @ApiProperty({
     description: 'Пароль',
@@ -23,4 +32,3 @@ export class RegisterDto {
   @MinLength(8)
   password!: string;
 }
-

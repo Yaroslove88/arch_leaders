@@ -1,29 +1,36 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, ValidateIf } from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsString, IsOptional } from 'class-validator';
 
 export class LoginDto {
   @ApiPropertyOptional({
-    description: 'API ключ для аутентификации (legacy)',
-    example: 'your-api-key',
+    description: 'Логин',
+    example: 'login',
   })
   @IsOptional()
   @IsString()
-  apiKey?: string;
+  login?: string;
 
   @ApiPropertyOptional({
-    description: 'Telegram username (без @)',
-    example: 'username',
+    description: 'Алиас для login (устаревшее поле)',
+    example: 'login',
   })
-  @ValidateIf((o) => !o.apiKey)
+  @IsOptional()
   @IsString()
   telegramUsername?: string;
+
+  @ApiPropertyOptional({
+    description: 'Алиас для login (устаревшее поле)',
+    example: 'login',
+  })
+  @IsOptional()
+  @IsString()
+  username?: string;
 
   @ApiPropertyOptional({
     description: 'Пароль',
     example: 'SecurePassword123!',
   })
-  @ValidateIf((o) => !o.apiKey)
+  @IsOptional()
   @IsString()
   password?: string;
 }
-

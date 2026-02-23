@@ -1,9 +1,7 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import { setToken, setUser, getToken } from '../lib/api';
-import { initTelegramDevMock, isTelegramDevMock } from '../lib/telegram-dev-mock';
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { initTelegramDevMock } from '../lib/telegram-dev-mock';
 
 interface TelegramUser {
   id: number;
@@ -63,8 +61,6 @@ interface TelegramWebAppContextType {
   user: TelegramUser | null;
   isInTelegram: boolean;
   isReady: boolean;
-  authError: string | null;
-  clearAuthError: () => void;
 }
 
 const TelegramWebAppContext = createContext<TelegramWebAppContextType>({
@@ -72,8 +68,6 @@ const TelegramWebAppContext = createContext<TelegramWebAppContextType>({
   user: null,
   isInTelegram: false,
   isReady: false,
-  authError: null,
-  clearAuthError: () => {},
 });
 
 export function useTelegramWebApp() {
@@ -85,17 +79,10 @@ interface Props {
 }
 
 export function TelegramWebAppProvider({ children }: Props) {
-  const router = useRouter();
-  const pathname = usePathname();
   const [webApp, setWebApp] = useState<TelegramWebApp | null>(null);
   const [user, setTgUser] = useState<TelegramUser | null>(null);
   const [isInTelegram, setIsInTelegram] = useState(false);
   const [isReady, setIsReady] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
-
-  const clearAuthError = useCallback(() => {
-    setAuthError(null);
-  }, []);
 
   useEffect(() => {
     // Dev mode: инициализируем mock если включен
@@ -121,95 +108,16 @@ export function TelegramWebAppProvider({ children }: Props) {
       
       // Раскрываем на весь экран
       tg.expand();
-
-      // Проверяем, есть ли уже токен (уже авторизован)
-      const existingToken = getToken();
-      if (existingToken) {
-        setIsReady(true);
-        return;
-      }
-
-      // Автоматическая авторизация через API
-      const autoAuth = async () => {
-        try {
-          const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/auth/telegram-webapp`,
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ initData: tg.initData }),
-            }
-          );
-
-          if (response.ok) {
-            const data = await response.json();
-            // Сохраняем токен и пользователя
-            setToken(data.access_token);
-            setUser(data.user);
-            
-            // Haptic feedback при успешной авторизации
-            try {
-              tg.HapticFeedback?.notificationOccurred('success');
-            } catch {
-              // HapticFeedback might not be available
-            }
-            
-            // Редирект на dashboard после успешной авторизации
-            // Только если мы на странице логина или корневой странице
-            if (pathname === '/login' || pathname === '/') {
-              router.push('/dashboard');
-            }
-          } else {
-            const errorText = await response.text();
-            const errorMessage = `Ошибка авторизации: ${response.status}`;
-            setAuthError(errorMessage);
-            
-            // Haptic feedback при ошибке
-            try {
-              tg.HapticFeedback?.notificationOccurred('error');
-            } catch {
-              // HapticFeedback might not be available
-            }
-          }
-        } catch (error) {
-          const errorMessage = error instanceof Error 
-            ? `Ошибка сети: ${error.message}` 
-            : 'Не удалось подключиться к серверу';
-          setAuthError(errorMessage);
-          
-          // Haptic feedback при ошибке
-          try {
-            tg.HapticFeedback?.notificationOccurred('error');
-          } catch {
-            // HapticFeedback might not be available
-          }
-        } finally {
-          setIsReady(true);
-        }
-      };
-
-      autoAuth();
+      setIsReady(true);
     } else {
       // Не в Telegram - обычный режим
       setIsReady(true);
     }
-  }, [pathname, router]);
+  }, []);
 
   return (
-    <TelegramWebAppContext.Provider value={{ webApp, user, isInTelegram, isReady, authError, clearAuthError }}>
+    <TelegramWebAppContext.Provider value={{ webApp, user, isInTelegram, isReady }}>
       {children}
-      {/* Показываем ошибку авторизации как toast/banner */}
-      {authError && isInTelegram && (
-        <div className="fixed bottom-4 left-4 right-4 z-50 bg-tension-red/90 text-white px-4 py-3 rounded-lg shadow-lg flex items-center justify-between">
-          <span className="text-sm">{authError}</span>
-          <button 
-            onClick={clearAuthError}
-            className="ml-2 text-white/80 hover:text-white"
-          >
-            ✕
-          </button>
-        </div>
-      )}
     </TelegramWebAppContext.Provider>
   );
 }
